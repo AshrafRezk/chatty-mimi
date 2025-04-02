@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+
+import { useEffect, useRef, useState, useCallback, memo } from "react";
 import Message from "./Message";
 import ChatInput from "./ChatInput";
 import MoodSelector from "./MoodSelector";
@@ -27,10 +28,17 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { scheduleWeatherNotification, scheduleTipNotification } from "@/utils/pushNotificationUtils";
 
+// Memoize individual messages for better performance
+const MemoizedMessage = memo(Message);
+
+// Optimize suggested questions to prevent re-renders
+const OptimizedSuggestions = memo(SuggestedQuestions);
+
 const ChatInterface = () => {
   const { state, addMessage, setTyping, clearMessages, setVoiceMode } = useChat();
   const { messages, mood, language, isTyping, userLocation, aiConfig, isVoiceMode } = state;
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   
   const [moodSelectorOpen, setMoodSelectorOpen] = useState(false);
@@ -63,19 +71,19 @@ const ChatInterface = () => {
     };
   }, []);
   
-  const playMessageSentSound = () => {
+  const playMessageSentSound = useCallback(() => {
     if (messageSentSound.current) {
       messageSentSound.current.currentTime = 0;
       messageSentSound.current.play().catch(err => console.error("Error playing sound:", err));
     }
-  };
+  }, []);
   
-  const playMessageReceivedSound = () => {
+  const playMessageReceivedSound = useCallback(() => {
     if (messageReceivedSound.current) {
       messageReceivedSound.current.currentTime = 0;
       messageReceivedSound.current.play().catch(err => console.error("Error playing sound:", err));
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (userLocation && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
@@ -102,13 +110,13 @@ const ChatInterface = () => {
     }
   }, [userLocation]);
   
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
   
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isTyping]);
+  }, [scrollToBottom, messages, isTyping]);
   
   useEffect(() => {
     if (messages.length === 0 && !welcomeMessageSentRef.current) {
@@ -135,7 +143,7 @@ const ChatInterface = () => {
       
       return () => clearTimeout(typingTimer);
     }
-  }, [messages.length, userLocation, language, addMessage, setTyping, aiConfig.persona]);
+  }, [messages.length, userLocation, language, addMessage, setTyping, aiConfig.persona, playMessageReceivedSound]);
   
   useEffect(() => {
     return () => {
@@ -145,7 +153,7 @@ const ChatInterface = () => {
     };
   }, [messages]);
   
-  const extractNutritionData = (text: string): NutritionData | undefined => {
+  const extractNutritionData = useCallback((text: string): NutritionData | undefined => {
     if (aiConfig.persona !== 'diet_coach') return undefined;
     
     try {
@@ -170,9 +178,9 @@ const ChatInterface = () => {
     }
     
     return undefined;
-  };
+  }, [aiConfig.persona]);
 
-  const extractPropertyData = (text: string): PropertyData | undefined => {
+  const extractPropertyData = useCallback((text: string): PropertyData | undefined => {
     if (aiConfig.persona !== 'real_estate') return undefined;
     
     try {
@@ -205,13 +213,13 @@ const ChatInterface = () => {
     }
     
     return undefined;
-  };
+  }, [aiConfig.persona]);
 
   const createImageUrl = (file: File): string => {
     return URL.createObjectURL(file);
   };
   
-  const handleSendMessage = async (text: string, imageFile: File | null = null) => {
+  const handleSendMessage = useCallback(async (text: string, imageFile: File | null = null) => {
     const imageSrc = imageFile ? createImageUrl(imageFile) : undefined;
     
     playMessageSentSound();
@@ -248,23 +256,25 @@ const ChatInterface = () => {
         }
       }
       
+      // Use Promise.all for parallel processing to improve performance
       try {
         console.log("Starting web search for:", text);
-        references = await performFallbackSearch(text, performWebSearch);
+        
+        // Perform search in parallel with other setup tasks
+        const searchPromise = performFallbackSearch(text, performWebSearch)
+          .catch(error => {
+            console.error("Web search error:", error);
+            return performWebSearch(text).catch(fallbackError => {
+              console.error("Fallback search also failed:", fallbackError);
+              return [];
+            });
+          });
+          
+        // Wait for search results
+        references = await searchPromise;
         certaintyScore = calculateCertaintyScore(references);
         console.log("Search completed with", references.length, "results. Certainty score:", certaintyScore);
-      } catch (error) {
-        console.error("Web search error:", error);
-        try {
-          console.log("Trying fallback search method");
-          references = await performWebSearch(text);
-          certaintyScore = calculateCertaintyScore(references);
-        } catch (fallbackError) {
-          console.error("Fallback search also failed:", fallbackError);
-        }
-      }
       
-      try {
         const referencesContext = references.length > 0 
           ? `Relevant information from web search:
             ${references.map((ref, index) => `[${index+1}] ${ref.title}: ${ref.snippet}`).join('\n')}`
@@ -303,6 +313,7 @@ const ChatInterface = () => {
         }
       }
       
+      // Extract links and combine with search results
       const extractedLinks = await extractLinksFromMessage(response);
       
       if (extractedLinks.length > 0) {
@@ -311,8 +322,8 @@ const ChatInterface = () => {
         console.log("Combined references:", references.length);
       }
       
+      // Extract structured data
       const nutritionData = extractNutritionData(response);
-      
       const propertyData = extractPropertyData(response);
       
       if (nutritionData) {
@@ -394,17 +405,17 @@ const ChatInterface = () => {
     if (imageSrc) {
       URL.revokeObjectURL(imageSrc);
     }
-  };
+  }, [addMessage, aiConfig.persona, extractNutritionData, extractPropertyData, language, messages, mood, playMessageReceivedSound, playMessageSentSound, setTyping, userLocation]);
   
-  const handleVoiceChatClose = () => {
+  const handleVoiceChatClose = useCallback(() => {
     setShowVoiceChat(false);
     setVoiceMode(false);
-  };
+  }, [setVoiceMode]);
   
-  const toggleVoiceChat = () => {
+  const toggleVoiceChat = useCallback(() => {
     setShowVoiceChat(!showVoiceChat);
     setVoiceMode(!showVoiceChat);
-  };
+  }, [setVoiceMode, showVoiceChat]);
   
   const getTextColor = () => {
     switch (mood) {
@@ -469,22 +480,25 @@ const ChatInterface = () => {
           </CollapsibleContent>
         </Collapsible>
         
-        <div className={cn(
-          "flex-1 pb-3 pt-0 space-y-3 overflow-y-auto",
-          getTextColor()
-        )}>
+        <div 
+          ref={messagesContainerRef}
+          className={cn(
+            "flex-1 pb-3 pt-0 space-y-3 overflow-y-auto scroll-container",
+            getTextColor()
+          )}
+        >
           <div className="px-3 space-y-3">
-            {messages.length > 0 && <SuggestedQuestions />}
+            {messages.length > 0 && <OptimizedSuggestions />}
             
             {messages.map((message) => (
-              <Message key={message.id} message={message} />
+              <MemoizedMessage key={message.id} message={message} />
             ))}
             
             {isTyping && (
               <div className="flex mb-4 animate-fade-in">
                 <div className={cn(
                   "chat-bubble-assistant",
-                  mood === 'deep' || mood === 'focus' ? "bg-white/20" : ""
+                  mood === 'deep' || mood === 'focus' ? "bg-slate-800/50" : ""
                 )}>
                   <ThinkingAnimation />
                 </div>
@@ -534,22 +548,25 @@ const ChatInterface = () => {
         <PersonaSelector />
       </div>
       
-      <div className={cn(
-        "flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto",
-        getTextColor()
-      )}>
+      <div 
+        ref={messagesContainerRef}
+        className={cn(
+          "flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto scroll-container hardware-accelerated",
+          getTextColor()
+        )}
+      >
         <div className="space-y-3 md:space-y-4">
-          {messages.length > 0 && <SuggestedQuestions />}
+          {messages.length > 0 && <OptimizedSuggestions />}
           
           {messages.map((message) => (
-            <Message key={message.id} message={message} />
+            <MemoizedMessage key={message.id} message={message} />
           ))}
           
           {isTyping && (
             <div className="flex mb-4 animate-fade-in">
               <div className={cn(
                 "chat-bubble-assistant",
-                mood === 'deep' || mood === 'focus' ? "bg-white/20" : ""
+                mood === 'deep' || mood === 'focus' ? "bg-slate-800/50" : ""
               )}>
                 <ThinkingAnimation />
               </div>

@@ -187,8 +187,8 @@ const Message = ({ message }: MessageProps) => {
       // Assistant bubble style with improved contrast for deep/focus modes
       return cn(
         "chat-bubble-assistant ios-glass shadow-lg",
-        mood === "deep" ? "bg-white/20 text-white" : "",
-        mood === "focus" ? "bg-white/20 text-white" : ""
+        mood === "deep" ? "bg-white/30 text-white" : "",
+        mood === "focus" ? "bg-white/30 text-white" : ""
       );
     }
   };
@@ -214,15 +214,15 @@ const Message = ({ message }: MessageProps) => {
           </div>
         )}
         
-        <div className="relative">
+        <div className="relative pb-6">
           {renderContent()}
           
           {message.sender === "assistant" && (
-            <div className="absolute top-0 right-0 flex space-x-1">
+            <div className="absolute bottom-0 right-0 flex space-x-1">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-6 w-6 p-0 opacity-50 hover:opacity-100 rounded-full"
+                className="h-6 w-6 p-0 opacity-70 hover:opacity-100 rounded-full bg-background/40"
                 onClick={handleCopy}
               >
                 {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
@@ -232,7 +232,7 @@ const Message = ({ message }: MessageProps) => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-6 w-6 p-0 opacity-50 hover:opacity-100 rounded-full"
+                className="h-6 w-6 p-0 opacity-70 hover:opacity-100 rounded-full bg-background/40"
                 onClick={handleDownload}
               >
                 <Download size={14} />
@@ -276,7 +276,7 @@ const Message = ({ message }: MessageProps) => {
         )}
         
         {message.sender === "assistant" && !isMobile && (
-          <div className="mt-2 text-right">
+          <div className="mt-4 text-right">
             <TextToSpeech text={message.text} />
           </div>
         )}

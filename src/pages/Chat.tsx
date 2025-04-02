@@ -87,7 +87,7 @@ const Chat = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, ease: "easeInOut" }}
         className={cn(
-          "min-h-screen transition-colors duration-300 flex flex-col max-h-screen",
+          "min-h-screen transition-colors duration-300 flex flex-col max-h-screen overflow-hidden",
           getMoodBackgroundClass(),
           language === 'ar' ? 'rtl' : '',
           mood === 'deep' || mood === 'focus' ? 'text-white' : ''
