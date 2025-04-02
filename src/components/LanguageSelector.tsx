@@ -76,6 +76,9 @@ const LanguageSelector: React.FC = () => {
                 onClick={() => handleLanguageChange(lang.code as Language)}
               >
                 {lang.label}
+                {language === lang.code && (
+                  <Check className="ml-auto h-4 w-4" />
+                )}
               </DropdownMenuItem>
             ))}
           </DropdownMenuGroup>
@@ -91,6 +94,9 @@ const LanguageSelector: React.FC = () => {
                 onClick={() => handleLanguageChange(lang.code as Language)}
               >
                 {lang.label}
+                {language === lang.code && (
+                  <Check className="ml-auto h-4 w-4" />
+                )}
               </DropdownMenuItem>
             ))}
           </DropdownMenuGroup>
@@ -106,6 +112,9 @@ const LanguageSelector: React.FC = () => {
                 onClick={() => handleLanguageChange(lang.code as Language)}
               >
                 {lang.label}
+                {language === lang.code && (
+                  <Check className="ml-auto h-4 w-4" />
+                )}
               </DropdownMenuItem>
             ))}
           </DropdownMenuGroup>
@@ -121,6 +130,9 @@ const LanguageSelector: React.FC = () => {
                 onClick={() => handleLanguageChange(lang.code as Language)}
               >
                 {lang.label}
+                {language === lang.code && (
+                  <Check className="ml-auto h-4 w-4" />
+                )}
               </DropdownMenuItem>
             ))}
           </DropdownMenuGroup>
