@@ -18,6 +18,12 @@ export interface UserLocation {
   countryCode: string;
 }
 
+export interface AIConfig {
+  service: 'gemini' | 'openai' | 'mock';
+  apiKey?: string;
+  contextLength?: number;
+}
+
 export interface ChatState {
   messages: Message[];
   language: Language;
@@ -26,4 +32,5 @@ export interface ChatState {
   userLocation: UserLocation | null;
   isFreeLimit: boolean;
   theme: Theme;
+  aiConfig: AIConfig;
 }

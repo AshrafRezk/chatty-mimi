@@ -1,6 +1,6 @@
 
 import { createContext, useContext, useEffect, useReducer } from 'react';
-import { ChatState, Language, Message, Mood, Theme, UserLocation } from '../types';
+import { AIConfig, ChatState, Language, Message, Mood, Theme, UserLocation } from '../types';
 import { detectUserLocation, getDefaultLanguageFromLocation } from '../utils/locationUtils';
 
 // Initial state
@@ -12,6 +12,11 @@ const initialState: ChatState = {
   userLocation: null,
   isFreeLimit: false, // If true, will trigger premium lock UI
   theme: 'light',
+  aiConfig: {
+    service: 'gemini', // Default to Gemini
+    apiKey: 'AIzaSyCYjG-f26Vg3t57PY0_KznRXDZF-9ljcWs',
+    contextLength: 5, // Default context length (number of messages to include)
+  },
 };
 
 // Action types
@@ -23,6 +28,7 @@ type ChatAction =
   | { type: 'SET_USER_LOCATION'; payload: UserLocation }
   | { type: 'SET_FREE_LIMIT'; payload: boolean }
   | { type: 'SET_THEME'; payload: Theme }
+  | { type: 'SET_AI_CONFIG'; payload: Partial<AIConfig> }
   | { type: 'CLEAR_MESSAGES' };
 
 // Reducer
@@ -69,6 +75,14 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
         ...state,
         theme: action.payload,
       };
+    case 'SET_AI_CONFIG':
+      return {
+        ...state,
+        aiConfig: {
+          ...state.aiConfig,
+          ...action.payload,
+        },
+      };
     case 'CLEAR_MESSAGES':
       return {
         ...state,
@@ -87,6 +101,7 @@ interface ChatContextType {
   setMood: (mood: Mood) => void;
   setTyping: (isTyping: boolean) => void;
   setTheme: (theme: Theme) => void;
+  setAIConfig: (config: Partial<AIConfig>) => void;
   clearMessages: () => void;
 }
 
@@ -190,6 +205,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const setTheme = (theme: Theme) => {
     dispatch({ type: 'SET_THEME', payload: theme });
   };
+  
+  const setAIConfig = (config: Partial<AIConfig>) => {
+    dispatch({ type: 'SET_AI_CONFIG', payload: config });
+  };
 
   const clearMessages = () => {
     dispatch({ type: 'CLEAR_MESSAGES' });
@@ -204,6 +223,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setMood,
         setTyping,
         setTheme,
+        setAIConfig,
         clearMessages,
       }}
     >

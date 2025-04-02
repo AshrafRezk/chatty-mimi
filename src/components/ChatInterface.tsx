@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from "react";
 import Message from "./Message";
 import ChatInput from "./ChatInput";
@@ -6,6 +5,8 @@ import MoodSelector from "./MoodSelector";
 import { useChat } from "@/context/ChatContext";
 import { cn } from "@/lib/utils";
 import { getWelcomeMessage } from "@/utils/locationUtils";
+import { generateGeminiResponse } from "@/utils/geminiUtils";
+import { toast } from "sonner";
 
 const ChatInterface = () => {
   const { state, addMessage, setTyping } = useChat();
@@ -46,46 +47,30 @@ const ChatInterface = () => {
     }
   }, [messages.length, userLocation, language, addMessage, setTyping]);
   
-  const handleSendMessage = (text: string) => {
+  const handleSendMessage = async (text: string) => {
     // Add user message
     addMessage({
       text,
       sender: "user",
     });
     
-    // Simulate assistant typing
+    // Set typing indicator
     setTyping(true);
     
-    // Mock response based on mood
-    let response = '';
-    
-    setTimeout(() => {
-      switch (mood) {
-        case 'calm':
-          response = language === 'ar' 
-            ? "أنا هنا لمساعدتك بكل هدوء. كيف يمكنني أن أكون عونًا لك اليوم؟" 
-            : "I'm here to help you calmly. How can I assist you today?";
-          break;
-        case 'friendly':
-          response = language === 'ar' 
-            ? "يا صديقي! أنا سعيد جدًا بالتحدث معك! كيف حالك اليوم؟" 
-            : "Hey friend! I'm so happy to chat with you! How are you doing today?";
-          break;
-        case 'deep':
-          response = language === 'ar' 
-            ? "هذا سؤال مثير للتفكير. دعنا نتعمق في استكشاف الأفكار والمعاني الكامنة وراء ذلك." 
-            : "That's a thought-provoking question. Let's explore the deeper ideas and meanings behind it.";
-          break;
-        case 'focus':
-          response = language === 'ar' 
-            ? "دعنا نركز على حل هذه المشكلة بشكل منهجي. ما هي النتيجة المحددة التي تريد تحقيقها؟" 
-            : "Let's focus on solving this issue systematically. What specific outcome are you looking to achieve?";
-          break;
-        default:
-          response = language === 'ar' 
-            ? "شكراً لرسالتك! كيف يمكنني مساعدتك اليوم؟" 
-            : "Thank you for your message! How can I assist you today?";
-      }
+    try {
+      // Format location string for the API
+      const locationString = userLocation 
+        ? `${userLocation.city}, ${userLocation.country} (${userLocation.countryCode})` 
+        : null;
+      
+      // Get AI response from Gemini API
+      const response = await generateGeminiResponse(
+        text, 
+        messages, 
+        language, 
+        mood,
+        locationString
+      );
       
       // Add assistant response
       setTyping(false);
@@ -93,7 +78,22 @@ const ChatInterface = () => {
         text: response,
         sender: "assistant",
       });
-    }, 2000);
+    } catch (error) {
+      console.error("Error getting AI response:", error);
+      setTyping(false);
+      
+      // Fallback response
+      addMessage({
+        text: language === 'ar' 
+          ? "عذراً، حدث خطأ في معالجة طلبك. يرجى المحاولة مرة أخرى."
+          : "Sorry, there was an error processing your request. Please try again.",
+        sender: "assistant",
+      });
+      
+      toast.error(language === 'ar' 
+        ? "حدث خطأ أثناء الاتصال بخدمة الذكاء الاصطناعي"
+        : "Error connecting to the AI service");
+    }
   };
   
   return (
