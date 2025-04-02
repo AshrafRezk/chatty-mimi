@@ -10,7 +10,7 @@ import InteractiveChart, { ChartData } from "./InteractiveChart";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
-import { Copy } from "lucide-react";
+import { Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -31,6 +31,7 @@ const Message = ({ message }: MessageProps) => {
   const [baseUrl, setBaseUrl] = useState("");
   const [chartData, setChartData] = useState<ChartData[] | null>(null);
   const [chartTitle, setChartTitle] = useState<string | undefined>(undefined);
+  const [copied, setCopied] = useState(false);
   
   useEffect(() => {
     // Get the base URL from the browser
@@ -94,6 +95,9 @@ const Message = ({ message }: MessageProps) => {
         
       await navigator.clipboard.writeText(message.text + attributionText);
       
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      
       toast.success(
         language === 'ar' ? "تم نسخ المحتوى إلى الحافظة" : "Content copied to clipboard"
       );
@@ -145,12 +149,12 @@ const Message = ({ message }: MessageProps) => {
 
   const bubbleStyle = message.sender === "user"
     ? cn(
-        "chat-bubble-user",
+        "chat-bubble-user ios-glass shadow-lg",
         mood === "deep" ? "bg-slate-700 text-white" : "",
         mood === "focus" ? "bg-zinc-700 text-white" : ""
       )
     : cn(
-        "chat-bubble-assistant",
+        "chat-bubble-assistant ios-glass shadow-lg",
         mood === "deep" || mood === "focus" ? "bg-white/20" : ""
       );
   
@@ -158,10 +162,10 @@ const Message = ({ message }: MessageProps) => {
     <div className={cn(
       "flex items-start gap-2",
       message.sender === "user" ? "justify-end" : "justify-start",
-      "animate-fade-in"
+      "animate-ios-fade-in"
     )}>
       <div className={cn(
-        "relative max-w-[85%] md:max-w-[70%] rounded-lg px-4 py-3",
+        "relative max-w-[85%] md:max-w-[70%] rounded-2xl px-4 py-3",
         bubbleStyle
       )}>
         {message.imageSrc && (
@@ -169,7 +173,7 @@ const Message = ({ message }: MessageProps) => {
             <img 
               src={message.imageSrc} 
               alt="Uploaded content" 
-              className="max-w-full h-auto rounded"
+              className="max-w-full h-auto rounded-lg"
               style={{ maxHeight: "200px" }}
             />
           </div>
@@ -183,10 +187,10 @@ const Message = ({ message }: MessageProps) => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-6 w-6 p-0 opacity-50 hover:opacity-100"
+                className="h-6 w-6 p-0 opacity-50 hover:opacity-100 rounded-full"
                 onClick={handleCopy}
               >
-                <Copy size={14} />
+                {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                 <span className="sr-only">{language === 'ar' ? "نسخ" : "Copy"}</span>
               </Button>
             </div>

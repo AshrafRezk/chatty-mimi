@@ -64,6 +64,10 @@ const Chat = () => {
         // Force layout recalculation
         setTimeout(() => {
           window.scrollTo(0, 0);
+          document.body.style.position = 'fixed';
+          document.body.style.width = '100%';
+          document.body.style.height = '100%';
+          document.body.style.overflow = 'hidden';
         }, 100);
       }
     };
@@ -74,6 +78,10 @@ const Chat = () => {
     return () => {
       if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
         document.body.style["webkitOverflowScrolling" as any] = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.height = '';
+        document.body.style.overflow = '';
       }
     };
   }, []);
@@ -84,32 +92,20 @@ const Chat = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeInOut" }}
       className={cn(
-        "min-h-screen transition-colors duration-300",
+        "min-h-screen transition-colors duration-300 flex flex-col",
         getMoodBackgroundClass(),
         language === 'ar' ? 'rtl' : '',
         mood === 'deep' || mood === 'focus' ? 'text-white' : '',
-        // Fixed: Remove overflow-hidden for iOS to prevent content getting cut off
-        isVoiceMode ? 'overflow-y-auto' : 'overflow-y-auto'
+        "fixed inset-0"
       )}
-      style={{ 
-        height: '100vh', 
-        width: '100vw', 
-        margin: 0, 
-        padding: 0,
-        // Ensure content is within safe area for iOS devices
-        paddingTop: 'env(safe-area-inset-top, 0px)',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        paddingLeft: 'env(safe-area-inset-left, 0px)',
-        paddingRight: 'env(safe-area-inset-right, 0px)'
-      }}
     >
       <ChatSEOHead />
       <Navbar />
       <div className={cn(
-        "flex flex-col",
-        isMobile ? "max-w-full p-0 pt-1" : "container mx-auto py-2 px-2 md:py-4 md:px-4"
+        "flex-1 flex flex-col overflow-hidden",
+        isMobile ? "max-w-full p-0" : "container mx-auto py-2 px-2 md:py-4 md:px-4"
       )}
-      style={{ height: 'calc(100vh - 64px)', maxHeight: 'calc(100vh - 64px)', position: 'relative', zIndex: 1 }}
+      style={{ position: 'relative', zIndex: 1 }}
       >
         <ComplianceBanner />
         <ChatInterface />

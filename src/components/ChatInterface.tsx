@@ -19,6 +19,7 @@ import { ChevronDown, ChevronUp, Mic } from "lucide-react";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { scheduleWeatherNotification, scheduleTipNotification } from "@/utils/pushNotificationUtils";
 
 const ChatInterface = () => {
@@ -40,6 +41,9 @@ const ChatInterface = () => {
     
     if (messageSentSound.current) messageSentSound.current.volume = 0.3;
     if (messageReceivedSound.current) messageReceivedSound.current.volume = 0.3;
+    
+    messageSentSound.current?.load();
+    messageReceivedSound.current?.load();
     
     return () => {
       messageSentSound.current = null;
@@ -385,9 +389,7 @@ const ChatInterface = () => {
   const getMoodStyle = () => {
     const baseClasses = "flex flex-col rounded-lg shadow-lg transition-colors";
     
-    const heightClass = isMobile 
-      ? "h-[calc(100vh-6rem)]" 
-      : "h-[calc(100vh-12rem)]";
+    const heightClass = "h-full";
     
     const mobileClasses = isMobile ? "mx-0 rounded-none" : "";
     
@@ -442,29 +444,31 @@ const ChatInterface = () => {
           </CollapsibleContent>
         </Collapsible>
         
-        <div className={cn(
-          "flex-1 px-3 pb-3 pt-0 overflow-y-auto space-y-3",
+        <ScrollArea className={cn(
+          "flex-1 pb-3 pt-0 space-y-3",
           getTextColor()
         )}>
-          {messages.length > 0 && <SuggestedQuestions />}
-          
-          {messages.map((message) => (
-            <Message key={message.id} message={message} />
-          ))}
-          
-          {isTyping && (
-            <div className="flex mb-4 animate-fade-in">
-              <div className={cn(
-                "chat-bubble-assistant",
-                mood === 'deep' || mood === 'focus' ? "bg-white/20" : ""
-              )}>
-                <ThinkingAnimation />
+          <div className="px-3 space-y-3">
+            {messages.length > 0 && <SuggestedQuestions />}
+            
+            {messages.map((message) => (
+              <Message key={message.id} message={message} />
+            ))}
+            
+            {isTyping && (
+              <div className="flex mb-4 animate-fade-in">
+                <div className={cn(
+                  "chat-bubble-assistant",
+                  mood === 'deep' || mood === 'focus' ? "bg-white/20" : ""
+                )}>
+                  <ThinkingAnimation />
+                </div>
               </div>
-            </div>
-          )}
-          
-          <div ref={messagesEndRef}></div>
-        </div>
+            )}
+            
+            <div ref={messagesEndRef}></div>
+          </div>
+        </ScrollArea>
         
         <div className="p-3 border-t bg-background/80 backdrop-blur-sm rounded-b-lg flex flex-col">
           <ChatInput onSendMessage={handleSendMessage} />
@@ -494,7 +498,7 @@ const ChatInterface = () => {
       transition={{ duration: 0.5 }}
       className={getMoodStyle()}
     >
-      <div className="p-2 md:p-4 flex flex-col md:flex-row justify-between items-center gap-2">
+      <div className="p-2 md:p-4 flex flex-col md:flex-row justify-between items-center gap-2 ios-glass bg-white/20 backdrop-blur-md">
         <div className="flex items-center gap-2">
           <MoodSelector />
           <Button
@@ -510,31 +514,33 @@ const ChatInterface = () => {
         <PersonaSelector />
       </div>
       
-      <div className={cn(
-        "flex-1 p-3 md:p-4 overflow-y-auto space-y-3 md:space-y-4",
+      <ScrollArea className={cn(
+        "flex-1 p-3 md:p-4 space-y-3 md:space-y-4",
         getTextColor()
       )}>
-        {messages.length > 0 && <SuggestedQuestions />}
-        
-        {messages.map((message) => (
-          <Message key={message.id} message={message} />
-        ))}
-        
-        {isTyping && (
-          <div className="flex mb-4 animate-fade-in">
-            <div className={cn(
-              "chat-bubble-assistant",
-              mood === 'deep' || mood === 'focus' ? "bg-white/20" : ""
-            )}>
-              <ThinkingAnimation />
+        <div className="space-y-3 md:space-y-4">
+          {messages.length > 0 && <SuggestedQuestions />}
+          
+          {messages.map((message) => (
+            <Message key={message.id} message={message} />
+          ))}
+          
+          {isTyping && (
+            <div className="flex mb-4 animate-fade-in">
+              <div className={cn(
+                "chat-bubble-assistant",
+                mood === 'deep' || mood === 'focus' ? "bg-white/20" : ""
+              )}>
+                <ThinkingAnimation />
+              </div>
             </div>
-          </div>
-        )}
-        
-        <div ref={messagesEndRef}></div>
-      </div>
+          )}
+          
+          <div ref={messagesEndRef}></div>
+        </div>
+      </ScrollArea>
       
-      <div className="p-3 md:p-4 border-t bg-background/80 backdrop-blur-sm">
+      <div className="p-3 md:p-4 border-t bg-background/80 backdrop-blur-sm ios-glass">
         <ChatInput onSendMessage={handleSendMessage} />
       </div>
       

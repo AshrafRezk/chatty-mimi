@@ -92,10 +92,15 @@
     @apply border-border;
   }
 
+  html, body {
+    @apply h-full overflow-hidden;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: 'SF Pro Display', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -153,7 +158,7 @@
 
   /* iOS-style glassmorphism */
   .ios-glass {
-    @apply backdrop-blur-md bg-white/60 dark:bg-black/60 border border-white/20 dark:border-white/10;
+    @apply backdrop-blur-md bg-white/70 dark:bg-black/50 border border-white/20 dark:border-white/10 shadow-sm;
   }
 }
 
@@ -250,4 +255,37 @@ code {
 
 .pwa-toast {
   @apply bg-black/80 text-white shadow-xl border border-white/10;
+}
+
+/* Chat interface specific styles */
+.chat-container {
+  @apply flex flex-col h-full;
+  height: calc(100vh - 64px); /* Navbar height */
+}
+
+.messages-container {
+  @apply flex-1 overflow-y-auto px-4 py-2 space-y-4;
+  scroll-behavior: smooth;
+}
+
+.input-container {
+  @apply p-2 border-t ios-glass;
+}
+
+/* Message sounds */
+.message-sound {
+  visibility: hidden;
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+/* Progress bar animation */
+@keyframes progress {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+.animate-progress {
+  animation: progress 2s linear forwards;
 }
