@@ -1,6 +1,8 @@
 
 import { useTheme } from "@/hooks/use-theme";
 import { useChat } from "@/context/ChatContext";
+import { useState, useEffect } from "react";
+import { Activity, BarChart, PieChart, RadarChart } from "lucide-react";
 
 const ThinkingAnimation = () => {
   const { theme } = useTheme();
@@ -8,8 +10,53 @@ const ThinkingAnimation = () => {
   const { language } = state;
   const isDark = theme === 'dark';
   
-  const thinkingText = language === 'ar' ? "جاري التحليل..." : "Analyzing information...";
-  const searchingText = language === 'ar' ? "البحث على الويب وإنشاء إجابة مخصصة" : "Searching the web and creating personalized response";
+  const [reasoningStage, setReasoningStage] = useState(0);
+  const [showIcon, setShowIcon] = useState(false);
+  
+  // Array of reasoning steps to show the user how Mimi is processing their request
+  const reasoningSteps = language === 'ar' ? [
+    "تحليل السؤال...",
+    "البحث عن المعلومات ذات الصلة...",
+    "تقييم مصادر المعلومات...",
+    "تنظيم الإجابة...",
+    "تحسين وتدقيق الإجابة..."
+  ] : [
+    "Analyzing question...",
+    "Retrieving relevant information...",
+    "Evaluating sources...",
+    "Structuring response...",
+    "Refining and optimizing answer..."
+  ];
+  
+  const thinkingText = language === 'ar' ? "جاري التحليل..." : "Processing...";
+  const searchingText = language === 'ar' ? "استخدام محركات متعددة وإنشاء إجابة مخصصة" : "Using multiple engines and creating personalized response";
+  
+  // Progress through reasoning steps to demonstrate thought process
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setReasoningStage(prevStage => (prevStage + 1) % reasoningSteps.length);
+      setShowIcon(true);
+      const iconTimeout = setTimeout(() => setShowIcon(false), 800);
+      return () => clearTimeout(iconTimeout);
+    }, 2000);
+    
+    return () => clearInterval(interval);
+  }, [reasoningSteps.length]);
+  
+  const renderStageIcon = () => {
+    switch (reasoningStage) {
+      case 0:
+        return <Activity className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
+      case 1:
+        return <BarChart className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
+      case 2:
+        return <PieChart className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
+      case 3:
+        return <RadarChart className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
+      default:
+        return <Activity className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
+    }
+  };
   
   return (
     <div className="flex flex-col items-center justify-center py-6 space-y-4">
@@ -33,10 +80,21 @@ const ThinkingAnimation = () => {
           </svg>
         </div>
       </div>
-      <div className="text-center">
+      
+      <div className="text-center space-y-3">
         <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-mimi-dark'}`}>
           {thinkingText}
         </p>
+        
+        <div className="flex items-center justify-center gap-2 transition-opacity">
+          <div className={`transition-opacity duration-300 ${showIcon ? 'opacity-100' : 'opacity-0'}`}>
+            {renderStageIcon()}
+          </div>
+          <p className="text-xs text-mimi-neutral">
+            {reasoningSteps[reasoningStage]}
+          </p>
+        </div>
+        
         <p className="text-xs text-mimi-neutral mt-1">
           {searchingText}
         </p>

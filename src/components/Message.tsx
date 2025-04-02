@@ -6,6 +6,7 @@ import NutritionChart from "./NutritionChart";
 import CodeViewer from "./CodeViewer";
 import TextToSpeech from "./TextToSpeech";
 import PropertyDetails from "./PropertyDetails";
+import InteractiveChart, { ChartData } from "./InteractiveChart";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
@@ -27,11 +28,61 @@ const Message = ({ message }: MessageProps) => {
   const { mood, language } = state;
   const isMobile = useIsMobile();
   const [baseUrl, setBaseUrl] = useState("");
+  const [chartData, setChartData] = useState<ChartData[] | null>(null);
+  const [chartTitle, setChartTitle] = useState<string | undefined>(undefined);
   
   useEffect(() => {
     // Get the base URL from the browser
     setBaseUrl(window.location.origin);
-  }, []);
+    
+    // Check if the message contains comparison data that could be visualized
+    if (message.sender === "assistant") {
+      extractChartData(message.text);
+    }
+  }, [message]);
+  
+  // Helper to extract potential chart data from message content
+  const extractChartData = (text: string) => {
+    // Check for table patterns (markdown tables or other tabular data)
+    const hasTable = /\|\s*[^|]+\s*\|/.test(text) || 
+                     /comparison|compare|versus|vs\.?|statistics/i.test(text);
+                     
+    // Check if there's a comparison section with numbers
+    const comparisonPattern = /([A-Za-z\s]+):\s*(\d+(?:\.\d+)?)/g;
+    const matches = [...text.matchAll(comparisonPattern)];
+    
+    if (matches.length >= 2) {
+      // Extract name-value pairs for charting
+      const data: ChartData[] = matches.map(match => ({
+        name: match[1].trim(), 
+        value: parseFloat(match[2])
+      }));
+      
+      // Try to extract a title from the context
+      const titleMatch = text.match(/(?:comparing|comparison of|between)\s+([^.]+)/i);
+      if (titleMatch) {
+        setChartTitle(titleMatch[1].trim());
+      }
+      
+      setChartData(data);
+    } else if (hasTable) {
+      // This is a placeholder for more advanced table parsing logic
+      // For now, we'll just check if there are numeric values that could be charted
+      const numericPattern = /\|\s*([^|]+)\s*\|\s*(\d+(?:\.\d+)?)\s*\|/g;
+      const tableMatches = [...text.matchAll(numericPattern)];
+      
+      if (tableMatches.length >= 2) {
+        const data: ChartData[] = tableMatches.map(match => ({
+          name: match[1].trim(),
+          value: parseFloat(match[2])
+        }));
+        
+        setChartData(data);
+      }
+    } else {
+      setChartData(null);
+    }
+  };
   
   // Helper to handle copying message content with attribution
   const handleCopy = async () => {
@@ -147,6 +198,12 @@ const Message = ({ message }: MessageProps) => {
               references={message.references} 
               certaintyScore={message.certaintyScore}
             />
+          </div>
+        )}
+        
+        {message.sender === "assistant" && chartData && chartData.length >= 2 && (
+          <div className="mt-4 w-full">
+            <InteractiveChart data={chartData} title={chartTitle} />
           </div>
         )}
         
