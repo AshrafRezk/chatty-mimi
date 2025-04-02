@@ -31,47 +31,28 @@ const ChatInterface = () => {
   const [showVoiceChat, setShowVoiceChat] = useState(false);
   const welcomeMessageSentRef = useRef(false);
   
+  const messageSentSound = useRef<HTMLAudioElement | null>(null);
   const messageReceivedSound = useRef<HTMLAudioElement | null>(null);
   
   useEffect(() => {
+    messageSentSound.current = new Audio('/sounds/message-sent.mp3');
     messageReceivedSound.current = new Audio('/sounds/message-received.mp3');
+    
+    if (messageSentSound.current) messageSentSound.current.volume = 0.3;
     if (messageReceivedSound.current) messageReceivedSound.current.volume = 0.3;
     
     return () => {
+      messageSentSound.current = null;
       messageReceivedSound.current = null;
     };
   }, []);
-
-  // Schedule daily notifications if user has granted permission
-  useEffect(() => {
-    if (userLocation && Notification.permission === 'granted') {
-      // Schedule a weather notification once per day
-      const now = new Date();
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(8, 0, 0, 0); // 8 AM
-      
-      const timeUntilTomorrow = tomorrow.getTime() - now.getTime();
-      
-      // Show weather notification now if it's morning
-      if (now.getHours() >= 8 && now.getHours() <= 10) {
-        scheduleWeatherNotification(userLocation);
-      }
-      
-      // Schedule next weather notification
-      setTimeout(() => {
-        scheduleWeatherNotification(userLocation);
-        // Then schedule it daily
-        setInterval(() => scheduleWeatherNotification(userLocation), 24 * 60 * 60 * 1000);
-      }, timeUntilTomorrow);
-      
-      // Schedule tips every 2 days
-      setTimeout(() => {
-        scheduleTipNotification();
-        setInterval(() => scheduleTipNotification(), 2 * 24 * 60 * 60 * 1000);
-      }, 4 * 60 * 60 * 1000); // First tip after 4 hours of using the app
+  
+  const playMessageSentSound = () => {
+    if (messageSentSound.current) {
+      messageSentSound.current.currentTime = 0;
+      messageSentSound.current.play().catch(err => console.error("Error playing sound:", err));
     }
-  }, [userLocation]);
+  };
   
   const playMessageReceivedSound = () => {
     if (messageReceivedSound.current) {
@@ -79,6 +60,31 @@ const ChatInterface = () => {
       messageReceivedSound.current.play().catch(err => console.error("Error playing sound:", err));
     }
   };
+
+  useEffect(() => {
+    if (userLocation && Notification.permission === 'granted') {
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(8, 0, 0, 0);
+      
+      const timeUntilTomorrow = tomorrow.getTime() - now.getTime();
+      
+      if (now.getHours() >= 8 && now.getHours() <= 10) {
+        scheduleWeatherNotification(userLocation);
+      }
+      
+      setTimeout(() => {
+        scheduleWeatherNotification(userLocation);
+        setInterval(() => scheduleWeatherNotification(userLocation), 24 * 60 * 60 * 1000);
+      }, timeUntilTomorrow);
+      
+      setTimeout(() => {
+        scheduleTipNotification();
+        setInterval(() => scheduleTipNotification(), 2 * 24 * 60 * 60 * 1000);
+      }, 4 * 60 * 60 * 1000);
+    }
+  }, [userLocation]);
   
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -192,6 +198,8 @@ const ChatInterface = () => {
   const handleSendMessage = async (text: string, imageFile: File | null = null) => {
     const imageSrc = imageFile ? createImageUrl(imageFile) : undefined;
     
+    playMessageSentSound();
+    
     addMessage({
       text,
       sender: "user",
@@ -224,7 +232,6 @@ const ChatInterface = () => {
         }
       }
       
-      // Always try to do web search for more accurate and referenced responses
       try {
         references = await performWebSearch(text);
         certaintyScore = calculateCertaintyScore(references);
@@ -285,7 +292,6 @@ const ChatInterface = () => {
       setTyping(false);
       playMessageReceivedSound();
       
-      // Fast response for feature questions
       const isFeatureQuestion = text.toLowerCase().includes("what can you do") || 
                                text.toLowerCase().includes("your features") ||
                                text.toLowerCase().includes("what are your capabilities") ||

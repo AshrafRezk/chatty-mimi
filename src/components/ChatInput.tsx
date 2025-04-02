@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useChat } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
@@ -37,7 +36,7 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
     
     // Set volumes to be gentle
     if (messageSentSound.current) messageSentSound.current.volume = 0.3;
-    if (messageReceivedSound.current) messageReceivedSound.current.volume = 0.3;
+    if (messageReceivedSound.current) messageSentSound.current.volume = 0.3;
     
     return () => {
       // Cleanup
