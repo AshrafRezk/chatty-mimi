@@ -57,11 +57,6 @@ const Index = () => {
         </section>
         
         {/* Footer */}
-        <footer className="py-8 px-4 border-t">
-          <div className="container mx-auto text-center text-muted-foreground">
-            &copy; 2023 Mimi Chat. All rights reserved.
-          </div>
-        </footer>
       </main>
     </div>
   );
