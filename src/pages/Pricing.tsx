@@ -1,8 +1,12 @@
+
 import { useChat } from "@/context/ChatContext";
 import Navbar from "@/components/Navbar";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Check, CreditCard } from "lucide-react";
+import { Check, CreditCard, Clock } from "lucide-react";
+import { Motion } from "@/components/ui/motion";
+import { Badge } from "@/components/ui/badge";
+import SEOHead from "@/components/SEOHead";
 
 const Pricing = () => {
   const { state } = useChat();
@@ -14,8 +18,8 @@ const Pricing = () => {
       ar: "تسعير بسيط وشفاف"
     },
     subtitle: {
-      en: "Choose the plan that works for you",
-      ar: "اختر الخطة التي تناسبك"
+      en: "Enjoy Mimi for free during our beta period",
+      ar: "استمتع بميمي مجانًا خلال فترة الإصدار التجريبي"
     },
     free: {
       en: "Free",
@@ -24,6 +28,14 @@ const Pricing = () => {
     premium: {
       en: "Premium",
       ar: "مميز"
+    },
+    comingSoon: {
+      en: "Coming Soon",
+      ar: "قريبًا"
+    },
+    limitedTime: {
+      en: "Limited Time Beta",
+      ar: "نسخة تجريبية لفترة محدودة"
     },
     currency: {
       en: "$",
@@ -40,6 +52,10 @@ const Pricing = () => {
     upgrade: {
       en: "Upgrade",
       ar: "ترقية"
+    },
+    notifyMe: {
+      en: "Notify Me When Available",
+      ar: "أخبرني عندما يتوفر"
     },
     features: {
       free: [
@@ -88,9 +104,19 @@ const Pricing = () => {
       "min-h-screen bg-background",
       language === 'ar' ? 'rtl' : ''
     )}>
+      <SEOHead 
+        title={language === 'ar' ? "ميمي - الأسعار" : "Mimi - Pricing"}
+        description={language === 'ar' ? "خطط تسعير بسيطة وشفافة. استمتع بميمي مجانًا خلال فترة البيتا المحدودة. خطة بريميوم قادمة قريبا!" : "Simple and transparent pricing plans. Enjoy Mimi for free during our limited time beta. Premium plan coming soon!"}
+        canonicalUrl="https://mimi-ai.app/pricing"
+      />
       <Navbar />
       <main className="py-16 px-4">
-        <div className="container mx-auto max-w-5xl">
+        <Motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="container mx-auto max-w-5xl"
+        >
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold mb-4 gradient-text">
               {texts.title[language]}
@@ -103,7 +129,15 @@ const Pricing = () => {
           {/* Pricing cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
             {/* Free plan */}
-            <div className="border rounded-xl p-8 bg-white dark:bg-mimi-dark/20 shadow-sm hover:shadow-md transition-shadow">
+            <Motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="border rounded-xl p-8 bg-white dark:bg-mimi-dark/20 shadow-sm hover:shadow-md transition-shadow relative"
+            >
+              <Badge className="absolute top-4 right-4 bg-green-500/10 text-green-500 hover:bg-green-500/20 border-none">
+                {texts.limitedTime[language]}
+              </Badge>
               <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-2">
                   {texts.free[language]}
@@ -129,13 +163,19 @@ const Pricing = () => {
               <Button variant="outline" className="w-full" disabled>
                 {texts.current[language]}
               </Button>
-            </div>
+            </Motion.div>
             
             {/* Premium plan */}
-            <div className="border border-mimi-primary rounded-xl p-8 bg-white dark:bg-mimi-dark/20 shadow-md hover:shadow-lg transition-shadow relative">
-              <div className="absolute top-0 right-0 bg-mimi-primary text-white px-4 py-1 rounded-bl-lg rounded-tr-lg text-sm">
-                {language === 'ar' ? "موصى به" : "Recommended"}
-              </div>
+            <Motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="border border-mimi-primary rounded-xl p-8 bg-white dark:bg-mimi-dark/20 shadow-md hover:shadow-lg transition-shadow relative"
+            >
+              <Badge className="absolute top-4 right-4 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-none flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {texts.comingSoon[language]}
+              </Badge>
               
               <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-2">
@@ -160,13 +200,18 @@ const Pricing = () => {
               </ul>
               
               <Button className="w-full bg-mimi-primary hover:bg-mimi-secondary">
-                {texts.upgrade[language]}
+                {texts.notifyMe[language]}
               </Button>
-            </div>
+            </Motion.div>
           </div>
           
           {/* Payment options */}
-          <div className="border rounded-xl p-8 bg-white dark:bg-mimi-dark/20">
+          <Motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="border rounded-xl p-8 bg-white dark:bg-mimi-dark/20"
+          >
             <h2 className="text-2xl font-bold mb-6 text-center">
               {texts.paymentOptions.title[language]}
             </h2>
@@ -201,20 +246,21 @@ const Pricing = () => {
                   ))}
                 </ul>
                 
-                {/* PayPal Payment Button */}
+                {/* PayPal Payment Button - Disabled since it's coming soon */}
                 <div className="mt-4 pt-4 border-t">
                   <Button 
                     variant="outline" 
                     className="w-full border-blue-500 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center justify-center gap-2"
+                    disabled
                   >
                     <CreditCard className="w-5 h-5" />
-                    {language === 'ar' ? "الدفع عبر باي بال" : "Pay with PayPal"}
+                    {language === 'ar' ? "قريبًا" : "Coming Soon"}
                   </Button>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </Motion.div>
+        </Motion.div>
       </main>
     </div>
   );
