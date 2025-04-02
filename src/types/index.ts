@@ -5,11 +5,21 @@ export type Theme = 'light' | 'dark' | 'system' | 'auto';
 
 export type Mood = 'calm' | 'friendly' | 'deep' | 'focus';
 
+export type Persona = 'general' | 'software' | 'medicine' | 'architecture' | 'project_management' | 'finance' | 'education' | 'legal';
+
 export interface Message {
   id: string;
   text: string;
   sender: 'user' | 'assistant';
   timestamp: number;
+  references?: Reference[];
+  certaintyScore?: number;
+}
+
+export interface Reference {
+  title: string;
+  url: string;
+  snippet: string;
 }
 
 export interface UserLocation {
@@ -19,9 +29,10 @@ export interface UserLocation {
 }
 
 export interface AIConfig {
-  service: 'gemini' | 'openai' | 'mock';
-  apiKey?: string;
+  service: 'mimi' | 'mock';
   contextLength?: number;
+  persona: Persona;
+  webSearch: boolean;
 }
 
 export interface ChatState {

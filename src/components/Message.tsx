@@ -2,6 +2,7 @@
 import { Message as MessageType } from "@/types";
 import { useChat } from "@/context/ChatContext";
 import { cn } from "@/lib/utils";
+import MessageReferences from "./MessageReferences";
 
 interface MessageProps {
   message: MessageType;
@@ -36,6 +37,15 @@ const Message = ({ message }: MessageProps) => {
         )}
       >
         <p className="whitespace-pre-wrap">{message.text}</p>
+        
+        {/* Show references if available */}
+        {!isUser && message.references && message.references.length > 0 && (
+          <MessageReferences 
+            references={message.references} 
+            certaintyScore={message.certaintyScore}
+          />
+        )}
+        
         <div 
           className={cn(
             "text-xs mt-1 opacity-70",

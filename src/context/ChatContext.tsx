@@ -1,6 +1,6 @@
 
 import { createContext, useContext, useEffect, useReducer } from 'react';
-import { AIConfig, ChatState, Language, Message, Mood, Theme, UserLocation } from '../types';
+import { AIConfig, ChatState, Language, Message, Mood, Persona, Theme, UserLocation } from '../types';
 import { detectUserLocation, getDefaultLanguageFromLocation } from '../utils/locationUtils';
 
 // Initial state
@@ -13,9 +13,10 @@ const initialState: ChatState = {
   isFreeLimit: false, // If true, will trigger premium lock UI
   theme: 'light',
   aiConfig: {
-    service: 'gemini', // Default to Gemini
-    apiKey: 'AIzaSyCYjG-f26Vg3t57PY0_KznRXDZF-9ljcWs',
+    service: 'mimi', // Default service name (not exposing underlying API)
     contextLength: 5, // Default context length (number of messages to include)
+    persona: 'general', // Default persona
+    webSearch: true, // Default to enable web search
   },
 };
 
@@ -29,6 +30,8 @@ type ChatAction =
   | { type: 'SET_FREE_LIMIT'; payload: boolean }
   | { type: 'SET_THEME'; payload: Theme }
   | { type: 'SET_AI_CONFIG'; payload: Partial<AIConfig> }
+  | { type: 'SET_PERSONA'; payload: Persona }
+  | { type: 'TOGGLE_WEB_SEARCH'; payload: boolean }
   | { type: 'CLEAR_MESSAGES' };
 
 // Reducer
@@ -83,6 +86,22 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
           ...action.payload,
         },
       };
+    case 'SET_PERSONA':
+      return {
+        ...state,
+        aiConfig: {
+          ...state.aiConfig,
+          persona: action.payload,
+        },
+      };
+    case 'TOGGLE_WEB_SEARCH':
+      return {
+        ...state,
+        aiConfig: {
+          ...state.aiConfig,
+          webSearch: action.payload,
+        },
+      };
     case 'CLEAR_MESSAGES':
       return {
         ...state,
@@ -102,6 +121,8 @@ interface ChatContextType {
   setTyping: (isTyping: boolean) => void;
   setTheme: (theme: Theme) => void;
   setAIConfig: (config: Partial<AIConfig>) => void;
+  setPersona: (persona: Persona) => void;
+  toggleWebSearch: (enabled: boolean) => void;
   clearMessages: () => void;
 }
 
@@ -210,6 +231,14 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch({ type: 'SET_AI_CONFIG', payload: config });
   };
 
+  const setPersona = (persona: Persona) => {
+    dispatch({ type: 'SET_PERSONA', payload: persona });
+  };
+
+  const toggleWebSearch = (enabled: boolean) => {
+    dispatch({ type: 'TOGGLE_WEB_SEARCH', payload: enabled });
+  };
+
   const clearMessages = () => {
     dispatch({ type: 'CLEAR_MESSAGES' });
   };
@@ -224,6 +253,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setTyping,
         setTheme,
         setAIConfig,
+        setPersona,
+        toggleWebSearch,
         clearMessages,
       }}
     >

@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import ChatInterface from "@/components/ChatInterface";
 import PremiumLock from "@/components/PremiumLock";
+import ComplianceBanner from "@/components/ComplianceBanner";
 import { useChat } from "@/context/ChatContext";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +40,7 @@ const Chat = () => {
     )}>
       <Navbar />
       <div className="container mx-auto py-8 px-4">
+        <ComplianceBanner />
         <ChatInterface />
       </div>
       
