@@ -26,6 +26,9 @@ const ThemeProvider = ({
 };
 
 const App = () => {
+  const currentPath = window.location.pathname;
+  const isChatPage = currentPath === '/chat';
+
   return (
     <HelmetProvider>
       <ThemeProvider defaultTheme="system" storageKey="mimi-theme">
@@ -37,7 +40,7 @@ const App = () => {
               <Route path="/pricing" element={<Pricing />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-            <Footer />
+            {!isChatPage && <Footer />}
           </Router>
         </ChatProvider>
       </ThemeProvider>

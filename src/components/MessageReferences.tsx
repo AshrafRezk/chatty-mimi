@@ -1,7 +1,7 @@
 
 import { Reference } from "@/types";
 import { ExternalLink } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useChat } from "@/context/ChatContext";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/use-theme";
@@ -12,13 +12,40 @@ interface MessageReferencesProps {
 }
 
 const MessageReferences = ({ references, certaintyScore = 0 }: MessageReferencesProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  // Default to expanded for better visibility of references
+  const [isExpanded, setIsExpanded] = useState(true);
   const { state } = useChat();
   const { mood, language } = state;
   const { theme } = useTheme();
   const isDark = theme === 'dark' || mood === 'deep' || mood === 'focus';
   
-  if (!references || references.length === 0) return null;
+  // Force references to show if they exist
+  useEffect(() => {
+    if (references && references.length > 0) {
+      setIsExpanded(true);
+    }
+  }, [references]);
+  
+  if (!references || references.length === 0) {
+    // Always show a placeholder if no references
+    const noReferencesMessage = language === 'ar' 
+      ? "لا توجد مراجع متاحة لهذا المحتوى"
+      : "No references available for this content";
+      
+    return (
+      <div className={cn(
+        "mt-3 rounded-lg p-3 text-xs",
+        isDark ? "bg-white/10" : "bg-white/90 dark:bg-mimi-dark/10 border border-gray-100 dark:border-gray-800"
+      )}>
+        <div className="flex items-center justify-between mb-1">
+          <span className="font-semibold">{language === 'ar' ? "المراجع" : "Sources"}</span>
+        </div>
+        <div className="text-muted-foreground italic">
+          {noReferencesMessage}
+        </div>
+      </div>
+    );
+  }
   
   const isArabic = language === 'ar';
   

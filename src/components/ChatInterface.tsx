@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import Message from "./Message";
 import ChatInput from "./ChatInput";
@@ -20,6 +19,7 @@ import { ChevronDown, ChevronUp, Mic } from "lucide-react";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
+import { scheduleWeatherNotification, scheduleTipNotification } from "@/utils/pushNotificationUtils";
 
 const ChatInterface = () => {
   const { state, addMessage, setTyping, clearMessages, setVoiceMode } = useChat();
@@ -41,6 +41,37 @@ const ChatInterface = () => {
       messageReceivedSound.current = null;
     };
   }, []);
+
+  // Schedule daily notifications if user has granted permission
+  useEffect(() => {
+    if (userLocation && Notification.permission === 'granted') {
+      // Schedule a weather notification once per day
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(8, 0, 0, 0); // 8 AM
+      
+      const timeUntilTomorrow = tomorrow.getTime() - now.getTime();
+      
+      // Show weather notification now if it's morning
+      if (now.getHours() >= 8 && now.getHours() <= 10) {
+        scheduleWeatherNotification(userLocation);
+      }
+      
+      // Schedule next weather notification
+      setTimeout(() => {
+        scheduleWeatherNotification(userLocation);
+        // Then schedule it daily
+        setInterval(() => scheduleWeatherNotification(userLocation), 24 * 60 * 60 * 1000);
+      }, timeUntilTomorrow);
+      
+      // Schedule tips every 2 days
+      setTimeout(() => {
+        scheduleTipNotification();
+        setInterval(() => scheduleTipNotification(), 2 * 24 * 60 * 60 * 1000);
+      }, 4 * 60 * 60 * 1000); // First tip after 4 hours of using the app
+    }
+  }, [userLocation]);
   
   const playMessageReceivedSound = () => {
     if (messageReceivedSound.current) {
@@ -193,19 +224,12 @@ const ChatInterface = () => {
         }
       }
       
-      const needsSearch = text.toLowerCase().startsWith("who is") || 
-                          text.toLowerCase().includes("what is") || 
-                          text.toLowerCase().includes("how to") ||
-                          text.toLowerCase().includes("where is") ||
-                          text.toLowerCase().includes("when was");
-      
-      if (aiConfig.webSearch && needsSearch) {
-        try {
-          references = await performWebSearch(text);
-          certaintyScore = calculateCertaintyScore(references);
-        } catch (error) {
-          console.error("Web search error:", error);
-        }
+      // Always try to do web search for more accurate and referenced responses
+      try {
+        references = await performWebSearch(text);
+        certaintyScore = calculateCertaintyScore(references);
+      } catch (error) {
+        console.error("Web search error:", error);
       }
       
       try {

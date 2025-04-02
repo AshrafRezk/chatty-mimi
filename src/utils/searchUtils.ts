@@ -18,7 +18,9 @@ export const performWebSearch = async (query: string): Promise<Reference[]> => {
       },
       body: JSON.stringify({
         q: query,
-        num: 5
+        num: 7,  // Increased from 5 to get more results
+        gl: "us", // Set to US for more comprehensive results
+        hl: "en"  // Set language to English
       })
     });
 
@@ -31,14 +33,26 @@ export const performWebSearch = async (query: string): Promise<Reference[]> => {
     // Extract organic search results
     const organicResults = data.organic || [];
     
-    // Map results to reference format
+    // Map results to reference format with more detailed snippets
     const references: Reference[] = organicResults.map((result: any) => ({
-      title: result.title,
-      url: result.link,
-      snippet: result.snippet
+      title: result.title || "Untitled Source",
+      url: result.link || "#",
+      snippet: result.snippet || (result.description || "No description available")
     }));
     
-    return references.slice(0, 3); // Limit to 3 references for UI
+    // Add knowledge graph results if available
+    if (data.knowledgeGraph) {
+      const kg = data.knowledgeGraph;
+      if (kg.title && kg.description) {
+        references.push({
+          title: kg.title,
+          url: kg.url || "#",
+          snippet: kg.description
+        });
+      }
+    }
+    
+    return references.slice(0, 5); // Return top 5 references
   } catch (error) {
     console.error("Web search error:", error);
     return [];
@@ -54,10 +68,16 @@ export const calculateCertaintyScore = (references: Reference[]): number => {
   if (references.length === 0) return 0;
   
   // Base score - more references equals higher base certainty
-  const baseScore = Math.min(references.length * 25, 75);
+  const baseScore = Math.min(references.length * 20, 70);
   
-  // Randomize slightly for natural feel
-  const randomVariance = Math.floor(Math.random() * 10);
+  // Add bonus for high-quality references (estimated by snippet length)
+  const qualityBonus = references.reduce((score, ref) => {
+    // Longer snippets might indicate more detailed information
+    return score + Math.min(ref.snippet.length / 100, 5);
+  }, 0);
   
-  return Math.min(baseScore + randomVariance, 97);
+  // Randomize slightly for natural feel (smaller range now)
+  const randomVariance = Math.floor(Math.random() * 5);
+  
+  return Math.min(Math.round(baseScore + qualityBonus + randomVariance), 98);
 };

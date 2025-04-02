@@ -42,21 +42,21 @@ const Chat = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeInOut" }}
       className={cn(
-        "min-h-screen transition-colors duration-300 overflow-hidden",
+        "min-h-screen transition-colors duration-300",
         getMoodBackgroundClass(),
         language === 'ar' ? 'rtl' : '',
         mood === 'deep' || mood === 'focus' ? 'text-white' : '',
-        isVoiceMode ? 'overflow-hidden' : ''
+        isVoiceMode ? 'overflow-hidden' : 'overflow-hidden'
       )}
-      style={{ height: '100vh' }}
+      style={{ height: '100vh', width: '100vw', margin: 0, padding: 0 }}
     >
       <ChatSEOHead />
       <Navbar />
       <div className={cn(
-        "container mx-auto py-2 px-2 md:py-6 md:px-4 flex flex-col",
-        isMobile && "max-w-full p-0 pt-1"
+        "flex flex-col",
+        isMobile ? "max-w-full p-0 pt-1" : "container mx-auto py-2 px-2 md:py-4 md:px-4"
       )}
-      style={{ height: 'calc(100vh - 64px)' }}
+      style={{ height: 'calc(100vh - 64px)', maxHeight: 'calc(100vh - 64px)' }}
       >
         <ComplianceBanner />
         <ChatInterface />
