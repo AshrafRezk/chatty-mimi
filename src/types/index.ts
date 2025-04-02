@@ -5,7 +5,7 @@ export type Theme = 'light' | 'dark' | 'system' | 'auto';
 
 export type Mood = 'calm' | 'friendly' | 'deep' | 'focus';
 
-export type Persona = 'general' | 'software' | 'medicine' | 'architecture' | 'project_management' | 'finance' | 'education' | 'legal' | 'christianity' | 'islam' | 'diet_coach';
+export type Persona = 'general' | 'software' | 'medicine' | 'architecture' | 'project_management' | 'finance' | 'education' | 'legal' | 'christianity' | 'islam' | 'diet_coach' | 'real_estate';
 
 export interface Message {
   id: string;
@@ -16,6 +16,7 @@ export interface Message {
   certaintyScore?: number;
   nutritionData?: NutritionData;
   imageSrc?: string;
+  propertyData?: PropertyData;
 }
 
 export interface NutritionData {
@@ -23,6 +24,19 @@ export interface NutritionData {
   fats: number;
   protein: number;
   carbohydrates: number;
+}
+
+export interface PropertyData {
+  price: number;
+  location: string;
+  area: number;
+  bedrooms: number;
+  bathrooms: number;
+  paymentPlan?: {
+    downPayment: number;
+    monthlyInstallment: number;
+    years: number;
+  };
 }
 
 export interface Reference {

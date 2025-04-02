@@ -19,7 +19,9 @@ import {
   Scale, 
   GraduationCap,
   Cross,
-  BookOpen
+  BookOpen,
+  Apple,
+  Home
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Motion } from "@/components/ui/motion";
@@ -219,6 +221,44 @@ const PersonaSelector = () => {
         no: 'Islamske studier'
       },
       icon: <BookOpen className="h-4 w-4 mr-2" />
+    },
+    { 
+      value: 'diet_coach', 
+      label: {
+        en: 'Diet Coach',
+        ar: 'مدرب الحمية',
+        fr: 'Coach diététique',
+        es: 'Entrenador de dieta',
+        de: 'Ernährungscoach',
+        it: 'Coach alimentare',
+        pt: 'Treinador de dieta',
+        ru: 'Тренер по питанию',
+        zh: '饮食教练',
+        ja: '食事コーチ',
+        ko: '다이어트 코치',
+        tr: 'Diyet Koçu',
+        no: 'Kostholdscoach'
+      },
+      icon: <Apple className="h-4 w-4 mr-2" />
+    },
+    { 
+      value: 'real_estate', 
+      label: {
+        en: 'Real Estate Consultant',
+        ar: 'مستشار العقارات',
+        fr: 'Consultant immobilier',
+        es: 'Consultor inmobiliario',
+        de: 'Immobilienberater',
+        it: 'Consulente immobiliare',
+        pt: 'Consultor imobiliário',
+        ru: 'Консультант по недвижимости',
+        zh: '房地产顾问',
+        ja: '不動産コンサルタント',
+        ko: '부동산 컨설턴트',
+        tr: 'Emlak Danışmanı',
+        no: 'Eiendomskonsulent'
+      },
+      icon: <Home className="h-4 w-4 mr-2" />
     },
   ];
 

@@ -12,7 +12,7 @@ import { getWelcomeMessage } from "@/utils/locationUtils";
 import { generateGeminiResponse } from "@/utils/geminiUtils";
 import { performWebSearch, calculateCertaintyScore } from "@/utils/searchUtils";
 import { toast } from "sonner";
-import { NutritionData, Reference } from "@/types";
+import { NutritionData, PropertyData, Reference } from "@/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Motion } from "@/components/ui/motion";
 import { ChevronDown, ChevronUp, Mic } from "lucide-react";
@@ -121,6 +121,44 @@ const ChatInterface = () => {
     return undefined;
   };
 
+  // Extract property data from response if real_estate persona
+  const extractPropertyData = (text: string): PropertyData | undefined => {
+    if (aiConfig.persona !== 'real_estate') return undefined;
+    
+    try {
+      // Look for JSON data with property information
+      const jsonMatch = text.match(/\{[\s\S]*"price"[\s\S]*\}/);
+      if (jsonMatch) {
+        const jsonData = JSON.parse(jsonMatch[0]);
+        if (jsonData && 
+            typeof jsonData.price === 'number' && 
+            typeof jsonData.location === 'string' && 
+            typeof jsonData.area === 'number' && 
+            typeof jsonData.bedrooms === 'number' && 
+            typeof jsonData.bathrooms === 'number') {
+          
+          // The paymentPlan is optional
+          return {
+            price: jsonData.price,
+            location: jsonData.location,
+            area: jsonData.area,
+            bedrooms: jsonData.bedrooms,
+            bathrooms: jsonData.bathrooms,
+            paymentPlan: jsonData.paymentPlan ? {
+              downPayment: jsonData.paymentPlan.downPayment,
+              monthlyInstallment: jsonData.paymentPlan.monthlyInstallment,
+              years: jsonData.paymentPlan.years
+            } : undefined
+          };
+        }
+      }
+    } catch (error) {
+      console.error("Error parsing property data:", error);
+    }
+    
+    return undefined;
+  };
+
   // Function to create image URL from File
   const createImageUrl = (file: File): string => {
     return URL.createObjectURL(file);
@@ -217,9 +255,16 @@ const ChatInterface = () => {
       // Extract nutrition data if diet_coach persona
       const nutritionData = extractNutritionData(response);
       
-      // Clean up response by removing JSON data at the end if nutrition data was found
+      // Extract property data if real_estate persona
+      const propertyData = extractPropertyData(response);
+      
+      // Clean up response by removing JSON data at the end if data was found
       if (nutritionData) {
         response = response.replace(/\{[\s\S]*"calories"[\s\S]*\}/, '');
+      }
+      
+      if (propertyData) {
+        response = response.replace(/\{[\s\S]*"price"[\s\S]*\}/, '');
       }
       
       setTyping(false);
@@ -230,7 +275,8 @@ const ChatInterface = () => {
         sender: "assistant",
         references: references.length > 0 ? references : undefined,
         certaintyScore: certaintyScore > 0 ? certaintyScore : undefined,
-        nutritionData
+        nutritionData,
+        propertyData
       });
     } catch (error) {
       console.error("Error getting AI response:", error);
