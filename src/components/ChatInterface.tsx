@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState, useCallback, memo } from "react";
 import Message from "./Message";
 import ChatInput from "./ChatInput";
@@ -6,7 +5,6 @@ import MoodSelector from "./MoodSelector";
 import PersonaSelector from "./PersonaSelector";
 import ThinkingAnimation from "./ThinkingAnimation";
 import VoiceChat from "./VoiceChat";
-import SuggestedQuestions from "./SuggestedQuestions";
 import { useChat } from "@/context/ChatContext";
 import { cn } from "@/lib/utils";
 import { getWelcomeMessage, getPersonaWelcomeMessage } from "@/utils/locationUtils";
@@ -30,9 +28,6 @@ import { scheduleWeatherNotification, scheduleTipNotification } from "@/utils/pu
 
 // Memoize individual messages for better performance
 const MemoizedMessage = memo(Message);
-
-// Optimize suggested questions to prevent re-renders
-const OptimizedSuggestions = memo(SuggestedQuestions);
 
 const ChatInterface = () => {
   const { state, addMessage, setTyping, clearMessages, setVoiceMode } = useChat();
@@ -256,11 +251,9 @@ const ChatInterface = () => {
         }
       }
       
-      // Use Promise.all for parallel processing to improve performance
       try {
         console.log("Starting web search for:", text);
         
-        // Perform search in parallel with other setup tasks
         const searchPromise = performFallbackSearch(text, performWebSearch)
           .catch(error => {
             console.error("Web search error:", error);
@@ -270,7 +263,6 @@ const ChatInterface = () => {
             });
           });
           
-        // Wait for search results
         references = await searchPromise;
         certaintyScore = calculateCertaintyScore(references);
         console.log("Search completed with", references.length, "results. Certainty score:", certaintyScore);
@@ -313,7 +305,6 @@ const ChatInterface = () => {
         }
       }
       
-      // Extract links and combine with search results
       const extractedLinks = await extractLinksFromMessage(response);
       
       if (extractedLinks.length > 0) {
@@ -322,7 +313,6 @@ const ChatInterface = () => {
         console.log("Combined references:", references.length);
       }
       
-      // Extract structured data
       const nutritionData = extractNutritionData(response);
       const propertyData = extractPropertyData(response);
       
@@ -488,8 +478,6 @@ const ChatInterface = () => {
           )}
         >
           <div className="px-3 space-y-3">
-            {messages.length > 0 && <OptimizedSuggestions />}
-            
             {messages.map((message) => (
               <MemoizedMessage key={message.id} message={message} />
             ))}
@@ -556,8 +544,6 @@ const ChatInterface = () => {
         )}
       >
         <div className="space-y-3 md:space-y-4">
-          {messages.length > 0 && <OptimizedSuggestions />}
-          
           {messages.map((message) => (
             <MemoizedMessage key={message.id} message={message} />
           ))}
