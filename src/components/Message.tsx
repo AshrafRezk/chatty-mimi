@@ -175,16 +175,23 @@ const Message = ({ message }: MessageProps) => {
     );
   };
 
-  const bubbleStyle = message.sender === "user"
-    ? cn(
+  // Get bubble styles with improved contrast for text in deep/focus modes
+  const getBubbleStyle = () => {
+    if (message.sender === "user") {
+      return cn(
         "chat-bubble-user ios-glass shadow-lg",
         mood === "deep" ? "bg-slate-700 text-white" : "",
         mood === "focus" ? "bg-zinc-700 text-white" : ""
-      )
-    : cn(
-        "chat-bubble-assistant ios-glass shadow-lg",
-        mood === "deep" || mood === "focus" ? "bg-white/20" : ""
       );
+    } else {
+      // Assistant bubble style with improved contrast for deep/focus modes
+      return cn(
+        "chat-bubble-assistant ios-glass shadow-lg",
+        mood === "deep" ? "bg-white/20 text-white" : "",
+        mood === "focus" ? "bg-white/20 text-white" : ""
+      );
+    }
+  };
   
   return (
     <div className={cn(
@@ -194,7 +201,7 @@ const Message = ({ message }: MessageProps) => {
     )}>
       <div className={cn(
         "relative max-w-[85%] md:max-w-[70%] rounded-2xl px-4 py-3",
-        bubbleStyle
+        getBubbleStyle()
       )}>
         {message.imageSrc && (
           <div className="mb-2">

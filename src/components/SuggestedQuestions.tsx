@@ -3,10 +3,12 @@ import { useChat } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
 
 const SuggestedQuestions = () => {
   const { state, addMessage, setTyping } = useChat();
   const { messages, language, aiConfig } = state;
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // Default suggested questions for new users
   const getInitialSuggestions = () => {
@@ -59,6 +61,11 @@ const SuggestedQuestions = () => {
       }
     ];
   };
+
+  // Make sure suggestions are immediately displayed when component loads
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
 
   // Dynamic suggestions based on the conversation
   const getDynamicSuggestions = () => {
@@ -148,15 +155,19 @@ const SuggestedQuestions = () => {
       opacity: 1, 
       y: 0,
       transition: {
-        staggerChildren: 0.1
+        staggerChildren: 0.05, // Faster staggering
+        duration: 0.2, // Faster animation
+        when: "beforeChildren"
       }
     }
   };
   
   const itemVariants = {
     hidden: { opacity: 0, y: -5 },
-    visible: { opacity: 1, y: 0 }
+    visible: { opacity: 1, y: 0, transition: { duration: 0.2 } } // Faster animation
   };
+  
+  if (!isLoaded) return null; // Don't render until loaded
   
   return (
     <div className={cn(
@@ -179,7 +190,8 @@ const SuggestedQuestions = () => {
               size="sm"
               className={cn(
                 "text-xs bg-background/80 hover:bg-background border border-muted",
-                language === 'ar' ? 'rtl' : ''
+                language === 'ar' ? 'rtl' : '',
+                mood === 'deep' || mood === 'focus' ? "text-foreground bg-white/10 hover:bg-white/20" : ""
               )}
               onClick={() => handleQuestionClick(language === 'ar' ? question.ar : question.en)}
             >

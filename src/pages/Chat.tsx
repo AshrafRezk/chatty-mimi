@@ -61,7 +61,7 @@ const Chat = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, ease: "easeInOut" }}
         className={cn(
-          "min-h-screen transition-colors duration-300 flex flex-col",
+          "min-h-screen transition-colors duration-300 flex flex-col max-h-screen",
           getMoodBackgroundClass(),
           language === 'ar' ? 'rtl' : '',
           mood === 'deep' || mood === 'focus' ? 'text-white' : ''
@@ -69,7 +69,7 @@ const Chat = () => {
       >
         <Navbar />
         <div className={cn(
-          "flex-1 flex flex-col",
+          "flex-1 flex flex-col overflow-auto",
           isMobile ? "max-w-full p-0" : "container mx-auto py-2 px-2 md:py-4 md:px-4"
         )}
         style={{ position: 'relative', zIndex: 1 }}

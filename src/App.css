@@ -1,9 +1,18 @@
 
+/* Reset some base styles that may be causing issues with scrolling */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+}
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  height: 100%;
 }
 
 .logo {
@@ -40,4 +49,42 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Ensure that messages have proper spacing and don't overlap with UI elements */
+.chat-bubble-assistant,
+.chat-bubble-user {
+  position: relative;
+  margin-bottom: 8px;
+  z-index: 1;
+}
+
+/* Position the copy and download buttons in a way that doesn't overlap with text */
+.chat-bubble-assistant .absolute.top-0.right-0 {
+  z-index: 2;
+  margin-top: 2px;
+  margin-right: 2px;
+  backdrop-filter: blur(4px);
+  border-radius: 999px;
+}
+
+/* Ensure suggested questions appear immediately */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-ios-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Fix for deep and focus modes */
+.bg-deep-gradient .text-white,
+.bg-focus-gradient .text-white {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.bg-deep-gradient .bg-white\/20,
+.bg-focus-gradient .bg-white\/20 {
+  background-color: rgba(255, 255, 255, 0.15) !important;
 }
