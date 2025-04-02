@@ -136,7 +136,7 @@ const MessageReferences = ({ references, certaintyScore = 0 }: MessageReferences
                     </a>
                     <Button
                       variant="ghost"
-                      size="xs"
+                      size="sm"
                       className="h-6 w-6 p-0 rounded-full"
                       onClick={() => handleCopy(`${ref.title}\n${ref.snippet}\nSource: ${ref.url}`)}
                       title={copyLabel}
