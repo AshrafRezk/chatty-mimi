@@ -3,10 +3,13 @@ import { useChat } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Mood } from "@/types";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Motion } from "@/components/ui/motion";
 
 const MoodSelector = () => {
   const { state, setMood } = useChat();
   const { mood, language } = state;
+  const isMobile = useIsMobile();
   
   const moods: { type: Mood; label: { en: string; ar: string } }[] = [
     { type: 'calm', label: { en: 'Calm', ar: 'هادئ' } },
@@ -16,24 +19,40 @@ const MoodSelector = () => {
   ];
 
   return (
-    <div className={`flex flex-wrap gap-2 mb-4 ${language === 'ar' ? 'justify-end rtl' : 'justify-start'}`}>
+    <Motion.div 
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className={cn(
+        "flex flex-wrap gap-2 mb-4",
+        isMobile ? "justify-center" : language === 'ar' ? 'justify-end rtl' : 'justify-start'
+      )}
+    >
       {moods.map((m) => (
-        <Button
+        <Motion.div
           key={m.type}
-          variant="ghost"
-          size="sm"
-          onClick={() => setMood(m.type)}
-          className={cn(
-            "rounded-full border text-sm transition-all", 
-            mood === m.type 
-              ? "bg-mimi-primary text-white border-mimi-primary" 
-              : "bg-transparent hover:bg-mimi-soft hover:text-mimi-primary"
-          )}
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.05 }}
         >
-          {language === 'ar' ? m.label.ar : m.label.en}
-        </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setMood(m.type)}
+            className={cn(
+              "rounded-full border text-sm transition-all px-5", 
+              mood === m.type 
+                ? "bg-mimi-primary text-white border-mimi-primary shadow-md" 
+                : cn(
+                    "bg-white/80 backdrop-blur-sm hover:bg-mimi-soft hover:text-mimi-primary dark:bg-white/20",
+                    (m.type === 'deep' || m.type === 'focus') ? "text-white" : "text-mimi-dark"
+                  )
+            )}
+          >
+            {language === 'ar' ? m.label.ar : m.label.en}
+          </Button>
+        </Motion.div>
       ))}
-    </div>
+    </Motion.div>
   );
 };
 

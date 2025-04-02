@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import Message from "./Message";
 import ChatInput from "./ChatInput";
@@ -11,14 +10,12 @@ import { getWelcomeMessage } from "@/utils/locationUtils";
 import { generateGeminiResponse } from "@/utils/geminiUtils";
 import { toast } from "sonner";
 import { Reference } from "@/types";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Motion } from "@/components/ui/motion";
 
-// Mock web search function (in real app, would connect to a search API)
 const performWebSearch = async (query: string): Promise<Reference[]> => {
-  // In a real implementation, this would call a search API
-  // For now, we'll simulate a delay and return mock data
   await new Promise(resolve => setTimeout(resolve, 1500));
   
-  // Return mock references based on query keywords
   const references: Reference[] = [
     {
       title: `Information about "${query}"`,
@@ -39,11 +36,10 @@ const ChatInterface = () => {
   const { state, addMessage, setTyping } = useChat();
   const { messages, mood, language, isTyping, userLocation, aiConfig } = state;
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
   
-  // Track if welcome message has been added
   const [welcomeMessageSent, setWelcomeMessageSent] = useState(false);
   
-  // Scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -52,16 +48,13 @@ const ChatInterface = () => {
     scrollToBottom();
   }, [messages, isTyping]);
   
-  // Add welcome message if no messages and it hasn't been sent yet
   useEffect(() => {
     if (messages.length === 0 && !welcomeMessageSent) {
       const welcomeMessage = getWelcomeMessage(userLocation, language);
       
-      // Add a short delay to make it seem like the assistant is typing
       const typingTimer = setTimeout(() => {
         setTyping(true);
         
-        // Then send the welcome message after a delay
         const messageTimer = setTimeout(() => {
           setTyping(false);
           addMessage({
@@ -79,40 +72,32 @@ const ChatInterface = () => {
   }, [messages.length, userLocation, language, addMessage, setTyping, welcomeMessageSent]);
   
   const handleSendMessage = async (text: string) => {
-    // Add user message
     addMessage({
       text,
       sender: "user",
     });
     
-    // Set typing indicator
     setTyping(true);
     
     try {
-      // Format location string for the API
       const locationString = userLocation 
         ? `${userLocation.city}, ${userLocation.country} (${userLocation.countryCode})` 
         : null;
       
-      // Fetch web search results if enabled
       let references: Reference[] = [];
       let certaintyScore = 0;
       let response = "";
       
-      // Always try to get web search results first
       if (aiConfig.webSearch) {
         try {
           references = await performWebSearch(text);
-          // Calculate a mock certainty score
-          certaintyScore = Math.floor(70 + Math.random() * 25); // Random between 70-95%
+          certaintyScore = Math.floor(70 + Math.random() * 25);
         } catch (error) {
           console.error("Web search error:", error);
-          // Continue with AI response even if search fails
         }
       }
       
       try {
-        // Get AI response from Gemini API (not mentioned to user)
         response = await generateGeminiResponse(
           text, 
           messages,
@@ -124,11 +109,8 @@ const ChatInterface = () => {
       } catch (error) {
         console.error("Gemini API error:", error);
         
-        // If Gemini fails, create a fallback response from web search results
         if (references.length > 0) {
           response = `Based on available information${language === 'ar' ? '، ' : ': '}`;
-          
-          // Add snippets from references to form an answer
           references.forEach((ref, index) => {
             response += `\n\n${ref.snippet}`;
             if (index < references.length - 1) {
@@ -136,14 +118,12 @@ const ChatInterface = () => {
             }
           });
         } else {
-          // If no web search results either, use a standard fallback
           response = language === 'ar' 
             ? "عذراً، لا يمكنني الوصول إلى معلومات كافية للإجابة على سؤالك حالياً. يرجى المحاولة مرة أخرى لاحقاً."
             : "I apologize, but I don't have enough information to answer your question at the moment. Please try again later.";
         }
       }
       
-      // Add assistant response with references and certainty if available
       setTyping(false);
       addMessage({
         text: response,
@@ -155,7 +135,6 @@ const ChatInterface = () => {
       console.error("Error getting AI response:", error);
       setTyping(false);
       
-      // Fallback response
       addMessage({
         text: language === 'ar' 
           ? "عذراً، حدث خطأ في معالجة طلبك. يرجى المحاولة مرة أخرى."
@@ -169,28 +148,60 @@ const ChatInterface = () => {
     }
   };
   
+  const getTextColor = () => {
+    switch (mood) {
+      case 'deep':
+      case 'focus':
+        return 'text-white';
+      default:
+        return '';
+    }
+  };
+
+  const getMoodStyle = () => {
+    const baseClasses = "flex flex-col h-[calc(100vh-12rem)] rounded-lg shadow-lg transition-colors";
+    const mobileClasses = isMobile ? "h-[calc(100vh-8rem)] mx-0 rounded-md" : "";
+    
+    switch (mood) {
+      case 'calm':
+        return cn(baseClasses, "bg-calm-gradient", mobileClasses);
+      case 'friendly':
+        return cn(baseClasses, "bg-friendly-gradient", mobileClasses);
+      case 'deep':
+        return cn(baseClasses, "bg-deep-gradient text-white", mobileClasses);
+      case 'focus':
+        return cn(baseClasses, "bg-focus-gradient text-white", mobileClasses);
+      default:
+        return cn(baseClasses, "bg-background", mobileClasses);
+    }
+  };
+
   return (
-    <div className={cn(
-      "flex flex-col h-[calc(100vh-12rem)] rounded-lg shadow-lg transition-colors",
-      mood === 'calm' && "bg-calm-gradient",
-      mood === 'friendly' && "bg-friendly-gradient",
-      mood === 'deep' && "bg-deep-gradient text-white",
-      mood === 'focus' && "bg-focus-gradient text-white",
-    )}>
-      <div className="p-4 flex justify-between items-center">
+    <Motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className={getMoodStyle()}
+    >
+      <div className="p-2 md:p-4 flex flex-col md:flex-row justify-between items-center gap-2">
         <MoodSelector />
         <PersonaSelector />
       </div>
       
-      <div className="flex-1 p-4 overflow-y-auto space-y-4">
+      <div className={cn(
+        "flex-1 p-3 md:p-4 overflow-y-auto space-y-3 md:space-y-4",
+        getTextColor()
+      )}>
         {messages.map((message) => (
           <Message key={message.id} message={message} />
         ))}
         
-        {/* Thinking animation */}
         {isTyping && (
           <div className="flex mb-4 animate-fade-in">
-            <div className="chat-bubble-assistant">
+            <div className={cn(
+              "chat-bubble-assistant",
+              mood === 'deep' || mood === 'focus' ? "bg-white/20" : ""
+            )}>
               <ThinkingAnimation />
             </div>
           </div>
@@ -199,10 +210,10 @@ const ChatInterface = () => {
         <div ref={messagesEndRef}></div>
       </div>
       
-      <div className="p-4 border-t bg-background/80 backdrop-blur-sm">
+      <div className="p-3 md:p-4 border-t bg-background/80 backdrop-blur-sm">
         <ChatInput onSendMessage={handleSendMessage} />
       </div>
-    </div>
+    </Motion.div>
   );
 };
 

@@ -6,10 +6,13 @@ import PremiumLock from "@/components/PremiumLock";
 import ComplianceBanner from "@/components/ComplianceBanner";
 import { useChat } from "@/context/ChatContext";
 import { cn } from "@/lib/utils";
+import { Motion } from "@/components/ui/motion";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Chat = () => {
   const { state } = useChat();
   const { language, mood, isFreeLimit } = state;
+  const isMobile = useIsMobile();
   
   // Set document title based on language
   useEffect(() => {
@@ -33,20 +36,28 @@ const Chat = () => {
   };
 
   return (
-    <div className={cn(
-      "min-h-screen transition-colors duration-300",
-      getMoodBackgroundClass(),
-      language === 'ar' ? 'rtl' : ''
-    )}>
+    <Motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: "easeInOut" }}
+      className={cn(
+        "min-h-screen transition-colors duration-300",
+        getMoodBackgroundClass(),
+        language === 'ar' ? 'rtl' : ''
+      )}
+    >
       <Navbar />
-      <div className="container mx-auto py-8 px-4">
+      <div className={cn(
+        "container mx-auto py-4 px-3 md:py-8 md:px-4",
+        isMobile && "max-w-full p-2"
+      )}>
         <ComplianceBanner />
         <ChatInterface />
       </div>
       
       {/* Show premium lock if free limit reached */}
       {isFreeLimit && <PremiumLock />}
-    </div>
+    </Motion.div>
   );
 };
 

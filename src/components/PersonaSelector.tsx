@@ -10,10 +10,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { BrainCircuit, Stethoscope, Building, ClipboardList, Code, LibraryBig, Scale, GraduationCap } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Motion } from "@/components/ui/motion";
 
 const PersonaSelector = () => {
   const { state, setPersona } = useChat();
-  const { aiConfig, language } = state;
+  const { aiConfig, language, mood } = state;
+  const isMobile = useIsMobile();
   
   const personas: { value: Persona; label: Record<Language, string>; icon: React.ReactNode }[] = [
     { 
@@ -174,13 +177,30 @@ const PersonaSelector = () => {
     setPersona(value as Persona);
   };
 
+  const isDarkMode = mood === 'deep' || mood === 'focus';
+  
   return (
-    <div className={cn("flex items-center", language === 'ar' ? 'flex-row-reverse' : '')}>
+    <Motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+      className={cn(
+        "flex items-center",
+        isMobile ? "" : language === 'ar' ? 'flex-row-reverse' : ''
+      )}
+    >
       <Select value={aiConfig.persona} onValueChange={handlePersonaChange}>
-        <SelectTrigger className="w-[180px] bg-white/70 dark:bg-mimi-dark/60 backdrop-blur-sm border-0">
+        <SelectTrigger 
+          className={cn(
+            "w-[180px] md:w-[220px] backdrop-blur-sm border-0",
+            isDarkMode 
+              ? "bg-white/20 text-white" 
+              : "bg-white/70 dark:bg-mimi-dark/60"
+          )}
+        >
           <SelectValue placeholder="Select persona" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="max-h-[300px]">
           {personas.map((persona) => (
             <SelectItem key={persona.value} value={persona.value}>
               <div className="flex items-center">
@@ -191,7 +211,7 @@ const PersonaSelector = () => {
           ))}
         </SelectContent>
       </Select>
-    </div>
+    </Motion.div>
   );
 };
 

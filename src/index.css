@@ -4,6 +4,7 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap');
 
 @layer base {
   :root {
@@ -93,7 +94,8 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'SF Pro Display', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -109,6 +111,21 @@
     content: "|";
     @apply animate-blink;
   }
+
+  /* iOS-like styling */
+  button, select, input {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* iOS-style focus states */
+  :focus {
+    outline: none;
+  }
+
+  /* iOS-style scrolling */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 @layer components {
@@ -117,10 +134,62 @@
   }
   
   .chat-bubble-assistant {
-    @apply bg-white dark:bg-mimi-dark/40 rounded-2xl rounded-tl-sm p-4 max-w-[80%] shadow-md;
+    @apply bg-white dark:bg-mimi-dark/40 rounded-2xl rounded-tl-sm p-3 md:p-4 max-w-[80%] shadow-md;
   }
   
   .gradient-text {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-mimi-primary to-mimi-sky;
   }
+
+  /* iOS-style top bar */
+  .ios-top-bar {
+    @apply h-12 flex items-center justify-between px-4 bg-white/90 dark:bg-black/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800;
+  }
+
+  /* iOS-style button */
+  .ios-button {
+    @apply rounded-full px-5 py-2 transition-all active:scale-95;
+  }
+
+  /* iOS-style glassmorphism */
+  .ios-glass {
+    @apply backdrop-blur-md bg-white/60 dark:bg-black/60 border border-white/20 dark:border-white/10;
+  }
+}
+
+/* Custom animations for iOS-like experience */
+@keyframes ios-fade-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes ios-slide-up {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes ios-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.ios-fade-in {
+  animation: ios-fade-in 0.3s ease-out forwards;
+}
+
+.ios-slide-up {
+  animation: ios-slide-up 0.4s ease-out forwards;
+}
+
+.ios-pulse {
+  animation: ios-pulse 2s infinite;
+}
+
+/* Fix for chat bubbles in dark modes */
+.bg-deep-gradient .chat-bubble-assistant,
+.bg-focus-gradient .chat-bubble-assistant {
+  --tw-bg-opacity: 0.2;
+  --tw-text-opacity: 1;
+  color: rgba(255, 255, 255, var(--tw-text-opacity));
 }
