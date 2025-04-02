@@ -11,6 +11,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import Pricing from './pages/Pricing';
 import NotFound from './pages/NotFound';
 import Index from './pages/Index';
+import { AnimatePresence } from './components/ui/motion';
 
 // Separate component for footer to use useLocation hook
 const FooterWithLocation = () => {
@@ -24,13 +25,15 @@ const App = () => {
       <ThemeProvider defaultTheme="system" storageKey="mimi-theme">
         <ChatProvider>
           <Router>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/chat" element={<Chat />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <FooterWithLocation />
+            <AnimatePresence mode="wait">
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/chat" element={<Chat />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <FooterWithLocation />
+            </AnimatePresence>
           </Router>
         </ChatProvider>
       </ThemeProvider>
