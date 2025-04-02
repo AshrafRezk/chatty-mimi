@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import Message from "./Message";
 import ChatInput from "./ChatInput";
@@ -8,6 +9,7 @@ import { useChat } from "@/context/ChatContext";
 import { cn } from "@/lib/utils";
 import { getWelcomeMessage } from "@/utils/locationUtils";
 import { generateGeminiResponse } from "@/utils/geminiUtils";
+import { performWebSearch, calculateCertaintyScore } from "@/utils/searchUtils";
 import { toast } from "sonner";
 import { Reference } from "@/types";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -17,33 +19,14 @@ import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 
-const performWebSearch = async (query: string): Promise<Reference[]> => {
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  const references: Reference[] = [
-    {
-      title: `Information about "${query}"`,
-      url: `https://example.com/search?q=${encodeURIComponent(query)}`,
-      snippet: `This is a snippet about ${query} that provides relevant information to the user's question.`,
-    },
-    {
-      title: `Latest research on ${query}`,
-      url: `https://example.com/research/${encodeURIComponent(query)}`,
-      snippet: `Recent studies and findings related to ${query} with important insights.`,
-    }
-  ];
-  
-  return references;
-};
-
 const ChatInterface = () => {
-  const { state, addMessage, setTyping } = useChat();
+  const { state, addMessage, setTyping, clearMessages } = useChat();
   const { messages, mood, language, isTyping, userLocation, aiConfig } = state;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   
-  const [welcomeMessageSent, setWelcomeMessageSent] = useState(false);
   const [moodSelectorOpen, setMoodSelectorOpen] = useState(false);
+  const welcomeMessageSentRef = useRef(false);
   
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -53,8 +36,10 @@ const ChatInterface = () => {
     scrollToBottom();
   }, [messages, isTyping]);
   
+  // Fix the welcome message duplication issue by using a ref instead of state
   useEffect(() => {
-    if (messages.length === 0 && !welcomeMessageSent) {
+    if (messages.length === 0 && !welcomeMessageSentRef.current) {
+      welcomeMessageSentRef.current = true;
       const welcomeMessage = getWelcomeMessage(userLocation, language);
       
       const typingTimer = setTimeout(() => {
@@ -66,7 +51,6 @@ const ChatInterface = () => {
             text: welcomeMessage,
             sender: "assistant",
           });
-          setWelcomeMessageSent(true);
         }, 1500);
         
         return () => clearTimeout(messageTimer);
@@ -74,7 +58,16 @@ const ChatInterface = () => {
       
       return () => clearTimeout(typingTimer);
     }
-  }, [messages.length, userLocation, language, addMessage, setTyping, welcomeMessageSent]);
+  }, [messages.length, userLocation, language, addMessage, setTyping]);
+  
+  // Reset welcome message flag when messages are cleared
+  useEffect(() => {
+    return () => {
+      if (messages.length === 0) {
+        welcomeMessageSentRef.current = false;
+      }
+    };
+  }, [messages]);
   
   const handleSendMessage = async (text: string) => {
     addMessage({
@@ -93,23 +86,38 @@ const ChatInterface = () => {
       let certaintyScore = 0;
       let response = "";
       
-      if (aiConfig.webSearch) {
+      // Check if it's a query that likely needs web search
+      const needsSearch = text.toLowerCase().startsWith("who is") || 
+                          text.toLowerCase().includes("what is") || 
+                          text.toLowerCase().includes("how to") ||
+                          text.toLowerCase().includes("where is") ||
+                          text.toLowerCase().includes("when was");
+      
+      if (aiConfig.webSearch && needsSearch) {
         try {
+          // Perform real web search
           references = await performWebSearch(text);
-          certaintyScore = Math.floor(70 + Math.random() * 25);
+          certaintyScore = calculateCertaintyScore(references);
         } catch (error) {
           console.error("Web search error:", error);
         }
       }
       
       try {
+        // Include references in the context for better responses
+        const referencesContext = references.length > 0 
+          ? `Relevant information from web search:
+            ${references.map(ref => `- ${ref.title}: ${ref.snippet}`).join('\n')}`
+          : '';
+          
         response = await generateGeminiResponse(
           text, 
           messages,
           language, 
           mood,
           locationString,
-          aiConfig.persona
+          aiConfig.persona,
+          referencesContext
         );
       } catch (error) {
         console.error("Gemini API error:", error);

@@ -6,6 +6,7 @@ import MessageReferences from "./MessageReferences";
 import { Motion } from "@/components/ui/motion";
 import CodeViewer from "./CodeViewer";
 import TextToSpeech from "./TextToSpeech";
+import { useTheme } from "@/hooks/use-theme";
 
 interface MessageProps {
   message: MessageType;
@@ -14,6 +15,8 @@ interface MessageProps {
 const Message = ({ message }: MessageProps) => {
   const { state } = useChat();
   const { language, mood } = state;
+  const { theme } = useTheme();
+  const isDarkTheme = theme === 'dark';
   const isUser = message.sender === "user";
   const timestamp = new Date(message.timestamp);
   const formattedTime = timestamp.toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', { 
@@ -67,6 +70,21 @@ const Message = ({ message }: MessageProps) => {
     return parts.length > 0 ? parts : <p className="whitespace-pre-wrap">{text}</p>;
   };
 
+  // Get the appropriate bubble styles to ensure contrast
+  const getBubbleStyle = () => {
+    if (isUser) {
+      return "chat-bubble-user";
+    } else {
+      if (isDarkMode) {
+        return "chat-bubble-assistant bg-white/20 text-white";
+      } else if (isDarkTheme) {
+        return "chat-bubble-assistant bg-zinc-800 text-white";
+      } else {
+        return "chat-bubble-assistant bg-white text-foreground";
+      }
+    }
+  };
+
   return (
     <Motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -80,10 +98,7 @@ const Message = ({ message }: MessageProps) => {
     >
       <div
         className={cn(
-          isUser ? "chat-bubble-user" : cn(
-            "chat-bubble-assistant",
-            isDarkMode ? "bg-white/20 text-white" : ""
-          ),
+          getBubbleStyle(),
           "backdrop-blur-sm"
         )}
       >
@@ -102,7 +117,7 @@ const Message = ({ message }: MessageProps) => {
             className={cn(
               "text-xs",
               isUser ? "text-white/90" : cn(
-                isDarkMode ? "text-white/90" : "text-gray-500"
+                isDarkMode || isDarkTheme ? "text-white/90" : "text-gray-500"
               )
             )}
           >

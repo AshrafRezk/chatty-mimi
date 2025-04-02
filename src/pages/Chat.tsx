@@ -41,17 +41,20 @@ const Chat = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeInOut" }}
       className={cn(
-        "min-h-screen transition-colors duration-300",
+        "min-h-screen transition-colors duration-300 overflow-hidden",
         getMoodBackgroundClass(),
         language === 'ar' ? 'rtl' : '',
         mood === 'deep' || mood === 'focus' ? 'text-white' : ''
       )}
+      style={{ height: '100vh' }}
     >
       <Navbar />
       <div className={cn(
-        "container mx-auto py-4 px-3 md:py-8 md:px-4 flex flex-col",
-        isMobile && "max-w-full p-0 pt-2"
-      )}>
+        "container mx-auto py-2 px-2 md:py-6 md:px-4 flex flex-col",
+        isMobile && "max-w-full p-0 pt-1"
+      )}
+      style={{ height: 'calc(100vh - 64px)' }}
+      >
         <ComplianceBanner />
         <ChatInterface />
       </div>

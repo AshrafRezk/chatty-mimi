@@ -61,7 +61,8 @@ export const generateGeminiResponse = async (
   language: string,
   mood: string,
   userLocation: string | null,
-  persona: Persona = 'general'
+  persona: Persona = 'general',
+  referencesContext: string = ''
 ): Promise<string> => {
   try {
     // Extract context from previous messages (limited to last 5 for brevity)
@@ -81,16 +82,18 @@ You are having a conversation in ${language} language.
 Current mood setting: ${mood}
 ${userLocation ? `User location: ${userLocation}` : ''}
 ${chatHistory ? `\nRecent conversation history:\n${chatHistory}` : ''}
+${referencesContext ? `\n${referencesContext}` : ''}
 
 You are Mimi, a privacy-focused AI that adheres to strict data security and compliance standards including HIPAA. You never cross-share user data or personal information. User conversations are private and not used to train other models.
 
 When responding:
 1. Enhance the user's query when needed to provide more comprehensive information
 2. Present multiple options or perspectives when appropriate
-3. For factual queries, cite sources that would be reliable (although in this prototype references are simulated)
+3. For factual queries, cite reliable sources
 4. Use a ${mood} tone in your response
 5. Keep answers helpful and concise
 6. Never mention that you're using any specific underlying AI service or API
+7. If you include code in your response, ensure it's properly formatted
 
 Based on this context, respond to: "${userMessage}"
 `;
