@@ -52,5 +52,9 @@ if (!container) {
 // Create a root using the new React 18 createRoot API
 const root = createRoot(container);
 
-// Removed React.StrictMode here since it's now in App component
-root.render(<App />);
+// Wrap the App in StrictMode
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);

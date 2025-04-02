@@ -38,18 +38,16 @@ const AnimatedRoutes = () => {
 
 const App: React.FC = () => {
   return (
-    <React.StrictMode>
-      <HelmetProvider>
-        <ThemeProvider defaultTheme="system" storageKey="mimi-theme">
-          <ChatProvider>
-            <Router>
-              <AnimatedRoutes />
-              <Toaster />
-            </Router>
-          </ChatProvider>
-        </ThemeProvider>
-      </HelmetProvider>
-    </React.StrictMode>
+    <HelmetProvider>
+      <ThemeProvider defaultTheme="system" storageKey="mimi-theme">
+        <ChatProvider>
+          <Router>
+            <AnimatedRoutes />
+            <Toaster />
+          </Router>
+        </ChatProvider>
+      </ThemeProvider>
+    </HelmetProvider>
   );
 };
 
