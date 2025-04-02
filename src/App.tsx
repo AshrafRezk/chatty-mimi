@@ -19,18 +19,20 @@ const FooterWithLocation = () => {
   return location.pathname !== '/chat' ? <Footer /> : null;
 };
 
-// Wrapper component for routes
+// Wrapper component for routes with AnimatePresence
 const AnimatedRoutes = () => {
   const location = useLocation();
   
   return (
     <>
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Index />} />
-        <Route path="/chat" element={<Chat />} />
-        <Route path="/pricing" element={<Pricing />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <AnimatePresence mode="sync">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<Index />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AnimatePresence>
       <FooterWithLocation />
     </>
   );
@@ -42,9 +44,7 @@ const App: React.FC = () => {
       <ThemeProvider defaultTheme="system" storageKey="mimi-theme">
         <ChatProvider>
           <Router>
-            <AnimatePresence mode="wait">
-              <AnimatedRoutes />
-            </AnimatePresence>
+            <AnimatedRoutes />
             <Toaster />
           </Router>
         </ChatProvider>

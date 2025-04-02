@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuGroup
 } from "@/components/ui/dropdown-menu";
 
 const LanguageSelector: React.FC = () => {
@@ -19,36 +18,30 @@ const LanguageSelector: React.FC = () => {
   const { language } = state;
   
   const languages = [
-    { code: 'en', label: 'English' },
-    { code: 'ar', label: 'العربية' },
-    { code: 'fr', label: 'Français' },
-    { code: 'es', label: 'Español' },
-    { code: 'de', label: 'Deutsch' },
-    { code: 'it', label: 'Italiano' },
-    { code: 'pt', label: 'Português' },
-    { code: 'ru', label: 'Русский' },
-    { code: 'zh', label: 'Chinese (中文)' },
-    { code: 'ja', label: 'Japanese (日本語)' },
-    { code: 'ko', label: 'Korean (한국어)' },
-    { code: 'tr', label: 'Türkçe' },
-    { code: 'no', label: 'Norsk' },
+    { code: 'en', label: 'English', group: 'popular' },
+    { code: 'ar', label: 'العربية', group: 'popular' },
+    { code: 'fr', label: 'Français', group: 'popular' },
+    { code: 'es', label: 'Español', group: 'popular' },
+    { code: 'de', label: 'Deutsch', group: 'european' },
+    { code: 'it', label: 'Italiano', group: 'european' },
+    { code: 'pt', label: 'Português', group: 'european' },
+    { code: 'ru', label: 'Русский', group: 'european' },
+    { code: 'zh', label: 'Chinese (中文)', group: 'asian' },
+    { code: 'ja', label: 'Japanese (日本語)', group: 'asian' },
+    { code: 'ko', label: 'Korean (한국어)', group: 'asian' },
+    { code: 'tr', label: 'Türkçe', group: 'other' },
+    { code: 'no', label: 'Norsk', group: 'european' },
   ];
 
   const handleLanguageChange = (code: Language) => {
     setLanguage(code);
   };
 
-  // Group languages by region for better dropdown organization
-  const languageGroups = {
-    popular: ['en', 'ar', 'fr', 'es'],
-    european: ['de', 'it', 'pt', 'ru', 'no'],
-    asian: ['zh', 'ja', 'ko'],
-    other: ['tr']
-  };
-
-  const getLanguagesByGroup = (group: string[]) => {
-    return languages.filter(lang => group.includes(lang.code));
-  };
+  // Group languages for the dropdown
+  const popularLanguages = languages.filter(lang => lang.group === 'popular');
+  const europeanLanguages = languages.filter(lang => lang.group === 'european');
+  const asianLanguages = languages.filter(lang => lang.group === 'asian');
+  const otherLanguages = languages.filter(lang => lang.group === 'other');
 
   const currentLanguage = languages.find(lang => lang.code === language)?.label || 'English';
 
@@ -61,78 +54,70 @@ const LanguageSelector: React.FC = () => {
             {currentLanguage}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuContent align="end" className="w-48 bg-popover">
           <DropdownMenuLabel>Select language</DropdownMenuLabel>
           <DropdownMenuSeparator />
           
-          <DropdownMenuGroup>
-            {getLanguagesByGroup(languageGroups.popular).map(lang => (
-              <DropdownMenuItem 
-                key={lang.code}
-                className={language === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
-                onClick={() => handleLanguageChange(lang.code as Language)}
-              >
-                {lang.label}
-                {language === lang.code && (
-                  <Check className="ml-auto h-4 w-4" />
-                )}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuGroup>
+          {popularLanguages.map(lang => (
+            <DropdownMenuItem 
+              key={lang.code}
+              className={language === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
+              onClick={() => handleLanguageChange(lang.code as Language)}
+            >
+              {lang.label}
+              {language === lang.code && (
+                <Check className="ml-auto h-4 w-4" />
+              )}
+            </DropdownMenuItem>
+          ))}
           
           <DropdownMenuSeparator />
           <DropdownMenuLabel>European</DropdownMenuLabel>
           
-          <DropdownMenuGroup>
-            {getLanguagesByGroup(languageGroups.european).map(lang => (
-              <DropdownMenuItem 
-                key={lang.code}
-                className={language === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
-                onClick={() => handleLanguageChange(lang.code as Language)}
-              >
-                {lang.label}
-                {language === lang.code && (
-                  <Check className="ml-auto h-4 w-4" />
-                )}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuGroup>
+          {europeanLanguages.map(lang => (
+            <DropdownMenuItem 
+              key={lang.code}
+              className={language === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
+              onClick={() => handleLanguageChange(lang.code as Language)}
+            >
+              {lang.label}
+              {language === lang.code && (
+                <Check className="ml-auto h-4 w-4" />
+              )}
+            </DropdownMenuItem>
+          ))}
           
           <DropdownMenuSeparator />
           <DropdownMenuLabel>Asian</DropdownMenuLabel>
           
-          <DropdownMenuGroup>
-            {getLanguagesByGroup(languageGroups.asian).map(lang => (
-              <DropdownMenuItem 
-                key={lang.code}
-                className={language === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
-                onClick={() => handleLanguageChange(lang.code as Language)}
-              >
-                {lang.label}
-                {language === lang.code && (
-                  <Check className="ml-auto h-4 w-4" />
-                )}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuGroup>
+          {asianLanguages.map(lang => (
+            <DropdownMenuItem 
+              key={lang.code}
+              className={language === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
+              onClick={() => handleLanguageChange(lang.code as Language)}
+            >
+              {lang.label}
+              {language === lang.code && (
+                <Check className="ml-auto h-4 w-4" />
+              )}
+            </DropdownMenuItem>
+          ))}
           
           <DropdownMenuSeparator />
           <DropdownMenuLabel>Other</DropdownMenuLabel>
           
-          <DropdownMenuGroup>
-            {getLanguagesByGroup(languageGroups.other).map(lang => (
-              <DropdownMenuItem 
-                key={lang.code}
-                className={language === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
-                onClick={() => handleLanguageChange(lang.code as Language)}
-              >
-                {lang.label}
-                {language === lang.code && (
-                  <Check className="ml-auto h-4 w-4" />
-                )}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuGroup>
+          {otherLanguages.map(lang => (
+            <DropdownMenuItem 
+              key={lang.code}
+              className={language === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
+              onClick={() => handleLanguageChange(lang.code as Language)}
+            >
+              {lang.label}
+              {language === lang.code && (
+                <Check className="ml-auto h-4 w-4" />
+              )}
+            </DropdownMenuItem>
+          ))}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
