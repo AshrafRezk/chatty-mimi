@@ -25,7 +25,7 @@ const AnimatedRoutes = () => {
   
   return (
     <>
-      <AnimatePresence mode="sync">
+      <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Index />} />
           <Route path="/chat" element={<Chat />} />
