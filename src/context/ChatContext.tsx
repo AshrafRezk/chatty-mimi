@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useReducer } from 'react';
+
+import React, { createContext, useContext, useEffect, useReducer } from 'react';
 import { AIConfig, ChatState, Language, Message, Mood, Persona, Theme, UserLocation } from '../types';
 import { detectUserLocation, getDefaultLanguageFromLocation } from '../utils/locationUtils';
 
@@ -136,7 +137,7 @@ interface ChatContextType {
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 // Provider component
-export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, dispatch] = useReducer(chatReducer, initialState);
 
   useEffect(() => {
