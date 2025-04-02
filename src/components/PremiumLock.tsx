@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useChat } from "@/context/ChatContext";
 import { cn } from "@/lib/utils";
-import { PayPal } from "lucide-react";
+import { CreditCard } from "lucide-react";
 
 const PremiumLock = () => {
   const { state } = useChat();
@@ -57,7 +57,7 @@ const PremiumLock = () => {
             variant="outline" 
             className="w-full border-blue-500 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center justify-center gap-2"
           >
-            <PayPal className="w-5 h-5" />
+            <CreditCard className="w-5 h-5" />
             {texts.payPaypal}
           </Button>
           <Button variant="link" className="w-full text-mimi-secondary">
