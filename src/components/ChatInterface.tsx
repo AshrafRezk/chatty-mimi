@@ -12,6 +12,10 @@ import { toast } from "sonner";
 import { Reference } from "@/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Motion } from "@/components/ui/motion";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Button } from "@/components/ui/button";
 
 const performWebSearch = async (query: string): Promise<Reference[]> => {
   await new Promise(resolve => setTimeout(resolve, 1500));
@@ -39,6 +43,7 @@ const ChatInterface = () => {
   const isMobile = useIsMobile();
   
   const [welcomeMessageSent, setWelcomeMessageSent] = useState(false);
+  const [moodSelectorOpen, setMoodSelectorOpen] = useState(false);
   
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -159,23 +164,94 @@ const ChatInterface = () => {
   };
 
   const getMoodStyle = () => {
-    const baseClasses = "flex flex-col h-[calc(100vh-12rem)] rounded-lg shadow-lg transition-colors";
-    const mobileClasses = isMobile ? "h-[calc(100vh-8rem)] mx-0 rounded-md" : "";
+    const baseClasses = "flex flex-col rounded-lg shadow-lg transition-colors";
+    
+    const heightClass = isMobile 
+      ? "h-[calc(100vh-6rem)]" 
+      : "h-[calc(100vh-12rem)]";
+    
+    const mobileClasses = isMobile ? "mx-0 rounded-none" : "";
     
     switch (mood) {
       case 'calm':
-        return cn(baseClasses, "bg-calm-gradient", mobileClasses);
+        return cn(baseClasses, heightClass, "bg-calm-gradient", mobileClasses);
       case 'friendly':
-        return cn(baseClasses, "bg-friendly-gradient", mobileClasses);
+        return cn(baseClasses, heightClass, "bg-friendly-gradient", mobileClasses);
       case 'deep':
-        return cn(baseClasses, "bg-deep-gradient text-white", mobileClasses);
+        return cn(baseClasses, heightClass, "bg-deep-gradient text-white", mobileClasses);
       case 'focus':
-        return cn(baseClasses, "bg-focus-gradient text-white", mobileClasses);
+        return cn(baseClasses, heightClass, "bg-focus-gradient text-white", mobileClasses);
       default:
-        return cn(baseClasses, "bg-background", mobileClasses);
+        return cn(baseClasses, heightClass, "bg-background", mobileClasses);
     }
   };
 
+  if (isMobile) {
+    return (
+      <Motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className={getMoodStyle()}
+      >
+        <Collapsible 
+          className="px-2 bg-background/50 backdrop-blur-sm"
+          open={moodSelectorOpen}
+          onOpenChange={setMoodSelectorOpen}
+        >
+          <div className="flex justify-center py-1">
+            <CollapsibleTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 w-full flex items-center justify-center rounded-full opacity-70 hover:opacity-100"
+              >
+                {moodSelectorOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                <span className="ml-1 text-xs">
+                  {moodSelectorOpen ? 
+                    (language === 'ar' ? "إخفاء الإعدادات" : "Hide Settings") : 
+                    (language === 'ar' ? "الإعدادات" : "Settings")}
+                </span>
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent className="pb-2">
+            <div className="space-y-2">
+              <MoodSelector />
+              <PersonaSelector />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+        
+        <div className={cn(
+          "flex-1 p-3 overflow-y-auto space-y-3",
+          getTextColor()
+        )}>
+          {messages.map((message) => (
+            <Message key={message.id} message={message} />
+          ))}
+          
+          {isTyping && (
+            <div className="flex mb-4 animate-fade-in">
+              <div className={cn(
+                "chat-bubble-assistant",
+                mood === 'deep' || mood === 'focus' ? "bg-white/20" : ""
+              )}>
+                <ThinkingAnimation />
+              </div>
+            </div>
+          )}
+          
+          <div ref={messagesEndRef}></div>
+        </div>
+        
+        <div className="p-3 border-t bg-background/80 backdrop-blur-sm rounded-b-lg">
+          <ChatInput onSendMessage={handleSendMessage} />
+        </div>
+      </Motion.div>
+    );
+  }
+  
   return (
     <Motion.div 
       initial={{ opacity: 0, y: 20 }}

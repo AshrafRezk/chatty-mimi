@@ -48,8 +48,8 @@ const Chat = () => {
     >
       <Navbar />
       <div className={cn(
-        "container mx-auto py-4 px-3 md:py-8 md:px-4",
-        isMobile && "max-w-full p-2"
+        "container mx-auto py-4 px-3 md:py-8 md:px-4 flex flex-col",
+        isMobile && "max-w-full p-0 pt-2"
       )}>
         <ComplianceBanner />
         <ChatInterface />

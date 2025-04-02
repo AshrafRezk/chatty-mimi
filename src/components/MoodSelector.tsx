@@ -24,8 +24,8 @@ const MoodSelector = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        "flex flex-wrap gap-2 mb-4",
-        isMobile ? "justify-center" : language === 'ar' ? 'justify-end rtl' : 'justify-start'
+        "flex flex-wrap gap-2",
+        isMobile ? "justify-center mb-2" : language === 'ar' ? 'justify-end rtl mb-4' : 'justify-start mb-4'
       )}
     >
       {moods.map((m) => (
@@ -39,7 +39,8 @@ const MoodSelector = () => {
             size="sm"
             onClick={() => setMood(m.type)}
             className={cn(
-              "rounded-full border text-sm transition-all px-5", 
+              "rounded-full border transition-all",
+              isMobile ? "text-xs px-3 py-1 h-auto" : "text-sm px-5",
               mood === m.type 
                 ? "bg-mimi-primary text-white border-mimi-primary shadow-md" 
                 : cn(
