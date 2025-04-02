@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Message from "./Message";
 import ChatInput from "./ChatInput";
 import MoodSelector from "./MoodSelector";
@@ -40,6 +40,9 @@ const ChatInterface = () => {
   const { messages, mood, language, isTyping, userLocation, aiConfig } = state;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
+  // Track if welcome message has been added
+  const [welcomeMessageSent, setWelcomeMessageSent] = useState(false);
+  
   // Scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -49,9 +52,9 @@ const ChatInterface = () => {
     scrollToBottom();
   }, [messages, isTyping]);
   
-  // Add welcome message if no messages
+  // Add welcome message if no messages and it hasn't been sent yet
   useEffect(() => {
-    if (messages.length === 0) {
+    if (messages.length === 0 && !welcomeMessageSent) {
       const welcomeMessage = getWelcomeMessage(userLocation, language);
       
       // Add a short delay to make it seem like the assistant is typing
@@ -65,6 +68,7 @@ const ChatInterface = () => {
             text: welcomeMessage,
             sender: "assistant",
           });
+          setWelcomeMessageSent(true);
         }, 1500);
         
         return () => clearTimeout(messageTimer);
@@ -72,7 +76,7 @@ const ChatInterface = () => {
       
       return () => clearTimeout(typingTimer);
     }
-  }, [messages.length, userLocation, language, addMessage, setTyping]);
+  }, [messages.length, userLocation, language, addMessage, setTyping, welcomeMessageSent]);
   
   const handleSendMessage = async (text: string) => {
     // Add user message
@@ -93,11 +97,13 @@ const ChatInterface = () => {
       // Fetch web search results if enabled
       let references: Reference[] = [];
       let certaintyScore = 0;
+      let response = "";
       
+      // Always try to get web search results first
       if (aiConfig.webSearch) {
         try {
           references = await performWebSearch(text);
-          // Calculate a mock certainty score (in real app, this would come from the AI)
+          // Calculate a mock certainty score
           certaintyScore = Math.floor(70 + Math.random() * 25); // Random between 70-95%
         } catch (error) {
           console.error("Web search error:", error);
@@ -105,15 +111,37 @@ const ChatInterface = () => {
         }
       }
       
-      // Get AI response from Gemini API (not mentioned to user)
-      const response = await generateGeminiResponse(
-        text, 
-        messages,
-        language, 
-        mood,
-        locationString,
-        aiConfig.persona
-      );
+      try {
+        // Get AI response from Gemini API (not mentioned to user)
+        response = await generateGeminiResponse(
+          text, 
+          messages,
+          language, 
+          mood,
+          locationString,
+          aiConfig.persona
+        );
+      } catch (error) {
+        console.error("Gemini API error:", error);
+        
+        // If Gemini fails, create a fallback response from web search results
+        if (references.length > 0) {
+          response = `Based on available information${language === 'ar' ? '، ' : ': '}`;
+          
+          // Add snippets from references to form an answer
+          references.forEach((ref, index) => {
+            response += `\n\n${ref.snippet}`;
+            if (index < references.length - 1) {
+              response += language === 'ar' ? '، ' : '; ';
+            }
+          });
+        } else {
+          // If no web search results either, use a standard fallback
+          response = language === 'ar' 
+            ? "عذراً، لا يمكنني الوصول إلى معلومات كافية للإجابة على سؤالك حالياً. يرجى المحاولة مرة أخرى لاحقاً."
+            : "I apologize, but I don't have enough information to answer your question at the moment. Please try again later.";
+        }
+      }
       
       // Add assistant response with references and certainty if available
       setTyping(false);

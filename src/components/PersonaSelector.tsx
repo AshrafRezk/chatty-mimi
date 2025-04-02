@@ -1,6 +1,6 @@
 
 import { useChat } from "@/context/ChatContext";
-import { Persona } from "@/types";
+import { Persona, Language } from "@/types";
 import { cn } from "@/lib/utils";
 import { 
   Select,
