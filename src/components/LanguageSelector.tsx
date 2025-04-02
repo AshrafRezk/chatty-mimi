@@ -14,7 +14,7 @@ import {
   DropdownMenuGroup
 } from "@/components/ui/dropdown-menu";
 
-const LanguageSelector = () => {
+const LanguageSelector: React.FC = () => {
   const { state, setLanguage } = useChat();
   const { language } = state;
   
