@@ -54,7 +54,6 @@ const LanguageSelector: React.FC = () => {
 
   const currentLanguage = languages.find(lang => lang.code === language)?.label || 'English';
 
-  // We're using controlled state for the dropdown to avoid potential issues
   return (
     <div className="flex items-center gap-2">
       <Globe className="h-4 w-4 opacity-70" />
