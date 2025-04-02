@@ -1,17 +1,10 @@
 
 import React from 'react';
 import { useChat } from '@/context/ChatContext';
-import { useLocation } from 'react-router-dom';
 
 const Footer = () => {
   const { state } = useChat();
   const { language } = state;
-  const location = useLocation();
-  
-  // Hide footer on chat page
-  if (location.pathname === '/chat') {
-    return null;
-  }
   
   const currentYear = new Date().getFullYear();
   

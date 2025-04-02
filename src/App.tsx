@@ -7,10 +7,16 @@ import Features from './components/Features';
 import Footer from './components/Footer';
 import SEOHead from './components/SEOHead';
 import { HelmetProvider } from 'react-helmet-async';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Pricing from './pages/Pricing';
 import NotFound from './pages/NotFound';
 import Index from './pages/Index';
+
+// Separate component for footer to use useLocation hook
+const FooterWithLocation = () => {
+  const location = useLocation();
+  return location.pathname !== '/chat' ? <Footer /> : null;
+};
 
 const App = () => {
   return (
@@ -24,8 +30,7 @@ const App = () => {
               <Route path="/pricing" element={<Pricing />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-            {/* Footer is now conditionally rendered based on route */}
-            <Footer />
+            <FooterWithLocation />
           </Router>
         </ChatProvider>
       </ThemeProvider>

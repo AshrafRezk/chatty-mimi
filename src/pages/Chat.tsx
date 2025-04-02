@@ -53,38 +53,6 @@ const Chat = () => {
     };
   }, []);
 
-  // iOS Safari fix - prevent any potential overlays from persisting
-  useEffect(() => {
-    // This helps reset any potential stuck overlays on iOS Safari
-    const resetIOSView = () => {
-      if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-        // Use string indexing for vendor prefixed properties to avoid TypeScript errors
-        document.body.style["webkitOverflowScrolling" as any] = 'touch';
-        // Force layout recalculation
-        setTimeout(() => {
-          window.scrollTo(0, 0);
-          document.body.style.position = 'fixed';
-          document.body.style.width = '100%';
-          document.body.style.height = '100%';
-          document.body.style.overflow = 'hidden';
-        }, 100);
-      }
-    };
-    
-    resetIOSView();
-    
-    // Cleanup function
-    return () => {
-      if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-        document.body.style["webkitOverflowScrolling" as any] = '';
-        document.body.style.position = '';
-        document.body.style.width = '';
-        document.body.style.height = '';
-        document.body.style.overflow = '';
-      }
-    };
-  }, []);
-
   return (
     <>
       <ChatSEOHead />
@@ -96,8 +64,7 @@ const Chat = () => {
           "min-h-screen transition-colors duration-300 flex flex-col",
           getMoodBackgroundClass(),
           language === 'ar' ? 'rtl' : '',
-          mood === 'deep' || mood === 'focus' ? 'text-white' : '',
-          "fixed inset-0"
+          mood === 'deep' || mood === 'focus' ? 'text-white' : ''
         )}
       >
         <Navbar />

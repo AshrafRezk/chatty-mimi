@@ -1,10 +1,12 @@
 
 import { Reference } from "@/types";
-import { ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
+import { ExternalLink, ChevronDown, ChevronUp, Copy, Check } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useChat } from "@/context/ChatContext";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/use-theme";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { 
   Accordion,
   AccordionContent,
@@ -49,6 +51,16 @@ const MessageReferences = ({ references, certaintyScore = 0 }: MessageReferences
       return url;
     }
   };
+
+  // Handle copying reference to clipboard
+  const handleCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(language === 'ar' ? "تم نسخ المرجع" : "Reference copied");
+    } catch (err) {
+      toast.error(language === 'ar' ? "فشل نسخ المرجع" : "Failed to copy reference");
+    }
+  };
   
   if (!references || references.length === 0) {
     // Always show a placeholder if no references
@@ -76,6 +88,7 @@ const MessageReferences = ({ references, certaintyScore = 0 }: MessageReferences
   // Get labels based on language
   const sourcesLabel = isArabic ? "المصادر" : "Sources";
   const certaintyLabel = isArabic ? "درجة الثقة" : "Reliability";
+  const copyLabel = isArabic ? "نسخ" : "Copy";
   
   return (
     <div className={cn(
@@ -101,25 +114,38 @@ const MessageReferences = ({ references, certaintyScore = 0 }: MessageReferences
             <div className="space-y-3 text-xs">
               {references.map((ref, index) => (
                 <div key={index} className="border-t pt-2">
-                  <a 
-                    href={ref.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={cn(
-                      "flex items-center gap-2 transition-colors",
-                      isDark ? "text-mimi-light hover:text-white" : "text-mimi-primary hover:text-mimi-secondary"
-                    )}
-                  >
-                    {getFavicon(ref.url) && (
-                      <img 
-                        src={getFavicon(ref.url) || ''} 
-                        alt="" 
-                        className="w-4 h-4 rounded-sm"
-                      />
-                    )}
-                    <span className="font-medium">{getDomainName(ref.url)}</span>
-                    <ExternalLink className="w-3 h-3 ml-1 inline-block" />
-                  </a>
+                  <div className="flex items-center justify-between">
+                    <a 
+                      href={ref.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(
+                        "flex items-center gap-2 transition-colors",
+                        isDark ? "text-mimi-light hover:text-white" : "text-mimi-primary hover:text-mimi-secondary"
+                      )}
+                    >
+                      {getFavicon(ref.url) && (
+                        <img 
+                          src={getFavicon(ref.url) || ''} 
+                          alt="" 
+                          className="w-4 h-4 rounded-sm"
+                        />
+                      )}
+                      <span className="font-medium">{getDomainName(ref.url)}</span>
+                      <ExternalLink className="w-3 h-3 ml-1 inline-block" />
+                    </a>
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      className="h-6 w-6 p-0 rounded-full"
+                      onClick={() => handleCopy(`${ref.title}\n${ref.snippet}\nSource: ${ref.url}`)}
+                      title={copyLabel}
+                    >
+                      <Copy className="h-3 w-3" />
+                      <span className="sr-only">{copyLabel}</span>
+                    </Button>
+                  </div>
+                  
                   <p className="line-clamp-2 mt-1 text-xs text-gray-600 dark:text-gray-300">
                     {ref.title}
                   </p>
