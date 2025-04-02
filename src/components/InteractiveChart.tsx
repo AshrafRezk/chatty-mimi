@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { BarChart, PieChart, RadarChart } from "lucide-react";
+import { BarChart, PieChart, LineChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/context/ChatContext";
@@ -156,7 +156,7 @@ const InteractiveChart = ({ data, title }: InteractiveChartProps) => {
           onClick={() => setChartType('radar')}
           className="rounded-full"
         >
-          <RadarChart className="h-4 w-4 mr-1" />
+          <LineChart className="h-4 w-4 mr-1" />
           {language === 'ar' ? 'راداري' : 'Radar'}
         </Button>
       </div>

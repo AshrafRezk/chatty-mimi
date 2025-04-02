@@ -2,7 +2,7 @@
 import { useTheme } from "@/hooks/use-theme";
 import { useChat } from "@/context/ChatContext";
 import { useState, useEffect } from "react";
-import { Activity, BarChart, PieChart, RadarChart } from "lucide-react";
+import { Activity, BarChart, PieChart, LineChart } from "lucide-react";
 
 const ThinkingAnimation = () => {
   const { theme } = useTheme();
@@ -52,7 +52,7 @@ const ThinkingAnimation = () => {
       case 2:
         return <PieChart className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
       case 3:
-        return <RadarChart className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
+        return <LineChart className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
       default:
         return <Activity className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
     }
