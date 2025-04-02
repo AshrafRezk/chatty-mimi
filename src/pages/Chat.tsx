@@ -59,7 +59,8 @@ const Chat = () => {
     // This helps reset any potential stuck overlays on iOS Safari
     const resetIOSView = () => {
       if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-        document.body.style.WebkitOverflowScrolling = 'touch';
+        // Use string indexing for vendor prefixed properties to avoid TypeScript errors
+        document.body.style["webkitOverflowScrolling" as any] = 'touch';
         // Force layout recalculation
         setTimeout(() => {
           window.scrollTo(0, 0);
@@ -72,7 +73,7 @@ const Chat = () => {
     // Cleanup function
     return () => {
       if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-        document.body.style.WebkitOverflowScrolling = '';
+        document.body.style["webkitOverflowScrolling" as any] = '';
       }
     };
   }, []);

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { cn } from "@/lib/utils";
 import SEOHead from '@/components/SEOHead';
 
 const Pricing = () => {
-  const { resolvedTheme } = useTheme();
+  const { theme } = useTheme();
   const { state } = useChat();
   const { language } = state;
 
