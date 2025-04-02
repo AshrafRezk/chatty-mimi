@@ -1,4 +1,3 @@
-
 import { useChat } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
@@ -7,10 +6,9 @@ import { useState, useEffect } from "react";
 
 const SuggestedQuestions = () => {
   const { state, addMessage, setTyping } = useChat();
-  const { messages, language, aiConfig } = state;
+  const { messages, language, aiConfig, mood } = state;
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Default suggested questions for new users
   const getInitialSuggestions = () => {
     if (aiConfig.persona === 'real_estate') {
       return [
@@ -62,20 +60,15 @@ const SuggestedQuestions = () => {
     ];
   };
 
-  // Make sure suggestions are immediately displayed when component loads
   useEffect(() => {
     setIsLoaded(true);
   }, []);
 
-  // Dynamic suggestions based on the conversation
   const getDynamicSuggestions = () => {
-    // If there's a conversation going, provide context-aware suggestions
     if (messages.length > 2) {
-      // For real estate persona
       if (aiConfig.persona === 'real_estate') {
         const lastMessage = messages[messages.length - 1];
         
-        // If discussing property
         if (lastMessage.text.toLowerCase().includes("property") || 
             lastMessage.text.toLowerCase().includes("house") || 
             lastMessage.text.toLowerCase().includes("apartment") ||
@@ -112,7 +105,6 @@ const SuggestedQuestions = () => {
         ];
       }
       
-      // For diet coach persona
       if (aiConfig.persona === 'diet_coach') {
         const lastMessage = messages[messages.length - 1];
         
@@ -135,7 +127,6 @@ const SuggestedQuestions = () => {
       }
     }
 
-    // Default return for other personas or situations
     return getInitialSuggestions();
   };
   
@@ -155,8 +146,8 @@ const SuggestedQuestions = () => {
       opacity: 1, 
       y: 0,
       transition: {
-        staggerChildren: 0.05, // Faster staggering
-        duration: 0.2, // Faster animation
+        staggerChildren: 0.05,
+        duration: 0.2,
         when: "beforeChildren"
       }
     }
@@ -164,10 +155,10 @@ const SuggestedQuestions = () => {
   
   const itemVariants = {
     hidden: { opacity: 0, y: -5 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.2 } } // Faster animation
+    visible: { opacity: 1, y: 0, transition: { duration: 0.2 } }
   };
   
-  if (!isLoaded) return null; // Don't render until loaded
+  if (!isLoaded) return null;
   
   return (
     <div className={cn(

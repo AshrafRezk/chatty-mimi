@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { getWelcomeMessage, getPersonaWelcomeMessage } from "@/utils/locationUtils";
 import { generateGeminiResponse } from "@/utils/geminiUtils";
 import { performWebSearch, calculateCertaintyScore } from "@/utils/searchUtils";
+import { performFallbackSearch, performGoogleSearch } from "@/utils/googleSearchUtils";
 import { toast } from "sonner";
 import { NutritionData, PropertyData, PropertyImage, Reference } from "@/types";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -243,18 +244,27 @@ const ChatInterface = () => {
       }
       
       try {
-        references = await performWebSearch(text);
+        console.log("Starting web search for:", text);
+        references = await performFallbackSearch(text, performWebSearch);
         certaintyScore = calculateCertaintyScore(references);
+        console.log("Search completed with", references.length, "results. Certainty score:", certaintyScore);
       } catch (error) {
         console.error("Web search error:", error);
+        try {
+          references = await performWebSearch(text);
+          certaintyScore = calculateCertaintyScore(references);
+        } catch (fallbackError) {
+          console.error("Fallback search also failed:", fallbackError);
+        }
       }
       
       try {
         const referencesContext = references.length > 0 
           ? `Relevant information from web search:
-            ${references.map(ref => `- ${ref.title}: ${ref.snippet}`).join('\n')}`
+            ${references.map((ref, index) => `[${index+1}] ${ref.title}: ${ref.snippet}`).join('\n')}`
           : '';
           
+        console.log("Sending to Gemini with references:", references.length > 0);
         const responseData = await generateGeminiResponse(
           text, 
           messages,
@@ -312,7 +322,7 @@ const ChatInterface = () => {
         "• دعم متعدد اللغات (العربية والإنجليزية)\n" +
         "• وعي بالموقع الجغرافي لتقديم إجابات مخصصة\n" +
         "• خبير في مجالات متعددة (برمجة، طب، عقارات، إلخ)\n" +
-        "• إمكانية معالجة الصور وتحليلها\n" +
+        "• إمكا��ية معالجة الصور وتحليلها\n" +
         "• محادثة بأنماط مزاجية مختلفة (هادئ، ودي، عميق، مركّز)\n" +
         "• إنشاء مخططات ورسومات بيانية تفاعلية\n" +
         "• تحويل النص إلى كلام\n" +
