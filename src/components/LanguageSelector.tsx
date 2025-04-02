@@ -30,8 +30,8 @@ const LANGUAGES = [
   { code: 'no', label: 'Norsk', group: 'european' },
 ];
 
-// Define group items renderer as a separate component outside the main component
-const LanguageGroup = React.memo(function LanguageGroup({ 
+// Define LanguageGroup as a regular function component
+const LanguageGroup = ({ 
   title,
   languages, 
   currentLanguage, 
@@ -41,7 +41,7 @@ const LanguageGroup = React.memo(function LanguageGroup({
   languages: typeof LANGUAGES;
   currentLanguage: Language; 
   onSelectLanguage: (code: Language) => void;
-}) {
+}) => {
   return (
     <>
       <DropdownMenuLabel>{title}</DropdownMenuLabel>
@@ -59,37 +59,22 @@ const LanguageGroup = React.memo(function LanguageGroup({
       ))}
     </>
   );
-});
+};
 
 // Main LanguageSelector component
 const LanguageSelector = () => {
   const { state, setLanguage } = useChat();
   const { language } = state;
 
-  const handleLanguageChange = React.useCallback((code: Language) => {
+  const handleLanguageChange = (code: Language) => {
     setLanguage(code);
-  }, [setLanguage]);
+  };
 
-  // Group languages
-  const popularLanguages = React.useMemo(() => 
-    LANGUAGES.filter(lang => lang.group === 'popular'), 
-    []
-  );
-  
-  const europeanLanguages = React.useMemo(() => 
-    LANGUAGES.filter(lang => lang.group === 'european'), 
-    []
-  );
-  
-  const asianLanguages = React.useMemo(() => 
-    LANGUAGES.filter(lang => lang.group === 'asian'), 
-    []
-  );
-  
-  const otherLanguages = React.useMemo(() => 
-    LANGUAGES.filter(lang => lang.group === 'other'), 
-    []
-  );
+  // Group languages - moved outside of hooks for simplicity
+  const popularLanguages = LANGUAGES.filter(lang => lang.group === 'popular');
+  const europeanLanguages = LANGUAGES.filter(lang => lang.group === 'european');
+  const asianLanguages = LANGUAGES.filter(lang => lang.group === 'asian');
+  const otherLanguages = LANGUAGES.filter(lang => lang.group === 'other');
 
   // Find current language label
   const currentLanguage = LANGUAGES.find(lang => lang.code === language)?.label || 'English';

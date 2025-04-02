@@ -95,6 +95,7 @@
   html, body {
     @apply h-full;
     overscroll-behavior: none;
+    overflow: auto; /* Ensure scrolling is enabled */
   }
 
   body {
