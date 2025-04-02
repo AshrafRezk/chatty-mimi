@@ -30,8 +30,8 @@ const LANGUAGES = [
   { code: 'no', label: 'Norsk', group: 'european' },
 ];
 
-// Create separate component for language items to avoid nesting component declarations
-const LanguageDropdownItems = ({ 
+// Separate component for language items to avoid nesting component declarations
+const LanguageDropdownItems = React.memo(({ 
   currentLanguage, 
   onSelectLanguage 
 }: { 
@@ -115,10 +115,12 @@ const LanguageDropdownItems = ({
       )}
     </>
   );
-};
+});
+
+LanguageDropdownItems.displayName = "LanguageDropdownItems";
 
 // Main LanguageSelector component - extracted from nested components
-const LanguageSelector: React.FC = () => {
+const LanguageSelector = () => {
   const { state, setLanguage } = useChat();
   const { language } = state;
 
