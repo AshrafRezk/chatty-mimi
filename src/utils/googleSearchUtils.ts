@@ -1,12 +1,17 @@
+
 import { Reference } from "@/types";
 
-// Get API keys from localStorage if available
+// Default API keys for Google Search
+const DEFAULT_GOOGLE_API_KEY = "AIzaSyAVlJ8upjkeQdnXynHLFtLX8vXM39Q2CRE";
+const DEFAULT_GOOGLE_CSE_ID = "e0f89b879ec0547bf";
+
+// Get API keys from localStorage if available, otherwise use defaults
 const getGoogleApiKey = (): string => {
-  return localStorage.getItem('google_api_key') || process.env.GOOGLE_API_KEY || "";
+  return localStorage.getItem('google_api_key') || DEFAULT_GOOGLE_API_KEY;
 };
 
 const getGoogleCseId = (): string => {
-  return localStorage.getItem('google_cse_id') || process.env.GOOGLE_CSE_ID || "";
+  return localStorage.getItem('google_cse_id') || DEFAULT_GOOGLE_CSE_ID;
 };
 
 interface GoogleSearchResult {

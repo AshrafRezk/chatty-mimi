@@ -19,7 +19,7 @@ const FooterWithLocation = () => {
   return location.pathname !== '/chat' ? <Footer /> : null;
 };
 
-// Wrapper component to use the location for AnimatePresence
+// Wrapper component for routes
 const AnimatedRoutes = () => {
   const location = useLocation();
   
@@ -42,7 +42,7 @@ const App: React.FC = () => {
       <ThemeProvider defaultTheme="system" storageKey="mimi-theme">
         <ChatProvider>
           <Router>
-            <AnimatePresence mode="sync">
+            <AnimatePresence mode="wait">
               <AnimatedRoutes />
             </AnimatePresence>
             <Toaster />
