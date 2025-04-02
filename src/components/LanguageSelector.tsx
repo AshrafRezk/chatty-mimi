@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useChat } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Language } from "@/types";
-import { Globe, Check, ChevronsUpDown } from "lucide-react";
+import { Globe, Check } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuGroup
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 
 const LanguageSelector: React.FC = () => {
   const { state, setLanguage } = useChat();
