@@ -20,25 +20,23 @@ const FooterWithLocation = () => {
 
 const App = () => {
   return (
-    <React.StrictMode>
-      <HelmetProvider>
-        <ThemeProvider defaultTheme="system" storageKey="mimi-theme">
-          <ChatProvider>
-            <Router>
-              <AnimatePresence mode="wait">
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/chat" element={<Chat />} />
-                  <Route path="/pricing" element={<Pricing />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-                <FooterWithLocation />
-              </AnimatePresence>
-            </Router>
-          </ChatProvider>
-        </ThemeProvider>
-      </HelmetProvider>
-    </React.StrictMode>
+    <HelmetProvider>
+      <ThemeProvider defaultTheme="system" storageKey="mimi-theme">
+        <ChatProvider>
+          <Router>
+            <AnimatePresence mode="wait">
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/chat" element={<Chat />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <FooterWithLocation />
+            </AnimatePresence>
+          </Router>
+        </ChatProvider>
+      </ThemeProvider>
+    </HelmetProvider>
   );
 };
 

@@ -137,7 +137,7 @@ interface ChatContextType {
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 // Provider component
-export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
+export const ChatProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const [state, dispatch] = useReducer(chatReducer, initialState);
 
   useEffect(() => {
