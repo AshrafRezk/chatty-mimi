@@ -94,26 +94,30 @@ const LanguageDropdownItems = ({
         </DropdownMenuItem>
       ))}
       
-      <DropdownMenuSeparator />
-      <DropdownMenuLabel>Other</DropdownMenuLabel>
-      
-      {otherLanguages.map(lang => (
-        <DropdownMenuItem 
-          key={lang.code}
-          className={currentLanguage === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
-          onClick={() => onSelectLanguage(lang.code as Language)}
-        >
-          {lang.label}
-          {currentLanguage === lang.code && (
-            <Check className="ml-auto h-4 w-4" />
-          )}
-        </DropdownMenuItem>
-      ))}
+      {otherLanguages.length > 0 && (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel>Other</DropdownMenuLabel>
+          
+          {otherLanguages.map(lang => (
+            <DropdownMenuItem 
+              key={lang.code}
+              className={currentLanguage === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
+              onClick={() => onSelectLanguage(lang.code as Language)}
+            >
+              {lang.label}
+              {currentLanguage === lang.code && (
+                <Check className="ml-auto h-4 w-4" />
+              )}
+            </DropdownMenuItem>
+          ))}
+        </>
+      )}
     </>
   );
 };
 
-// Main LanguageSelector component
+// Main LanguageSelector component - extracted from nested components
 const LanguageSelector: React.FC = () => {
   const { state, setLanguage } = useChat();
   const { language } = state;
