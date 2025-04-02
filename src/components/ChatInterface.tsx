@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import Message from "./Message";
 import ChatInput from "./ChatInput";
@@ -12,7 +13,7 @@ import { getWelcomeMessage, getPersonaWelcomeMessage } from "@/utils/locationUti
 import { generateGeminiResponse } from "@/utils/geminiUtils";
 import { performWebSearch, calculateCertaintyScore } from "@/utils/searchUtils";
 import { toast } from "sonner";
-import { NutritionData, PropertyData, Reference } from "@/types";
+import { NutritionData, PropertyData, PropertyImage, Reference } from "@/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Motion } from "@/components/ui/motion";
 import { ChevronDown, ChevronUp, Mic } from "lucide-react";
@@ -176,6 +177,7 @@ const ChatInterface = () => {
       let references: Reference[] = [];
       let certaintyScore = 0;
       let response = "";
+      let propertyImages: PropertyImage[] | undefined;
       let imageBase64: string | null = null;
       
       if (imageFile && imageFile.type.startsWith('image/')) {
@@ -212,7 +214,7 @@ const ChatInterface = () => {
             ${references.map(ref => `- ${ref.title}: ${ref.snippet}`).join('\n')}`
           : '';
           
-        response = await generateGeminiResponse(
+        const responseData = await generateGeminiResponse(
           text, 
           messages,
           language, 
@@ -222,6 +224,10 @@ const ChatInterface = () => {
           referencesContext,
           imageBase64
         );
+        
+        response = responseData.text;
+        propertyImages = responseData.propertyImages;
+        
       } catch (error) {
         console.error("Gemini API error:", error);
         
@@ -255,13 +261,55 @@ const ChatInterface = () => {
       setTyping(false);
       playMessageReceivedSound();
       
+      // Fast response for feature questions
+      const isFeatureQuestion = text.toLowerCase().includes("what can you do") || 
+                               text.toLowerCase().includes("your features") ||
+                               text.toLowerCase().includes("what are your capabilities") ||
+                               text.toLowerCase().includes("tell me about your features");
+      
+      const featuresResponse = language === 'ar' ? 
+        "أنا ميمي، مساعدك الذكي الاصطناعي مع العديد من الميزات المتقدمة:\n\n" +
+        "• دعم متعدد اللغات (العربية والإنجليزية)\n" +
+        "• وعي بالموقع الجغرافي لتقديم إجابات مخصصة\n" +
+        "• خبير في مجالات متعددة (برمجة، طب، عقارات، إلخ)\n" +
+        "• إمكانية معالجة الصور وتحليلها\n" +
+        "• محادثة بأنماط مزاجية مختلفة (هادئ، ودي، عميق، مركّز)\n" +
+        "• إنشاء مخططات ورسومات بيانية تفاعلية\n" +
+        "• تحويل النص إلى كلام\n" +
+        "• دعم المحادثات الصوتية\n" +
+        "• تلخيص المحتوى وتحليله\n" +
+        "• توفير مراجع موثوقة للمعلومات\n" +
+        "• خبرة في تحليل القيم الغذائية للأطعمة\n" +
+        "• استشارات عقارية مع رؤى استثمارية\n\n" +
+        "كيف يمكنني مساعدتك اليوم؟" :
+        
+        "I'm Mimi, your intelligent AI assistant with multiple advanced features:\n\n" +
+        "• Multilingual support (English and Arabic)\n" +
+        "• Location awareness for personalized answers\n" +
+        "• Expert in multiple domains (programming, medicine, real estate, etc.)\n" +
+        "• Image processing and analysis capabilities\n" +
+        "• Conversation in different moods (calm, friendly, deep, focused)\n" +
+        "• Interactive chart and visualization creation\n" +
+        "• Text-to-speech functionality\n" +
+        "• Voice chat support\n" +
+        "• Content summarization and analysis\n" +
+        "• Reliable reference sourcing\n" +
+        "• Nutrition analysis for foods\n" +
+        "• Real estate consultation with investment insights\n\n" +
+        "How can I assist you today?";
+                               
+      if (isFeatureQuestion) {
+        response = featuresResponse;
+      }
+      
       addMessage({
         text: response,
         sender: "assistant",
         references: references.length > 0 ? references : undefined,
         certaintyScore: certaintyScore > 0 ? certaintyScore : undefined,
         nutritionData,
-        propertyData
+        propertyData,
+        propertyImages
       });
     } catch (error) {
       console.error("Error getting AI response:", error);

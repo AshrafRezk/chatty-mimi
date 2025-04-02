@@ -1,34 +1,25 @@
+import React from 'react';
+import { ChatProvider } from './context/ChatContext';
+import Chat from './pages/Chat';
+import { ThemeProvider } from './hooks/use-theme';
+import Features from './components/Features';
+import Footer from './components/Footer';
+import { SEOHead } from './components/SEOHead';
+import { HelmetProvider } from 'react-helmet-async';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import Chat from "./pages/Chat";
-import Pricing from "./pages/Pricing";
-import NotFound from "./pages/NotFound";
-import { ChatProvider } from "./context/ChatContext";
-
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ChatProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ChatProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  return (
+    <HelmetProvider>
+      <ThemeProvider defaultTheme="system" storageKey="mimi-theme">
+        <ChatProvider>
+          <SEOHead />
+          <Chat />
+          <Features />
+          <Footer />
+        </ChatProvider>
+      </ThemeProvider>
+    </HelmetProvider>
+  );
+};
 
 export default App;

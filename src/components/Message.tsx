@@ -18,6 +18,7 @@ import rehypeRaw from "rehype-raw";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useIsMobile } from "@/hooks/use-mobile";
+import RealEstateGallery from "./RealEstateGallery";
 
 interface MessageProps {
   message: MessageType;
@@ -216,6 +217,12 @@ const Message = ({ message }: MessageProps) => {
         {message.sender === "assistant" && message.propertyData && (
           <div className="mt-4 w-full">
             <PropertyDetails propertyData={message.propertyData} />
+          </div>
+        )}
+
+        {message.sender === "assistant" && message.propertyData && message.propertyImages && message.propertyImages.length > 0 && (
+          <div className="mt-4 w-full">
+            <RealEstateGallery images={message.propertyImages} />
           </div>
         )}
         

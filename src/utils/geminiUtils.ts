@@ -1,9 +1,37 @@
-
-import { Message, Persona } from "@/types";
+import { Message, Persona, PropertyImage } from "@/types";
 
 // API constants (hidden from user)
 const GEMINI_API_KEY = "AIzaSyCYjG-f26Vg3t57PY0_KznRXDZF-9ljcWs";
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+
+// Real estate property image placeholders
+const PROPERTY_IMAGE_PLACEHOLDERS = [
+  {
+    url: "https://images.unsplash.com/photo-1518005020951-eccb494ad742",
+    title: "Modern apartment building",
+    description: "Contemporary design with spacious balconies"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1496307653780-42ee777d4833",
+    title: "Luxury residence",
+    description: "Floor-to-ceiling windows with panoramic views"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1431576901776-e539bd916ba2",
+    title: "City center view",
+    description: "Prime location with urban amenities"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1459767129954-1b1c1f9b9ace",
+    title: "Residential complex",
+    description: "Family-friendly environment with green spaces"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1460574283810-2aab119d8511",
+    title: "Modern living space",
+    description: "Open concept with contemporary finishes"
+  }
+];
 
 interface GeminiRequestContent {
   parts: {
@@ -49,6 +77,30 @@ const isAskingAboutModel = (message: string): boolean => {
   );
 }
 
+// Helper function to detect real estate related queries
+const isRealEstateQuery = (message: string): boolean => {
+  const lowerMessage = message.toLowerCase();
+  return (
+    lowerMessage.includes("property") ||
+    lowerMessage.includes("real estate") ||
+    lowerMessage.includes("apartment") ||
+    lowerMessage.includes("house") ||
+    lowerMessage.includes("condo") ||
+    lowerMessage.includes("villa") ||
+    lowerMessage.includes("rent") ||
+    lowerMessage.includes("buy home") ||
+    lowerMessage.includes("housing") ||
+    lowerMessage.includes("mortgage")
+  );
+};
+
+// Helper to get random property images for real estate queries
+const getPropertyImages = (count: number = 3): PropertyImage[] => {
+  return [...PROPERTY_IMAGE_PLACEHOLDERS]
+    .sort(() => 0.5 - Math.random())
+    .slice(0, Math.min(count, PROPERTY_IMAGE_PLACEHOLDERS.length));
+};
+
 // Helper to get persona specific context
 const getPersonaContext = (persona: Persona): string => {
   switch (persona) {
@@ -93,12 +145,16 @@ export const generateGeminiResponse = async (
   persona: Persona = 'general',
   referencesContext: string = '',
   nutritionImage: string | null = null
-): Promise<string> => {
+): Promise<{
+  text: string; 
+  propertyImages?: PropertyImage[];
+}> => {
   try {
     // Handle specific questions about the AI model
     if (isAskingAboutModel(userMessage)) {
       if (language === 'ar') {
-        return `ميمي ليست مجرد نموذج ذكاء اصطناعي واحد، بل هي منصة متكاملة تجمع بين مجموعة من النماذج والوحدات المتقدمة. أنا أستخدم تقنيات متعددة تشمل:
+        return {
+          text: `ميمي ليست مجرد نموذج ذكاء اصطناعي واحد، بل هي منصة متكاملة تجمع بين مجموعة من النماذج والوحدات المتقدمة. أنا أستخدم تقنيات متعددة تشمل:
 
 • نماذج لغوية كبيرة متعددة متكاملة مع بعضها البعض
 • محركات بحث متقدمة للوصول إلى المعلومات المحدثة
@@ -107,9 +163,11 @@ export const generateGeminiResponse = async (
 • محركات تحويل النص إلى كلام
 • وحدات معالجة البيانات المتخصصة
 
-هذا التكامل يجعلني أكثر من مجرد نموذج ذكاء اصطناعي تقليدي، بل نظام متكامل يجمع بين قدرات متعددة لتقديم تجربة شاملة ومتكاملة.`;
+هذا التكامل يجعلني أكثر من مجرد نموذج ذكاء اصطناعي تقليدي، بل نظام متكامل يجمع بين قدرات متعددة لتقديم تجربة شاملة ومتكاملة.`
+        };
       } else {
-        return `Mimi is not just a single AI model, but a comprehensive platform that integrates multiple advanced models and modules. I utilize a combination of technologies including:
+        return {
+          text: `Mimi is not just a single AI model, but a comprehensive platform that integrates multiple advanced models and modules. I utilize a combination of technologies including:
 
 • Multiple integrated large language models working together
 • Advanced search engines for up-to-date information
@@ -118,7 +176,8 @@ export const generateGeminiResponse = async (
 • Text-to-speech engines
 • Specialized data processing modules
 
-This integration makes me more than a traditional AI model - I'm an integrated system combining multiple capabilities to deliver a comprehensive experience.`;
+This integration makes me more than a traditional AI model - I'm an integrated system combining multiple capabilities to deliver a comprehensive experience.`
+        };
       }
     }
     
@@ -165,7 +224,7 @@ Based on this context, respond to: "${userMessage}"
 `;
 
     // Prepare the request
-    const requestBody: GeminiRequest = {
+    const requestBody = {
       contents: [
         {
           parts: [{ text: contextualizedPrompt }]
@@ -188,22 +247,32 @@ Based on this context, respond to: "${userMessage}"
       throw new Error(`API error: ${response.status}`);
     }
 
-    const data: GeminiResponse = await response.json();
+    const data = await response.json();
 
     // Check for content blocking
     if (data.promptFeedback?.blockReason) {
       console.warn("Prompt was blocked:", data.promptFeedback.blockReason);
-      return "I'm sorry, but I cannot respond to that query. Let's talk about something else.";
+      return { text: "I'm sorry, but I cannot respond to that query. Let's talk about something else." };
     }
 
     // Extract and return the response text
     if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-      return data.candidates[0].content.parts[0].text;
+      const responseText = data.candidates[0].content.parts[0].text;
+      
+      // If query is about real estate and using real estate persona, include images
+      const propertyImages = isRealEstateQuery(userMessage) && persona === 'real_estate' 
+        ? getPropertyImages(3) 
+        : undefined;
+      
+      return { 
+        text: responseText,
+        propertyImages
+      };
     }
 
     throw new Error("No valid response from AI service");
   } catch (error) {
     console.error("Error generating AI response:", error);
-    return "I'm sorry, I couldn't process your request at the moment. Please try again.";
+    return { text: "I'm sorry, I couldn't process your request at the moment. Please try again." };
   }
 };

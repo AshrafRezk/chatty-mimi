@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import ChatInterface from "@/components/ChatInterface";
 import PremiumLock from "@/components/PremiumLock";
 import ComplianceBanner from "@/components/ComplianceBanner";
+import ChatSEOHead from "@/components/ChatSEOHead";
 import { useChat } from "@/context/ChatContext";
 import { cn } from "@/lib/utils";
 import { Motion } from "@/components/ui/motion";
@@ -49,6 +50,7 @@ const Chat = () => {
       )}
       style={{ height: '100vh' }}
     >
+      <ChatSEOHead />
       <Navbar />
       <div className={cn(
         "container mx-auto py-2 px-2 md:py-6 md:px-4 flex flex-col",

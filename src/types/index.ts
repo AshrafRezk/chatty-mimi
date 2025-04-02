@@ -1,42 +1,30 @@
-
-export type Language = 'en' | 'ar' | 'fr' | 'es' | 'de' | 'it' | 'pt' | 'ru' | 'zh' | 'ja' | 'ko' | 'tr' | 'no';
-
-export type Theme = 'light' | 'dark' | 'system' | 'auto';
-
+export type Language = 'en' | 'ar';
 export type Mood = 'calm' | 'friendly' | 'deep' | 'focus';
-
-export type Persona = 'general' | 'software' | 'medicine' | 'architecture' | 'project_management' | 'finance' | 'education' | 'legal' | 'christianity' | 'islam' | 'diet_coach' | 'real_estate';
+export type Theme = 'light' | 'dark' | 'system';
+export type Persona = 
+  'general' | 
+  'software' | 
+  'medicine' | 
+  'architecture' | 
+  'project_management' | 
+  'finance' | 
+  'education' | 
+  'legal' | 
+  'christianity' | 
+  'islam' |
+  'diet_coach' |
+  'real_estate';
 
 export interface Message {
   id: string;
   text: string;
-  sender: 'user' | 'assistant';
+  sender: "user" | "assistant";
   timestamp: number;
+  imageSrc?: string;
   references?: Reference[];
   certaintyScore?: number;
   nutritionData?: NutritionData;
-  imageSrc?: string;
   propertyData?: PropertyData;
-}
-
-export interface NutritionData {
-  calories: number;
-  fats: number;
-  protein: number;
-  carbohydrates: number;
-}
-
-export interface PropertyData {
-  price: number;
-  location: string;
-  area: number;
-  bedrooms: number;
-  bathrooms: number;
-  paymentPlan?: {
-    downPayment: number;
-    monthlyInstallment: number;
-    years: number;
-  };
 }
 
 export interface Reference {
@@ -49,11 +37,35 @@ export interface UserLocation {
   city: string;
   country: string;
   countryCode: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface NutritionData {
+  calories: number;
+  protein: number;
+  fats: number;
+  carbohydrates: number;
+}
+
+export interface PaymentPlan {
+  downPayment: number;
+  monthlyInstallment: number;
+  years: number;
+}
+
+export interface PropertyData {
+  price: number;
+  location: string;
+  area: number;
+  bedrooms: number;
+  bathrooms: number;
+  paymentPlan?: PaymentPlan;
 }
 
 export interface AIConfig {
-  service: 'mimi' | 'mock';
-  contextLength?: number;
+  service: string;
+  contextLength: number;
   persona: Persona;
   webSearch: boolean;
 }
@@ -68,4 +80,23 @@ export interface ChatState {
   theme: Theme;
   aiConfig: AIConfig;
   isVoiceMode: boolean;
+}
+
+export interface PropertyImage {
+  url: string;
+  title: string;
+  description?: string;
+}
+
+export interface Message {
+  id: string;
+  text: string;
+  sender: "user" | "assistant";
+  timestamp: number;
+  imageSrc?: string;
+  references?: Reference[];
+  certaintyScore?: number;
+  nutritionData?: NutritionData;
+  propertyData?: PropertyData;
+  propertyImages?: PropertyImage[];
 }
