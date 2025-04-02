@@ -12,7 +12,9 @@ export const detectUserLocation = async (): Promise<UserLocation | null> => {
     return {
       city: data.city || 'Unknown City',
       country: data.country_name || 'Unknown Country',
-      countryCode: data.country_code || 'US'
+      countryCode: data.country_code || 'US',
+      latitude: data.latitude || 0,
+      longitude: data.longitude || 0
     };
   } catch (error) {
     console.error('Error detecting user location:', error);

@@ -1,4 +1,4 @@
-export type Language = 'en' | 'ar';
+export type Language = 'en' | 'ar' | 'fr' | 'es' | 'de' | 'it' | 'pt' | 'ru' | 'zh' | 'ja' | 'ko' | 'tr' | 'no';
 export type Mood = 'calm' | 'friendly' | 'deep' | 'focus';
 export type Theme = 'light' | 'dark' | 'system';
 export type Persona = 

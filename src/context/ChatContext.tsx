@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useReducer } from 'react';
 import { AIConfig, ChatState, Language, Message, Mood, Persona, Theme, UserLocation } from '../types';
 import { detectUserLocation, getDefaultLanguageFromLocation } from '../utils/locationUtils';
@@ -183,8 +182,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e: MediaQueryListEvent) => {
-      // Only update if theme is set to 'auto' or 'system'
-      if (state.theme === 'auto' || state.theme === 'system') {
+      // Only update if theme is set to 'system'
+      if (state.theme === 'system') {
         document.documentElement.classList.toggle('dark', e.matches);
         dispatch({ type: 'SET_THEME', payload: e.matches ? 'dark' : 'light' });
       }
