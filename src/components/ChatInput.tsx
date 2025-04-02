@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useChat } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,18 +12,47 @@ import { toast } from "sonner";
 import { useTheme } from "@/hooks/use-theme";
 
 interface ChatInputProps {
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, imageFile?: File | null) => void;
 }
 
 const ChatInput = ({ onSendMessage }: ChatInputProps) => {
   const [message, setMessage] = useState("");
   const [showFileUploader, setShowFileUploader] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const { state } = useChat();
   const { language, mood } = state;
   const isMobile = useIsMobile();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  
+  // Sound effects
+  const messageSentSound = useRef<HTMLAudioElement | null>(null);
+  const messageReceivedSound = useRef<HTMLAudioElement | null>(null);
+  
+  // Initialize audio on component mount
+  useEffect(() => {
+    messageSentSound.current = new Audio('/sounds/message-sent.mp3');
+    messageReceivedSound.current = new Audio('/sounds/message-received.mp3');
+    
+    // Set volumes to be gentle
+    if (messageSentSound.current) messageSentSound.current.volume = 0.3;
+    if (messageReceivedSound.current) messageReceivedSound.current.volume = 0.3;
+    
+    return () => {
+      // Cleanup
+      messageSentSound.current = null;
+      messageReceivedSound.current = null;
+    };
+  }, []);
+  
+  // Play sent sound when user sends a message
+  const playMessageSentSound = () => {
+    if (messageSentSound.current) {
+      messageSentSound.current.currentTime = 0;
+      messageSentSound.current.play().catch(err => console.error("Error playing sound:", err));
+    }
+  };
   
   const placeholderText = language === 'ar' 
     ? "اكتب رسالتك هنا..." 
@@ -32,9 +61,11 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (message.trim()) {
-      onSendMessage(message.trim());
+    if (message.trim() || imageFile) {
+      playMessageSentSound();
+      onSendMessage(message.trim(), imageFile);
       setMessage("");
+      setImageFile(null);
     }
   };
 
@@ -47,6 +78,12 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
     setMessage(updatedMessage);
     setShowFileUploader(false);
     toast.success(language === 'ar' ? "تم استخراج النص بنجاح" : "Text extracted successfully");
+  };
+  
+  const handleImageSelected = (file: File) => {
+    setImageFile(file);
+    setShowFileUploader(false);
+    toast.success(language === 'ar' ? "تم تحديد الصورة بنجاح" : "Image selected successfully");
   };
   
   const handleMicClick = () => {
@@ -106,7 +143,30 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
                 ✕
               </Button>
             </div>
-            <FileUploader onTextExtracted={handleTextExtracted} />
+            <FileUploader 
+              onTextExtracted={handleTextExtracted} 
+              onImageSelected={handleImageSelected}
+            />
+          </div>
+        )}
+        
+        {imageFile && (
+          <div className="bg-white/10 dark:bg-zinc-800/10 backdrop-blur-sm p-2 rounded-lg border border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Camera className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span className="text-sm truncate">{imageFile.name}</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0"
+                onClick={() => setImageFile(null)}
+              >
+                <span className="sr-only">Remove</span>
+                ✕
+              </Button>
+            </div>
           </div>
         )}
         
@@ -128,9 +188,11 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                if (message.trim()) {
-                  onSendMessage(message.trim());
+                if (message.trim() || imageFile) {
+                  playMessageSentSound();
+                  onSendMessage(message.trim(), imageFile);
                   setMessage("");
+                  setImageFile(null);
                 }
               }
             }}
@@ -186,7 +248,7 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
                 "h-9 w-9",
                 getButtonStyle()
               )}
-              disabled={!message.trim()}
+              disabled={!message.trim() && !imageFile}
               title={language === 'ar' ? "إرسال" : "Send"}
             >
               <Send className="h-4 w-4" />

@@ -49,6 +49,8 @@ const getPersonaContext = (persona: Persona): string => {
       return "You are a Christianity expert with deep knowledge of Christian theology, scripture, traditions, denominations, and history. Provide accurate, respectful information about Christianity while acknowledging denominational differences. You can discuss biblical interpretation, church practices, and theological concepts with scholarly understanding while avoiding assuming specific religious beliefs of the user.";
     case 'islam':
       return "You are an Islamic studies expert with deep knowledge of Islamic theology, the Quran, Hadith, Islamic history, jurisprudence, and various Islamic traditions and schools of thought. Provide accurate, respectful information about Islam while acknowledging the diversity within the faith. You can discuss Islamic concepts, practices, and history with scholarly understanding while avoiding assuming specific religious beliefs of the user.";
+    case 'diet_coach':
+      return "You are a nutrition and diet coach expert with deep knowledge of food science, nutrition, dietary planning, and health optimization. Provide accurate, evidence-based information about diet plans, nutrition facts, meal preparation, and healthy eating habits. You can analyze food content, suggest balanced meal plans, and provide guidance on nutritional needs for different health goals. Always clarify you're not providing medical advice for specific health conditions, and recommend consulting with healthcare professionals for personalized nutritional guidance.";
     case 'general':
     default:
       return "You are a helpful AI assistant with wide-ranging knowledge. Provide clear, factual information on a variety of topics.";
@@ -66,7 +68,8 @@ export const generateGeminiResponse = async (
   mood: string,
   userLocation: string | null,
   persona: Persona = 'general',
-  referencesContext: string = ''
+  referencesContext: string = '',
+  nutritionImage: string | null = null
 ): Promise<string> => {
   try {
     // Extract context from previous messages (limited to last 5 for brevity)
@@ -77,6 +80,12 @@ export const generateGeminiResponse = async (
     
     // Get persona-specific context
     const personaContext = getPersonaContext(persona);
+
+    // Add nutrition image context if available and persona is diet_coach
+    let nutritionContext = '';
+    if (persona === 'diet_coach' && nutritionImage) {
+      nutritionContext = `\nThe user has uploaded an image of food. If this is a food item or dish, please analyze its nutritional content and estimate the calories, protein, fats, and carbohydrates. Provide this data in a structured format that can be used for visualization.`;
+    }
     
     // Create a contextualized prompt with useful information
     const contextualizedPrompt = `
@@ -87,6 +96,7 @@ Current mood setting: ${mood}
 ${userLocation ? `User location: ${userLocation}` : ''}
 ${chatHistory ? `\nRecent conversation history:\n${chatHistory}` : ''}
 ${referencesContext ? `\n${referencesContext}` : ''}
+${nutritionContext}
 
 You are Mimi, a privacy-focused AI that adheres to strict data security and compliance standards including HIPAA. You never cross-share user data or personal information. User conversations are private and not used to train other models.
 
@@ -98,6 +108,7 @@ When responding:
 5. Keep answers helpful and concise
 6. Never mention that you're using any specific underlying AI service or API
 7. If you include code in your response, ensure it's properly formatted
+${persona === 'diet_coach' ? `8. If analyzing food images, provide nutritional estimates in this JSON format at the end of your message: {"calories": 300, "protein": 20, "fats": 10, "carbohydrates": 30}` : ''}
 
 Based on this context, respond to: "${userMessage}"
 `;

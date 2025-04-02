@@ -12,7 +12,7 @@ import { getWelcomeMessage } from "@/utils/locationUtils";
 import { generateGeminiResponse } from "@/utils/geminiUtils";
 import { performWebSearch, calculateCertaintyScore } from "@/utils/searchUtils";
 import { toast } from "sonner";
-import { Reference } from "@/types";
+import { NutritionData, Reference } from "@/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Motion } from "@/components/ui/motion";
 import { ChevronDown, ChevronUp, Mic } from "lucide-react";
@@ -29,6 +29,26 @@ const ChatInterface = () => {
   const [moodSelectorOpen, setMoodSelectorOpen] = useState(false);
   const [showVoiceChat, setShowVoiceChat] = useState(false);
   const welcomeMessageSentRef = useRef(false);
+  
+  // Sound effects
+  const messageReceivedSound = useRef<HTMLAudioElement | null>(null);
+  
+  // Initialize sound on component mount
+  useEffect(() => {
+    messageReceivedSound.current = new Audio('/sounds/message-received.mp3');
+    if (messageReceivedSound.current) messageReceivedSound.current.volume = 0.3;
+    
+    return () => {
+      messageReceivedSound.current = null;
+    };
+  }, []);
+  
+  const playMessageReceivedSound = () => {
+    if (messageReceivedSound.current) {
+      messageReceivedSound.current.currentTime = 0;
+      messageReceivedSound.current.play().catch(err => console.error("Error playing sound:", err));
+    }
+  };
   
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -49,6 +69,7 @@ const ChatInterface = () => {
         
         const messageTimer = setTimeout(() => {
           setTyping(false);
+          playMessageReceivedSound();
           addMessage({
             text: welcomeMessage,
             sender: "assistant",
@@ -71,10 +92,48 @@ const ChatInterface = () => {
     };
   }, [messages]);
   
-  const handleSendMessage = async (text: string) => {
+  // Extract nutrition data from response if diet_coach persona
+  const extractNutritionData = (text: string): NutritionData | undefined => {
+    if (aiConfig.persona !== 'diet_coach') return undefined;
+    
+    try {
+      // Look for JSON data at the end of the text
+      const jsonMatch = text.match(/\{[\s\S]*"calories"[\s\S]*\}/);
+      if (jsonMatch) {
+        const jsonData = JSON.parse(jsonMatch[0]);
+        if (jsonData && 
+            typeof jsonData.calories === 'number' && 
+            typeof jsonData.protein === 'number' && 
+            typeof jsonData.fats === 'number' && 
+            typeof jsonData.carbohydrates === 'number') {
+          return {
+            calories: jsonData.calories,
+            protein: jsonData.protein,
+            fats: jsonData.fats,
+            carbohydrates: jsonData.carbohydrates
+          };
+        }
+      }
+    } catch (error) {
+      console.error("Error parsing nutrition data:", error);
+    }
+    
+    return undefined;
+  };
+
+  // Function to create image URL from File
+  const createImageUrl = (file: File): string => {
+    return URL.createObjectURL(file);
+  };
+  
+  const handleSendMessage = async (text: string, imageFile: File | null = null) => {
+    // Create image URL if file is provided
+    const imageSrc = imageFile ? createImageUrl(imageFile) : undefined;
+    
     addMessage({
       text,
       sender: "user",
+      imageSrc
     });
     
     setTyping(true);
@@ -87,6 +146,21 @@ const ChatInterface = () => {
       let references: Reference[] = [];
       let certaintyScore = 0;
       let response = "";
+      let imageBase64: string | null = null;
+      
+      // Convert image to base64 if provided
+      if (imageFile && imageFile.type.startsWith('image/')) {
+        try {
+          const reader = new FileReader();
+          imageBase64 = await new Promise((resolve, reject) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(imageFile);
+          });
+        } catch (error) {
+          console.error("Error converting image to base64:", error);
+        }
+      }
       
       // Check if it's a query that likely needs web search
       const needsSearch = text.toLowerCase().startsWith("who is") || 
@@ -119,7 +193,8 @@ const ChatInterface = () => {
           mood,
           locationString,
           aiConfig.persona,
-          referencesContext
+          referencesContext,
+          imageBase64
         );
       } catch (error) {
         console.error("Gemini API error:", error);
@@ -139,12 +214,23 @@ const ChatInterface = () => {
         }
       }
       
+      // Extract nutrition data if diet_coach persona
+      const nutritionData = extractNutritionData(response);
+      
+      // Clean up response by removing JSON data at the end if nutrition data was found
+      if (nutritionData) {
+        response = response.replace(/\{[\s\S]*"calories"[\s\S]*\}/, '');
+      }
+      
       setTyping(false);
+      playMessageReceivedSound();
+      
       addMessage({
         text: response,
         sender: "assistant",
         references: references.length > 0 ? references : undefined,
         certaintyScore: certaintyScore > 0 ? certaintyScore : undefined,
+        nutritionData
       });
     } catch (error) {
       console.error("Error getting AI response:", error);
@@ -160,6 +246,11 @@ const ChatInterface = () => {
       toast.error(language === 'ar' 
         ? "حدث خطأ أثناء الاتصال بخدمة الذكاء الاصطناعي"
         : "Error connecting to the AI service");
+    }
+    
+    // Clean up image URL if it was created
+    if (imageSrc) {
+      URL.revokeObjectURL(imageSrc);
     }
   };
   

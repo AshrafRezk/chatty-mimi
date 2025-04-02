@@ -5,7 +5,7 @@ export type Theme = 'light' | 'dark' | 'system' | 'auto';
 
 export type Mood = 'calm' | 'friendly' | 'deep' | 'focus';
 
-export type Persona = 'general' | 'software' | 'medicine' | 'architecture' | 'project_management' | 'finance' | 'education' | 'legal' | 'christianity' | 'islam';
+export type Persona = 'general' | 'software' | 'medicine' | 'architecture' | 'project_management' | 'finance' | 'education' | 'legal' | 'christianity' | 'islam' | 'diet_coach';
 
 export interface Message {
   id: string;
@@ -14,6 +14,15 @@ export interface Message {
   timestamp: number;
   references?: Reference[];
   certaintyScore?: number;
+  nutritionData?: NutritionData;
+  imageSrc?: string;
+}
+
+export interface NutritionData {
+  calories: number;
+  fats: number;
+  protein: number;
+  carbohydrates: number;
 }
 
 export interface Reference {

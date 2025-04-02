@@ -8,6 +8,14 @@ import { cn } from '@/lib/utils';
 import { Motion } from './ui/motion';
 import { toast } from 'sonner';
 
+// Add global type definitions for SpeechRecognition
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
+
 interface VoiceChatProps {
   onSendMessage: (text: string) => void;
   onClose: () => void;
@@ -21,7 +29,7 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
   const [transcript, setTranscript] = useState('');
   const [isMouthMoving, setIsMouthMoving] = useState(false);
   
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any | null>(null);
   const synthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
   
   // Initialize speech recognition
@@ -35,7 +43,7 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
       
       recognitionRef.current.lang = language === 'ar' ? 'ar-SA' : 'en-US';
       
-      recognitionRef.current.onresult = (event) => {
+      recognitionRef.current.onresult = (event: any) => {
         let interimTranscript = '';
         let finalTranscript = '';
         
@@ -51,7 +59,7 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
         setTranscript(finalTranscript || interimTranscript);
       };
       
-      recognitionRef.current.onerror = (event) => {
+      recognitionRef.current.onerror = (event: any) => {
         console.error('Speech recognition error', event.error);
         setIsListening(false);
         toast.error('Speech recognition error. Please try again.');
@@ -77,7 +85,7 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
         }
       }
     };
-  }, [language]);
+  }, [language, isListening]);
   
   // Effect for handling animation when AI is speaking
   useEffect(() => {

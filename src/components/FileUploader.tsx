@@ -10,13 +10,14 @@ import { Motion } from "@/components/ui/motion";
 
 interface FileUploaderProps {
   onTextExtracted: (text: string) => void;
+  onImageSelected?: (file: File) => void;
 }
 
-const FileUploader = ({ onTextExtracted }: FileUploaderProps) => {
+const FileUploader = ({ onTextExtracted, onImageSelected }: FileUploaderProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const { state } = useChat();
-  const { language } = state;
+  const { language, aiConfig } = state;
   
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -40,6 +41,13 @@ const FileUploader = ({ onTextExtracted }: FileUploaderProps) => {
     }
     
     setFile(selectedFile);
+    
+    // If it's an image and we're in diet_coach persona, select it automatically
+    if (selectedFile.type.startsWith('image/') && 
+        aiConfig.persona === 'diet_coach' && 
+        onImageSelected) {
+      onImageSelected(selectedFile);
+    }
   };
   
   const processFile = async () => {
@@ -48,6 +56,14 @@ const FileUploader = ({ onTextExtracted }: FileUploaderProps) => {
     setIsProcessing(true);
     
     try {
+      // If this is for diet coach and an image, pass directly to parent
+      if (file.type.startsWith('image/') && aiConfig.persona === 'diet_coach' && onImageSelected) {
+        onImageSelected(file);
+        setFile(null);
+        setIsProcessing(false);
+        return;
+      }
+      
       const extractedText = await extractTextFromImage(file);
       
       if (extractedText && extractedText.trim()) {
@@ -126,7 +142,9 @@ const FileUploader = ({ onTextExtracted }: FileUploaderProps) => {
                   {language === 'ar' ? 'جارٍ المعالجة...' : 'Processing...'}
                 </span>
               ) : (
-                language === 'ar' ? 'استخراج النص' : 'Extract Text'
+                aiConfig.persona === 'diet_coach' && file.type.startsWith('image/') 
+                  ? (language === 'ar' ? 'تحليل الصورة' : 'Analyze Image')
+                  : (language === 'ar' ? 'استخراج النص' : 'Extract Text')
               )}
             </Button>
           </div>
@@ -176,8 +194,12 @@ const FileUploader = ({ onTextExtracted }: FileUploaderProps) => {
           
           <p className="text-xs text-center text-muted-foreground">
             {language === 'ar' 
-              ? 'يدعم PDF والصور (JPG، PNG، WEBP)' 
-              : 'Supports PDF and images (JPG, PNG, WEBP)'}
+              ? aiConfig.persona === 'diet_coach'
+                ? 'التقط صورة للطعام لتحليل المحتوى الغذائي'
+                : 'يدعم PDF والصور (JPG، PNG، WEBP)'
+              : aiConfig.persona === 'diet_coach' 
+                ? 'Take a photo of food to analyze nutritional content'
+                : 'Supports PDF and images (JPG, PNG, WEBP)'}
           </p>
         </div>
       )}
