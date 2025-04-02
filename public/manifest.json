@@ -7,6 +7,10 @@
   "display": "standalone",
   "scope": "/",
   "start_url": "/chat",
+  "orientation": "portrait",
+  "categories": ["productivity", "utilities", "ai"],
+  "description": "Mimi is an intelligent AI assistant with multiple capabilities including web search, multilingual support, and specialized expertise.",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "icons/icon-72x72.png",
@@ -57,10 +61,6 @@
       "purpose": "any"
     }
   ],
-  "splash_pages": null,
-  "orientation": "portrait",
-  "categories": ["productivity", "utilities", "ai"],
-  "description": "Mimi is an intelligent AI assistant with multiple capabilities including web search, multilingual support, and specialized expertise.",
   "screenshots": [
     {
       "src": "screenshots/screen1.png",
@@ -68,8 +68,6 @@
       "type": "image/png"
     }
   ],
-  "related_applications": [],
-  "prefer_related_applications": false,
   "shortcuts": [
     {
       "name": "Start Chat",

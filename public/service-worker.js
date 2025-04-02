@@ -1,16 +1,13 @@
 
 // Service worker for Mimi AI Assistant PWA
-const CACHE_NAME = 'mimi-ai-v1';
+const CACHE_NAME = 'mimi-ai-v1.1';
 
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/favicon.ico',
+  '/chat',
   '/manifest.json',
-  '/src/index.css',
-  '/src/main.tsx',
-  '/sounds/message-received.mp3',
-  '/sounds/message-sent.mp3',
+  '/mimi-favicon.ico',
   '/icons/icon-72x72.png',
   '/icons/icon-96x96.png',
   '/icons/icon-128x128.png',
@@ -18,7 +15,9 @@ const STATIC_ASSETS = [
   '/icons/icon-152x152.png',
   '/icons/icon-192x192.png',
   '/icons/icon-384x384.png',
-  '/icons/icon-512x512.png'
+  '/icons/icon-512x512.png',
+  '/sounds/message-received.mp3',
+  '/sounds/message-sent.mp3'
 ];
 
 // Install event - cache static assets
@@ -55,44 +54,80 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
-  // Skip cross-origin requests
-  if (event.request.url.startsWith(self.location.origin)) {
-    event.respondWith(
-      caches.match(event.request).then((response) => {
-        if (response) {
-          console.log('[Service Worker] Serving from cache:', event.request.url);
-          return response;
-        }
-        
-        return fetch(event.request).then((networkResponse) => {
-          // Don't cache API responses or dynamic content
-          if (
-            !event.request.url.includes('/api/') && 
-            event.request.method === 'GET'
-          ) {
-            let responseToCache = networkResponse.clone();
-            
-            caches.open(CACHE_NAME).then((cache) => {
-              console.log('[Service Worker] Caching new resource:', event.request.url);
-              cache.put(event.request, responseToCache);
-            });
-          }
-          
-          return networkResponse;
-        });
-      })
-    );
+  // Skip non-GET requests and browser extensions
+  if (event.request.method !== 'GET' || 
+      !event.request.url.startsWith(self.location.origin)) {
+    return;
   }
+
+  // For navigation requests (HTML pages), use a network-first strategy
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Cache a copy of the response
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME)
+            .then(cache => cache.put(event.request, responseToCache));
+          return response;
+        })
+        .catch(() => {
+          // If offline, try to serve from cache
+          return caches.match(event.request)
+            .then(cachedResponse => {
+              return cachedResponse || caches.match('/index.html');
+            });
+        })
+    );
+    return;
+  }
+
+  // For all other requests, try the cache first, then network
+  event.respondWith(
+    caches.match(event.request)
+      .then(cachedResponse => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        return fetch(event.request)
+          .then(response => {
+            // Don't cache if not a success response
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+
+            // Cache a copy of the response
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              });
+
+            return response;
+          })
+          .catch(() => {
+            // If both cache and network fail, return a basic offline message for HTML
+            if (event.request.headers.get('accept')?.includes('text/html')) {
+              return caches.match('/index.html');
+            }
+            return new Response('Network error happened', {
+              status: 408,
+              headers: { 'Content-Type': 'text/plain' }
+            });
+          });
+      })
+  );
 });
 
 // Handle push notifications
 self.addEventListener('push', (event) => {
-  const data = event.data.json();
+  const data = event.data?.json() || {};
   
   const options = {
     body: data.body || 'New notification from Mimi AI',
     icon: 'icons/icon-192x192.png',
-    badge: 'icons/badge-72x72.png',
+    badge: 'icons/icon-72x72.png',
     vibrate: [100, 50, 100],
     data: {
       url: data.url || '/chat'

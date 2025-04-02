@@ -37,6 +37,23 @@ const Chat = () => {
     }
   };
 
+  // Add listener for PWA display mode changes
+  useEffect(() => {
+    const handleDisplayModeChange = () => {
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        console.log('App is running in standalone mode (PWA)');
+        // You could update state here if needed
+      }
+    };
+    
+    window.matchMedia('(display-mode: standalone)').addEventListener('change', handleDisplayModeChange);
+    handleDisplayModeChange(); // Check initial state
+    
+    return () => {
+      window.matchMedia('(display-mode: standalone)').removeEventListener('change', handleDisplayModeChange);
+    };
+  }, []);
+
   return (
     <Motion.div 
       initial={{ opacity: 0 }}
@@ -49,7 +66,17 @@ const Chat = () => {
         mood === 'deep' || mood === 'focus' ? 'text-white' : '',
         isVoiceMode ? 'overflow-hidden' : 'overflow-hidden'
       )}
-      style={{ height: '100vh', width: '100vw', margin: 0, padding: 0 }}
+      style={{ 
+        height: '100vh', 
+        width: '100vw', 
+        margin: 0, 
+        padding: 0,
+        // Ensure content is within safe area for iOS devices
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingLeft: 'env(safe-area-inset-left, 0px)',
+        paddingRight: 'env(safe-area-inset-right, 0px)'
+      }}
     >
       <ChatSEOHead />
       <Navbar />

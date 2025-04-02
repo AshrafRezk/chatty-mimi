@@ -22,7 +22,8 @@ const PWAInstallButton = () => {
     // Check if app is already installed
     if (
       window.matchMedia('(display-mode: standalone)').matches ||
-      window.navigator.standalone
+      // Safe check for iOS Safari - use window.navigator with type assertion
+      (window.navigator as any).standalone
     ) {
       setIsStandalone(true);
     }
@@ -116,11 +117,11 @@ const PWAInstallButton = () => {
     <Button
       onClick={handleInstall}
       className={cn(
-        "pwa-install-button",
+        "fixed z-50 bottom-4 right-4 shadow-lg pwa-install-button rounded-full",
         language === 'ar' ? 'left-4 right-auto' : ''
       )}
     >
-      <Download className="h-4 w-4" />
+      <Download className="h-4 w-4 mr-2" />
       {language === 'ar' ? 'تثبيت التطبيق' : 'Install App'}
     </Button>
   );

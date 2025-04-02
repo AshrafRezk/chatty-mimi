@@ -8,17 +8,35 @@ import { registerServiceWorker, requestNotificationPermission } from './utils/pu
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      // Register service worker
+      // Register service worker with more robust error handling
       const registration = await navigator.serviceWorker.register('/service-worker.js', {
-        scope: '/'
+        scope: '/',
+        updateViaCache: 'none' // Ensure browser checks for updated service worker
       });
       
-      console.log('Service Worker registered with scope:', registration.scope);
+      console.log('Service Worker registered successfully:', registration.scope);
       
-      // Request notification permission if service worker is active
-      if (registration.active) {
-        await requestNotificationPermission();
+      // Check if the service worker is active or activating
+      if (registration.active || registration.installing || registration.waiting) {
+        try {
+          await requestNotificationPermission();
+        } catch (permError) {
+          console.warn('Notification permission error:', permError);
+        }
       }
+
+      // Handle service worker updates
+      registration.onupdatefound = () => {
+        const newWorker = registration.installing;
+        if (!newWorker) return;
+
+        newWorker.onstatechange = () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            console.log('New service worker available, reload for updates');
+            // Here we could prompt the user to refresh for updates if needed
+          }
+        };
+      };
     } catch (error) {
       console.error('Service worker registration failed:', error);
     }
