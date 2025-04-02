@@ -22,7 +22,21 @@ export const detectUserLocation = async (): Promise<UserLocation | null> => {
 
 export const getWelcomeMessage = (location: UserLocation | null, language: string): string => {
   if (!location) {
-    return language === 'ar' ? "أهلاً بك!" : "Welcome!";
+    switch (language) {
+      case 'ar': return "أهلاً بك!";
+      case 'fr': return "Bienvenue!";
+      case 'es': return "¡Bienvenido!";
+      case 'de': return "Willkommen!";
+      case 'it': return "Benvenuto!";
+      case 'pt': return "Bem-vindo!";
+      case 'ru': return "Добро пожаловать!";
+      case 'zh': return "欢迎!";
+      case 'ja': return "ようこそ!";
+      case 'ko': return "환영합니다!";
+      case 'tr': return "Hoş geldiniz!";
+      case 'no': return "Velkommen!";
+      default: return "Welcome!";
+    }
   }
   
   const { city, country } = location;
@@ -51,6 +65,8 @@ export const getWelcomeMessage = (location: UserLocation | null, language: strin
       return `${country} ${city}에서 환영합니다!`;
     case 'tr':
       return `${city}, ${country}'den hoş geldiniz!`;
+    case 'no':
+      return `Velkommen fra ${city}, ${country}!`;
     default:
       return `Welcome from ${city}, ${country}!`;
   }
@@ -98,7 +114,10 @@ export const getDefaultLanguageFromLocation = (countryCode: string): Language =>
     'kr': 'ko',
     
     // Turkish
-    'tr': 'tr'
+    'tr': 'tr',
+    
+    // Norwegian
+    'no': 'no'
   };
   
   return languageMappings[countryCode.toLowerCase()] || 'en';
