@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useChat } from "@/context/ChatContext";
-import { X, Lock, Shield } from "lucide-react";
+import { X, Shield } from "lucide-react";
 import { Motion, AnimatePresence } from "@/components/ui/motion";
 import { Button } from "@/components/ui/button";
 
