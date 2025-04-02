@@ -9,7 +9,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BrainCircuit, Stethoscope, Building, ClipboardList, Code, LibraryBig, Scale, GraduationCap } from "lucide-react";
+import { 
+  BrainCircuit, 
+  Stethoscope, 
+  Building, 
+  ClipboardList, 
+  Code, 
+  LibraryBig, 
+  Scale, 
+  GraduationCap,
+  Cross,
+  BookOpen
+} from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Motion } from "@/components/ui/motion";
 
@@ -170,6 +181,44 @@ const PersonaSelector = () => {
         no: 'Juridisk'
       },
       icon: <Scale className="h-4 w-4 mr-2" />
+    },
+    { 
+      value: 'christianity', 
+      label: {
+        en: 'Christianity Expert',
+        ar: 'خبير المسيحية',
+        fr: 'Expert en christianisme',
+        es: 'Experto en cristianismo',
+        de: 'Christentum-Experte',
+        it: 'Esperto di cristianesimo',
+        pt: 'Especialista em cristianismo',
+        ru: 'Эксперт по христианству',
+        zh: '基督教专家',
+        ja: 'キリスト教専門家',
+        ko: '기독교 전문가',
+        tr: 'Hristiyanlık Uzmanı',
+        no: 'Kristendomsekspert'
+      },
+      icon: <Cross className="h-4 w-4 mr-2" />
+    },
+    { 
+      value: 'islam', 
+      label: {
+        en: 'Islamic Studies',
+        ar: 'دراسات إسلامية',
+        fr: 'Études islamiques',
+        es: 'Estudios islámicos',
+        de: 'Islamische Studien',
+        it: 'Studi islamici',
+        pt: 'Estudos islâmicos',
+        ru: 'Исламоведение',
+        zh: '伊斯兰研究',
+        ja: 'イスラム研究',
+        ko: '이슬람 연구',
+        tr: 'İslami Çalışmalar',
+        no: 'Islamske studier'
+      },
+      icon: <BookOpen className="h-4 w-4 mr-2" />
     },
   ];
 

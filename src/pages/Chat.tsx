@@ -11,7 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const Chat = () => {
   const { state } = useChat();
-  const { language, mood, isFreeLimit } = state;
+  const { language, mood, isFreeLimit, isVoiceMode } = state;
   const isMobile = useIsMobile();
   
   // Set document title based on language
@@ -44,7 +44,8 @@ const Chat = () => {
         "min-h-screen transition-colors duration-300 overflow-hidden",
         getMoodBackgroundClass(),
         language === 'ar' ? 'rtl' : '',
-        mood === 'deep' || mood === 'focus' ? 'text-white' : ''
+        mood === 'deep' || mood === 'focus' ? 'text-white' : '',
+        isVoiceMode ? 'overflow-hidden' : ''
       )}
       style={{ height: '100vh' }}
     >

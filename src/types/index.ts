@@ -5,7 +5,7 @@ export type Theme = 'light' | 'dark' | 'system' | 'auto';
 
 export type Mood = 'calm' | 'friendly' | 'deep' | 'focus';
 
-export type Persona = 'general' | 'software' | 'medicine' | 'architecture' | 'project_management' | 'finance' | 'education' | 'legal';
+export type Persona = 'general' | 'software' | 'medicine' | 'architecture' | 'project_management' | 'finance' | 'education' | 'legal' | 'christianity' | 'islam';
 
 export interface Message {
   id: string;
@@ -44,4 +44,5 @@ export interface ChatState {
   isFreeLimit: boolean;
   theme: Theme;
   aiConfig: AIConfig;
+  isVoiceMode: boolean;
 }

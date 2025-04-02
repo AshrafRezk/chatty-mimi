@@ -5,6 +5,7 @@ import ChatInput from "./ChatInput";
 import MoodSelector from "./MoodSelector";
 import PersonaSelector from "./PersonaSelector";
 import ThinkingAnimation from "./ThinkingAnimation";
+import VoiceChat from "./VoiceChat";
 import { useChat } from "@/context/ChatContext";
 import { cn } from "@/lib/utils";
 import { getWelcomeMessage } from "@/utils/locationUtils";
@@ -14,18 +15,19 @@ import { toast } from "sonner";
 import { Reference } from "@/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Motion } from "@/components/ui/motion";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Mic } from "lucide-react";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 
 const ChatInterface = () => {
-  const { state, addMessage, setTyping, clearMessages } = useChat();
-  const { messages, mood, language, isTyping, userLocation, aiConfig } = state;
+  const { state, addMessage, setTyping, clearMessages, setVoiceMode } = useChat();
+  const { messages, mood, language, isTyping, userLocation, aiConfig, isVoiceMode } = state;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   
   const [moodSelectorOpen, setMoodSelectorOpen] = useState(false);
+  const [showVoiceChat, setShowVoiceChat] = useState(false);
   const welcomeMessageSentRef = useRef(false);
   
   const scrollToBottom = () => {
@@ -161,6 +163,16 @@ const ChatInterface = () => {
     }
   };
   
+  const handleVoiceChatClose = () => {
+    setShowVoiceChat(false);
+    setVoiceMode(false);
+  };
+  
+  const toggleVoiceChat = () => {
+    setShowVoiceChat(!showVoiceChat);
+    setVoiceMode(!showVoiceChat);
+  };
+  
   const getTextColor = () => {
     switch (mood) {
       case 'deep':
@@ -253,9 +265,23 @@ const ChatInterface = () => {
           <div ref={messagesEndRef}></div>
         </div>
         
-        <div className="p-3 border-t bg-background/80 backdrop-blur-sm rounded-b-lg">
+        <div className="p-3 border-t bg-background/80 backdrop-blur-sm rounded-b-lg flex flex-col">
           <ChatInput onSendMessage={handleSendMessage} />
+          
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-2 self-center rounded-full bg-white/90 border border-gray-200 shadow-sm"
+            onClick={toggleVoiceChat}
+          >
+            <Mic className="h-4 w-4 mr-2" />
+            {language === 'ar' ? "وضع الصوت" : "Voice Mode"}
+          </Button>
         </div>
+        
+        {showVoiceChat && (
+          <VoiceChat onSendMessage={handleSendMessage} onClose={handleVoiceChatClose} />
+        )}
       </Motion.div>
     );
   }
@@ -268,7 +294,18 @@ const ChatInterface = () => {
       className={getMoodStyle()}
     >
       <div className="p-2 md:p-4 flex flex-col md:flex-row justify-between items-center gap-2">
-        <MoodSelector />
+        <div className="flex items-center gap-2">
+          <MoodSelector />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleVoiceChat}
+            className="rounded-full bg-white/90 border border-gray-200 shadow-sm"
+          >
+            <Mic className="h-4 w-4 mr-2" />
+            {language === 'ar' ? "وضع الصوت" : "Voice Mode"}
+          </Button>
+        </div>
         <PersonaSelector />
       </div>
       
@@ -297,6 +334,10 @@ const ChatInterface = () => {
       <div className="p-3 md:p-4 border-t bg-background/80 backdrop-blur-sm">
         <ChatInput onSendMessage={handleSendMessage} />
       </div>
+      
+      {showVoiceChat && (
+        <VoiceChat onSendMessage={handleSendMessage} onClose={handleVoiceChatClose} />
+      )}
     </Motion.div>
   );
 };

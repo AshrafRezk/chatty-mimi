@@ -18,6 +18,7 @@ const initialState: ChatState = {
     persona: 'general', // Default persona
     webSearch: true, // Default to enable web search
   },
+  isVoiceMode: false, // New state for voice mode
 };
 
 // Action types
@@ -32,6 +33,7 @@ type ChatAction =
   | { type: 'SET_AI_CONFIG'; payload: Partial<AIConfig> }
   | { type: 'SET_PERSONA'; payload: Persona }
   | { type: 'TOGGLE_WEB_SEARCH'; payload: boolean }
+  | { type: 'SET_VOICE_MODE'; payload: boolean }
   | { type: 'CLEAR_MESSAGES' };
 
 // Reducer
@@ -102,6 +104,11 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
           webSearch: action.payload,
         },
       };
+    case 'SET_VOICE_MODE':
+      return {
+        ...state,
+        isVoiceMode: action.payload,
+      };
     case 'CLEAR_MESSAGES':
       return {
         ...state,
@@ -123,6 +130,7 @@ interface ChatContextType {
   setAIConfig: (config: Partial<AIConfig>) => void;
   setPersona: (persona: Persona) => void;
   toggleWebSearch: (enabled: boolean) => void;
+  setVoiceMode: (enabled: boolean) => void;
   clearMessages: () => void;
 }
 
@@ -239,6 +247,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch({ type: 'TOGGLE_WEB_SEARCH', payload: enabled });
   };
 
+  const setVoiceMode = (enabled: boolean) => {
+    dispatch({ type: 'SET_VOICE_MODE', payload: enabled });
+  };
+
   const clearMessages = () => {
     dispatch({ type: 'CLEAR_MESSAGES' });
   };
@@ -255,6 +267,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setAIConfig,
         setPersona,
         toggleWebSearch,
+        setVoiceMode,
         clearMessages,
       }}
     >
