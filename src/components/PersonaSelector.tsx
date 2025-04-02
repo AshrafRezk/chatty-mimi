@@ -2,13 +2,29 @@
 import { useChat } from "@/context/ChatContext";
 import { Persona, Language } from "@/types";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 import { 
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { 
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { 
   BrainCircuit, 
   Stethoscope, 
@@ -21,17 +37,22 @@ import {
   Cross,
   BookOpen,
   Apple,
-  Home
+  Home,
+  Check,
+  ChevronsUpDown
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Motion } from "@/components/ui/motion";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const PersonaSelector = () => {
   const { state, setPersona } = useChat();
   const { aiConfig, language, mood } = state;
   const isMobile = useIsMobile();
+  const [open, setOpen] = useState(false);
   
-  const personas: { value: Persona; label: Record<Language, string>; icon: React.ReactNode }[] = [
+  const personas: { value: Persona; label: Record<Language, string>; icon: React.ReactNode; isNew?: boolean }[] = [
     { 
       value: 'general', 
       label: {
@@ -258,15 +279,20 @@ const PersonaSelector = () => {
         tr: 'Emlak Danışmanı',
         no: 'Eiendomskonsulent'
       },
-      icon: <Home className="h-4 w-4 mr-2" />
+      icon: <Home className="h-4 w-4 mr-2" />,
+      isNew: true
     },
   ];
 
   const handlePersonaChange = (value: string) => {
     setPersona(value as Persona);
+    setOpen(false);
   };
 
   const isDarkMode = mood === 'deep' || mood === 'focus';
+
+  const currentPersona = personas.find(p => p.value === aiConfig.persona);
+  const currentLabel = currentPersona?.label[language as keyof typeof currentPersona.label] || '';
   
   return (
     <Motion.div 
@@ -278,28 +304,68 @@ const PersonaSelector = () => {
         isMobile ? "" : language === 'ar' ? 'flex-row-reverse' : ''
       )}
     >
-      <Select value={aiConfig.persona} onValueChange={handlePersonaChange}>
-        <SelectTrigger 
-          className={cn(
-            "w-[180px] md:w-[220px] backdrop-blur-sm border-0",
-            isDarkMode 
-              ? "bg-white/20 text-white" 
-              : "bg-white/70 dark:bg-mimi-dark/60"
-          )}
-        >
-          <SelectValue placeholder="Select persona" />
-        </SelectTrigger>
-        <SelectContent className="max-h-[300px]">
-          {personas.map((persona) => (
-            <SelectItem key={persona.value} value={persona.value}>
-              <div className="flex items-center">
-                {persona.icon}
-                <span>{persona.label[language]}</span>
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={cn(
+              "w-[180px] md:w-[220px] flex items-center justify-between backdrop-blur-sm",
+              isDarkMode 
+                ? "bg-white/20 text-white border-white/30" 
+                : "bg-white/70 dark:bg-mimi-dark/60"
+            )}
+          >
+            <div className="flex items-center truncate">
+              {currentPersona?.icon}
+              <span className="truncate">{currentLabel}</span>
+              {currentPersona?.isNew && (
+                <Badge variant="outline" className="ml-2 h-5 bg-green-500/10 text-green-600 border-green-500/30">
+                  {language === 'ar' ? 'جديد' : 'NEW'}
+                </Badge>
+              )}
+            </div>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[200px] md:w-[320px] p-0">
+          <Command>
+            <CommandInput 
+              placeholder={language === 'ar' ? "ابحث عن شخصية..." : "Search personas..."} 
+              className={language === 'ar' ? 'text-right' : ''}
+            />
+            <CommandList>
+              <CommandEmpty>
+                {language === 'ar' ? 'لم يتم العثور على شخصية' : 'No persona found.'}
+              </CommandEmpty>
+              <CommandGroup>
+                {personas.map((persona) => (
+                  <CommandItem
+                    key={persona.value}
+                    value={persona.value}
+                    onSelect={() => handlePersonaChange(persona.value)}
+                    className="flex items-center"
+                  >
+                    {persona.icon}
+                    <span className="flex-1 truncate">
+                      {persona.label[language as keyof typeof persona.label]}
+                    </span>
+                    {persona.isNew && (
+                      <Badge variant="outline" className="ml-2 h-5 bg-green-500/10 text-green-600 border-green-500/30">
+                        {language === 'ar' ? 'جديد' : 'NEW'}
+                      </Badge>
+                    )}
+                    {persona.value === aiConfig.persona && (
+                      <Check className="ml-2 h-4 w-4" />
+                    )}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
     </Motion.div>
   );
 };

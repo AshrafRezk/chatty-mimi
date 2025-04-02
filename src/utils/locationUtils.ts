@@ -3,122 +3,174 @@ import { Language, UserLocation } from "../types";
 
 export const detectUserLocation = async (): Promise<UserLocation | null> => {
   try {
-    const response = await fetch("https://ipapi.co/json/");
+    const response = await fetch('https://ipapi.co/json/');
     if (!response.ok) {
-      throw new Error("Failed to fetch location data");
+      throw new Error('Failed to fetch location data');
     }
     
     const data = await response.json();
     return {
-      city: data.city,
-      country: data.country_name,
-      countryCode: data.country_code.toLowerCase()
+      city: data.city || 'Unknown City',
+      country: data.country_name || 'Unknown Country',
+      countryCode: data.country_code || 'US'
     };
   } catch (error) {
-    console.error("Error fetching location:", error);
+    console.error('Error detecting user location:', error);
     return null;
   }
 };
 
-export const getWelcomeMessage = (location: UserLocation | null, language: string): string => {
-  if (!location) {
-    switch (language) {
-      case 'ar': return "أهلاً بك!";
-      case 'fr': return "Bienvenue!";
-      case 'es': return "¡Bienvenido!";
-      case 'de': return "Willkommen!";
-      case 'it': return "Benvenuto!";
-      case 'pt': return "Bem-vindo!";
-      case 'ru': return "Добро пожаловать!";
-      case 'zh': return "欢迎!";
-      case 'ja': return "ようこそ!";
-      case 'ko': return "환영합니다!";
-      case 'tr': return "Hoş geldiniz!";
-      case 'no': return "Velkommen!";
-      default: return "Welcome!";
-    }
-  }
-  
-  const { city, country } = location;
-  
-  // Multilingual welcome messages
-  switch (language) {
-    case 'ar':
-      return `أهلاً بك من ${city}، ${country}!`;
-    case 'fr':
-      return `Bienvenue de ${city}, ${country}!`;
-    case 'es':
-      return `¡Bienvenido desde ${city}, ${country}!`;
-    case 'de':
-      return `Willkommen aus ${city}, ${country}!`;
-    case 'it':
-      return `Benvenuto da ${city}, ${country}!`;
-    case 'pt':
-      return `Bem-vindo de ${city}, ${country}!`;
-    case 'ru':
-      return `Добро пожаловать из ${city}, ${country}!`;
-    case 'zh':
-      return `来自${country}${city}的欢迎!`;
-    case 'ja':
-      return `${country}の${city}からようこそ!`;
-    case 'ko':
-      return `${country} ${city}에서 환영합니다!`;
-    case 'tr':
-      return `${city}, ${country}'den hoş geldiniz!`;
-    case 'no':
-      return `Velkommen fra ${city}, ${country}!`;
+export const getDefaultLanguageFromLocation = (countryCode: string): Language => {
+  switch (countryCode?.toUpperCase()) {
+    case 'EG':
+    case 'SA':
+    case 'AE':
+    case 'QA':
+    case 'KW':
+    case 'BH':
+    case 'OM':
+    case 'JO':
+    case 'LB':
+    case 'SY':
+    case 'IQ':
+    case 'YE':
+    case 'SD':
+      return 'ar';
+    case 'FR':
+      return 'fr';
+    case 'ES':
+    case 'MX':
+    case 'CO':
+    case 'AR':
+      return 'es';
+    case 'DE':
+    case 'AT':
+    case 'CH':
+      return 'de';
+    case 'IT':
+      return 'it';
+    case 'PT':
+    case 'BR':
+      return 'pt';
+    case 'RU':
+      return 'ru';
+    case 'CN':
+    case 'TW':
+    case 'HK':
+      return 'zh';
+    case 'JP':
+      return 'ja';
+    case 'KR':
+      return 'ko';
+    case 'TR':
+      return 'tr';
+    case 'NO':
+      return 'no';
     default:
-      return `Welcome from ${city}, ${country}!`;
+      return 'en';
   }
 };
 
-export const getDefaultLanguageFromLocation = (countryCode: string): Language => {
-  // Language mappings by country code
-  const languageMappings: Record<string, Language> = {
-    // Arabic speaking countries
-    'sa': 'ar', 'ae': 'ar', 'qa': 'ar', 'kw': 'ar', 'om': 'ar', 
-    'bh': 'ar', 'eg': 'ar', 'jo': 'ar', 'lb': 'ar', 'sy': 'ar', 
-    'iq': 'ar', 'ps': 'ar', 'ye': 'ar', 'sd': 'ar', 'ma': 'ar', 
-    'dz': 'ar', 'tn': 'ar', 'ly': 'ar',
-    
-    // French speaking countries
-    'fr': 'fr', 'be': 'fr', 'ch': 'fr', 'lu': 'fr', 'mc': 'fr',
-    'sn': 'fr', 'ci': 'fr', 'ml': 'fr', 'cd': 'fr', 'mg': 'fr',
-    'cm': 'fr', 'ca': 'fr',
-    
-    // Spanish speaking countries
-    'es': 'es', 'mx': 'es', 'co': 'es', 'ar': 'es', 'pe': 'es',
-    've': 'es', 'cl': 'es', 'ec': 'es', 'gt': 'es', 'cu': 'es',
-    'bo': 'es', 'do': 'es', 'hn': 'es', 'py': 'es', 'sv': 'es',
-    'ni': 'es', 'cr': 'es', 'pa': 'es', 'uy': 'es', 'pr': 'es',
-    
-    // German speaking countries
-    'de': 'de', 'at': 'de', 'li': 'de',
-    
-    // Italian speaking countries
-    'it': 'it', 'sm': 'it', 'va': 'it',
-    
-    // Portuguese speaking countries
-    'pt': 'pt', 'br': 'pt', 'ao': 'pt', 'mz': 'pt', 'gw': 'pt',
-    
-    // Russian speaking countries
-    'ru': 'ru', 'by': 'ru', 'kz': 'ru', 'kg': 'ru',
-    
-    // Chinese speaking regions
-    'cn': 'zh', 'tw': 'zh', 'hk': 'zh', 'sg': 'zh',
-    
-    // Japanese
-    'jp': 'ja',
-    
-    // Korean
-    'kr': 'ko',
-    
-    // Turkish
-    'tr': 'tr',
-    
-    // Norwegian
-    'no': 'no'
-  };
+export const getWelcomeMessage = (userLocation: UserLocation | null, language: Language): string => {
+  if (language === 'ar') {
+    return userLocation 
+      ? `مرحبًا بك في ميمي! أنا هنا لمساعدتك في ${userLocation.city}، ${userLocation.country}. كيف يمكنني مساعدتك اليوم؟
+      
+أنا لست مجرد مساعد ذكاء اصطناعي، بل منصة متكاملة تجمع بين عدة نماذج ذكاء اصطناعي وتقنيات متقدمة. يمكنني:
+
+• البحث في الإنترنت للحصول على معلومات محدثة
+• تحليل الصور واستخراج النصوص منها
+• تقديم المشورة المتخصصة في عدة مجالات
+• العمل بعدة لغات وأنماط
+• تحويل النص إلى كلام والاستماع لتعليماتك صوتيًا
+
+يمكنك اختيار شخصية متخصصة من القائمة المنسدلة في الأعلى للحصول على مساعدة موجهة في مجال محدد.`
+      : `مرحبًا بك في ميمي! أنا هنا لمساعدتك. كيف يمكنني مساعدتك اليوم؟
+      
+أنا لست مجرد مساعد ذكاء اصطناعي، بل منصة متكاملة تجمع بين عدة نماذج ذكاء اصطناعي وتقنيات متقدمة. يمكنني:
+
+• البحث في الإنترنت للحصول على معلومات محدثة
+• تحليل الصور واستخراج النصوص منها
+• تقديم المشورة المتخصصة في عدة مجالات
+• العمل بعدة لغات وأنماط
+• تحويل النص إلى كلام والاستماع لتعليماتك صوتيًا
+
+يمكنك اختيار شخصية متخصصة من القائمة المنسدلة في الأعلى للحصول على مساعدة موجهة في مجال محدد.`;
+  }
   
-  return languageMappings[countryCode.toLowerCase()] || 'en';
+  return userLocation 
+    ? `Welcome to Mimi! I'm here to assist you in ${userLocation.city}, ${userLocation.country}. How can I help you today?
+    
+I'm not just another AI assistant, but a comprehensive platform integrating multiple AI models and advanced technologies. I can:
+
+• Search the web for up-to-date information
+• Analyze images and extract text from them
+• Provide specialized expertise across various domains
+• Work in multiple languages and styles
+• Convert text to speech and listen to your voice commands
+
+You can select a specialized persona from the dropdown above to get targeted help in a specific domain.`
+    : `Welcome to Mimi! I'm here to assist you. How can I help you today?
+    
+I'm not just another AI assistant, but a comprehensive platform integrating multiple AI models and advanced technologies. I can:
+
+• Search the web for up-to-date information
+• Analyze images and extract text from them
+• Provide specialized expertise across various domains
+• Work in multiple languages and styles
+• Convert text to speech and listen to your voice commands
+
+You can select a specialized persona from the dropdown above to get targeted help in a specific domain.`;
+};
+
+export const getPersonaWelcomeMessage = (persona: string, language: Language): string => {
+  if (persona === 'diet_coach') {
+    return language === 'ar'
+      ? `أنا حاليًا في وضع مدرب الحمية الغذائية. يمكنني مساعدتك بـ:
+
+• تحليل القيمة الغذائية للوجبات
+• إنشاء خطط غذائية مخصصة
+• تقديم نصائح للأكل الصحي
+• تحليل الصور الغذائية وعرض محتواها الغذائي بيانيًا
+
+يمكنك إرفاق صور للطعام وسأحللها تلقائيًا!`
+      : `I'm currently in Diet Coach mode. I can help you with:
+
+• Analyzing meal nutrition content
+• Creating personalized meal plans
+• Providing healthy eating advice
+• Analyzing food images and displaying their nutritional content graphically
+
+You can attach food images and I'll analyze them automatically!`;
+  }
+  
+  if (persona === 'real_estate') {
+    return language === 'ar'
+      ? `أنا حاليًا في وضع مستشار العقارات. يمكنني مساعدتك بـ:
+
+• اقتراح عقارات تناسب ميزانيتك
+• تحليل خطط الدفع والرهون العقارية
+• مقارنة الخيارات الاستثمارية
+• تقديم معلومات عن اتجاهات السوق
+
+لمساعدتك بشكل أفضل، أخبرني عن:
+1. ميزانيتك المتاحة للدفعة الأولى
+2. راتبك الشهري
+3. المواقع التي تفضلها
+4. حجم عائلتك واحتياجاتها`
+      : `I'm currently in Real Estate Consultant mode. I can help you with:
+
+• Suggesting properties within your budget
+• Analyzing payment plans and mortgages
+• Comparing investment options
+• Providing market trend information
+
+To assist you better, please tell me about:
+1. Your available budget for down payment
+2. Your monthly income
+3. Your preferred locations
+4. Your family size and needs`;
+  }
+  
+  return '';
 };

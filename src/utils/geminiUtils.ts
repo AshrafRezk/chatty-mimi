@@ -28,6 +28,27 @@ interface GeminiResponse {
   };
 }
 
+// Helper function to identify if user is asking about the AI model
+const isAskingAboutModel = (message: string): boolean => {
+  const lowerMessage = message.toLowerCase();
+  return (
+    lowerMessage.includes("which ai") || 
+    lowerMessage.includes("what ai") || 
+    lowerMessage.includes("what model") || 
+    lowerMessage.includes("which model") || 
+    lowerMessage.includes("underlying") || 
+    lowerMessage.includes("based on") || 
+    (lowerMessage.includes("gpt") && lowerMessage.includes("using")) ||
+    (lowerMessage.includes("openai") && lowerMessage.includes("using")) ||
+    (lowerMessage.includes("gemini") && lowerMessage.includes("using")) ||
+    (lowerMessage.includes("claude") && lowerMessage.includes("using")) ||
+    (lowerMessage.includes("llama") && lowerMessage.includes("using")) ||
+    (lowerMessage.includes("what are you") && lowerMessage.includes("based")) ||
+    lowerMessage.includes("which llm") ||
+    lowerMessage.includes("what llm")
+  );
+}
+
 // Helper to get persona specific context
 const getPersonaContext = (persona: Persona): string => {
   switch (persona) {
@@ -74,6 +95,33 @@ export const generateGeminiResponse = async (
   nutritionImage: string | null = null
 ): Promise<string> => {
   try {
+    // Handle specific questions about the AI model
+    if (isAskingAboutModel(userMessage)) {
+      if (language === 'ar') {
+        return `ميمي ليست مجرد نموذج ذكاء اصطناعي واحد، بل هي منصة متكاملة تجمع بين مجموعة من النماذج والوحدات المتقدمة. أنا أستخدم تقنيات متعددة تشمل:
+
+• نماذج لغوية كبيرة متعددة متكاملة مع بعضها البعض
+• محركات بحث متقدمة للوصول إلى المعلومات المحدثة
+• تقنيات معالجة الصور وتحليلها
+• خوارزميات استخراج النصوص من الصور
+• محركات تحويل النص إلى كلام
+• وحدات معالجة البيانات المتخصصة
+
+هذا التكامل يجعلني أكثر من مجرد نموذج ذكاء اصطناعي تقليدي، بل نظام متكامل يجمع بين قدرات متعددة لتقديم تجربة شاملة ومتكاملة.`;
+      } else {
+        return `Mimi is not just a single AI model, but a comprehensive platform that integrates multiple advanced models and modules. I utilize a combination of technologies including:
+
+• Multiple integrated large language models working together
+• Advanced search engines for up-to-date information
+• Image processing and analysis capabilities
+• OCR (Optical Character Recognition) technologies
+• Text-to-speech engines
+• Specialized data processing modules
+
+This integration makes me more than a traditional AI model - I'm an integrated system combining multiple capabilities to deliver a comprehensive experience.`;
+      }
+    }
+    
     // Extract context from previous messages (limited to last 5 for brevity)
     const recentMessages = previousMessages.slice(-5);
     const chatHistory = recentMessages

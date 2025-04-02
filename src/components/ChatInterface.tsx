@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import Message from "./Message";
 import ChatInput from "./ChatInput";
@@ -6,9 +5,10 @@ import MoodSelector from "./MoodSelector";
 import PersonaSelector from "./PersonaSelector";
 import ThinkingAnimation from "./ThinkingAnimation";
 import VoiceChat from "./VoiceChat";
+import SuggestedQuestions from "./SuggestedQuestions";
 import { useChat } from "@/context/ChatContext";
 import { cn } from "@/lib/utils";
-import { getWelcomeMessage } from "@/utils/locationUtils";
+import { getWelcomeMessage, getPersonaWelcomeMessage } from "@/utils/locationUtils";
 import { generateGeminiResponse } from "@/utils/geminiUtils";
 import { performWebSearch, calculateCertaintyScore } from "@/utils/searchUtils";
 import { toast } from "sonner";
@@ -30,10 +30,8 @@ const ChatInterface = () => {
   const [showVoiceChat, setShowVoiceChat] = useState(false);
   const welcomeMessageSentRef = useRef(false);
   
-  // Sound effects
   const messageReceivedSound = useRef<HTMLAudioElement | null>(null);
   
-  // Initialize sound on component mount
   useEffect(() => {
     messageReceivedSound.current = new Audio('/sounds/message-received.mp3');
     if (messageReceivedSound.current) messageReceivedSound.current.volume = 0.3;
@@ -58,11 +56,13 @@ const ChatInterface = () => {
     scrollToBottom();
   }, [messages, isTyping]);
   
-  // Fix the welcome message duplication issue by using a ref instead of state
   useEffect(() => {
     if (messages.length === 0 && !welcomeMessageSentRef.current) {
       welcomeMessageSentRef.current = true;
       const welcomeMessage = getWelcomeMessage(userLocation, language);
+      const personaInfo = getPersonaWelcomeMessage(aiConfig.persona, language);
+      
+      const fullWelcomeMessage = `${welcomeMessage}${personaInfo ? `\n\n${personaInfo}` : ''}`;
       
       const typingTimer = setTimeout(() => {
         setTyping(true);
@@ -71,7 +71,7 @@ const ChatInterface = () => {
           setTyping(false);
           playMessageReceivedSound();
           addMessage({
-            text: welcomeMessage,
+            text: fullWelcomeMessage,
             sender: "assistant",
           });
         }, 1500);
@@ -81,9 +81,8 @@ const ChatInterface = () => {
       
       return () => clearTimeout(typingTimer);
     }
-  }, [messages.length, userLocation, language, addMessage, setTyping]);
+  }, [messages.length, userLocation, language, addMessage, setTyping, aiConfig.persona]);
   
-  // Reset welcome message flag when messages are cleared
   useEffect(() => {
     return () => {
       if (messages.length === 0) {
@@ -92,12 +91,10 @@ const ChatInterface = () => {
     };
   }, [messages]);
   
-  // Extract nutrition data from response if diet_coach persona
   const extractNutritionData = (text: string): NutritionData | undefined => {
     if (aiConfig.persona !== 'diet_coach') return undefined;
     
     try {
-      // Look for JSON data at the end of the text
       const jsonMatch = text.match(/\{[\s\S]*"calories"[\s\S]*\}/);
       if (jsonMatch) {
         const jsonData = JSON.parse(jsonMatch[0]);
@@ -121,12 +118,10 @@ const ChatInterface = () => {
     return undefined;
   };
 
-  // Extract property data from response if real_estate persona
   const extractPropertyData = (text: string): PropertyData | undefined => {
     if (aiConfig.persona !== 'real_estate') return undefined;
     
     try {
-      // Look for JSON data with property information
       const jsonMatch = text.match(/\{[\s\S]*"price"[\s\S]*\}/);
       if (jsonMatch) {
         const jsonData = JSON.parse(jsonMatch[0]);
@@ -137,7 +132,6 @@ const ChatInterface = () => {
             typeof jsonData.bedrooms === 'number' && 
             typeof jsonData.bathrooms === 'number') {
           
-          // The paymentPlan is optional
           return {
             price: jsonData.price,
             location: jsonData.location,
@@ -159,13 +153,11 @@ const ChatInterface = () => {
     return undefined;
   };
 
-  // Function to create image URL from File
   const createImageUrl = (file: File): string => {
     return URL.createObjectURL(file);
   };
   
   const handleSendMessage = async (text: string, imageFile: File | null = null) => {
-    // Create image URL if file is provided
     const imageSrc = imageFile ? createImageUrl(imageFile) : undefined;
     
     addMessage({
@@ -186,7 +178,6 @@ const ChatInterface = () => {
       let response = "";
       let imageBase64: string | null = null;
       
-      // Convert image to base64 if provided
       if (imageFile && imageFile.type.startsWith('image/')) {
         try {
           const reader = new FileReader();
@@ -200,7 +191,6 @@ const ChatInterface = () => {
         }
       }
       
-      // Check if it's a query that likely needs web search
       const needsSearch = text.toLowerCase().startsWith("who is") || 
                           text.toLowerCase().includes("what is") || 
                           text.toLowerCase().includes("how to") ||
@@ -209,7 +199,6 @@ const ChatInterface = () => {
       
       if (aiConfig.webSearch && needsSearch) {
         try {
-          // Perform real web search
           references = await performWebSearch(text);
           certaintyScore = calculateCertaintyScore(references);
         } catch (error) {
@@ -218,7 +207,6 @@ const ChatInterface = () => {
       }
       
       try {
-        // Include references in the context for better responses
         const referencesContext = references.length > 0 
           ? `Relevant information from web search:
             ${references.map(ref => `- ${ref.title}: ${ref.snippet}`).join('\n')}`
@@ -252,13 +240,10 @@ const ChatInterface = () => {
         }
       }
       
-      // Extract nutrition data if diet_coach persona
       const nutritionData = extractNutritionData(response);
       
-      // Extract property data if real_estate persona
       const propertyData = extractPropertyData(response);
       
-      // Clean up response by removing JSON data at the end if data was found
       if (nutritionData) {
         response = response.replace(/\{[\s\S]*"calories"[\s\S]*\}/, '');
       }
@@ -294,7 +279,6 @@ const ChatInterface = () => {
         : "Error connecting to the AI service");
     }
     
-    // Clean up image URL if it was created
     if (imageSrc) {
       URL.revokeObjectURL(imageSrc);
     }
@@ -381,9 +365,11 @@ const ChatInterface = () => {
         </Collapsible>
         
         <div className={cn(
-          "flex-1 p-3 overflow-y-auto space-y-3",
+          "flex-1 px-3 pb-3 pt-0 overflow-y-auto space-y-3",
           getTextColor()
         )}>
+          {messages.length > 0 && <SuggestedQuestions />}
+          
           {messages.map((message) => (
             <Message key={message.id} message={message} />
           ))}
@@ -450,6 +436,8 @@ const ChatInterface = () => {
         "flex-1 p-3 md:p-4 overflow-y-auto space-y-3 md:space-y-4",
         getTextColor()
       )}>
+        {messages.length > 0 && <SuggestedQuestions />}
+        
         {messages.map((message) => (
           <Message key={message.id} message={message} />
         ))}
