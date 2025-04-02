@@ -1,4 +1,5 @@
 
+import React from "react";
 import { useChat } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Language } from "@/types";

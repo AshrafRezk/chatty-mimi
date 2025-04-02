@@ -1,32 +1,24 @@
 
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useChat } from "@/context/ChatContext";
 import { Moon, Sun, Globe } from "lucide-react";
 import { Language as LanguageType } from "@/types";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
+import LanguageSelector from "@/components/LanguageSelector";
+import { useTheme } from "@/hooks/use-theme";
 
 const Navbar = () => {
-  const { state, setLanguage, setTheme } = useChat();
+  const { state, setTheme } = useChat();
   const location = useLocation();
-  const { language, theme } = state;
+  const { language } = state;
+  const { theme } = useTheme();
 
   // Language texts
   const navTexts = {
     home: language === 'ar' ? 'الرئيسية' : 'Home',
     chat: language === 'ar' ? 'محادثة' : 'Chat',
     pricing: language === 'ar' ? 'الأسعار' : 'Pricing',
-    english: 'English',
-    arabic: 'العربية',
-  };
-
-  const handleLanguageChange = (newLang: LanguageType) => {
-    setLanguage(newLang);
   };
 
   const toggleTheme = () => {
@@ -68,21 +60,7 @@ const Navbar = () => {
         </nav>
 
         <div className="flex items-center space-x-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Select Language">
-                <Globe className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleLanguageChange('en')}>
-                {navTexts.english}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleLanguageChange('ar')}>
-                {navTexts.arabic}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <LanguageSelector />
 
           <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle Theme">
             {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
