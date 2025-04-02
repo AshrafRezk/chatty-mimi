@@ -54,6 +54,29 @@ const Chat = () => {
     };
   }, []);
 
+  // iOS Safari fix - prevent any potential overlays from persisting
+  useEffect(() => {
+    // This helps reset any potential stuck overlays on iOS Safari
+    const resetIOSView = () => {
+      if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+        document.body.style.WebkitOverflowScrolling = 'touch';
+        // Force layout recalculation
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+        }, 100);
+      }
+    };
+    
+    resetIOSView();
+    
+    // Cleanup function
+    return () => {
+      if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+        document.body.style.WebkitOverflowScrolling = '';
+      }
+    };
+  }, []);
+
   return (
     <Motion.div 
       initial={{ opacity: 0 }}
@@ -64,7 +87,8 @@ const Chat = () => {
         getMoodBackgroundClass(),
         language === 'ar' ? 'rtl' : '',
         mood === 'deep' || mood === 'focus' ? 'text-white' : '',
-        isVoiceMode ? 'overflow-hidden' : 'overflow-hidden'
+        // Fixed: Remove overflow-hidden for iOS to prevent content getting cut off
+        isVoiceMode ? 'overflow-y-auto' : 'overflow-y-auto'
       )}
       style={{ 
         height: '100vh', 
@@ -84,7 +108,7 @@ const Chat = () => {
         "flex flex-col",
         isMobile ? "max-w-full p-0 pt-1" : "container mx-auto py-2 px-2 md:py-4 md:px-4"
       )}
-      style={{ height: 'calc(100vh - 64px)', maxHeight: 'calc(100vh - 64px)' }}
+      style={{ height: 'calc(100vh - 64px)', maxHeight: 'calc(100vh - 64px)', position: 'relative', zIndex: 1 }}
       >
         <ComplianceBanner />
         <ChatInterface />

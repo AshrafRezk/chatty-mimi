@@ -1,267 +1,87 @@
-
-import { useChat } from "@/context/ChatContext";
-import Navbar from "@/components/Navbar";
-import { cn } from "@/lib/utils";
+import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Check, CreditCard, Clock } from "lucide-react";
-import { Motion } from "@/components/ui/motion";
-import { Badge } from "@/components/ui/badge";
-import SEOHead from "@/components/SEOHead";
+import { useTheme } from "@/hooks/use-theme";
+import { useChat } from "@/context/ChatContext";
+import { cn } from "@/lib/utils";
+import SEOHead from '@/components/SEOHead';
 
 const Pricing = () => {
+  const { resolvedTheme } = useTheme();
   const { state } = useChat();
   const { language } = state;
-  
-  const texts = {
-    title: {
-      en: "Simple, Transparent Pricing",
-      ar: "تسعير بسيط وشفاف"
-    },
-    subtitle: {
-      en: "Enjoy Mimi for free during our beta period",
-      ar: "استمتع بميمي مجانًا خلال فترة الإصدار التجريبي"
-    },
-    free: {
-      en: "Free",
-      ar: "مجاني"
-    },
-    premium: {
-      en: "Premium",
-      ar: "مميز"
-    },
-    comingSoon: {
-      en: "Coming Soon",
-      ar: "قريبًا"
-    },
-    limitedTime: {
-      en: "Limited Time Beta",
-      ar: "نسخة تجريبية لفترة محدودة"
-    },
-    currency: {
-      en: "$",
-      ar: "دولار"
-    },
-    perMonth: {
-      en: "per month",
-      ar: "شهريًا"
-    },
-    current: {
-      en: "Current Plan",
-      ar: "الخطة الحالية"
-    },
-    upgrade: {
-      en: "Upgrade",
-      ar: "ترقية"
-    },
-    notifyMe: {
-      en: "Notify Me When Available",
-      ar: "أخبرني عندما يتوفر"
-    },
-    features: {
-      free: [
-        { en: "15 messages per day", ar: "15 رسالة يوميًا" },
-        { en: "Basic chat functionality", ar: "وظائف الدردشة الأساسية" },
-        { en: "Multiple languages", ar: "لغات متعددة" },
-        { en: "Mood-based responses", ar: "ردود حسب المزاج" },
+
+  const pricingData = [
+    {
+      title: language === 'ar' ? 'الباقة المجانية' : 'Free Plan',
+      price: language === 'ar' ? 'مجاناً' : 'Free',
+      features: [
+        language === 'ar' ? '5 رسائل يومياً' : '5 messages per day',
+        language === 'ar' ? 'محادثة أساسية' : 'Basic chat capabilities',
+        language === 'ar' ? 'دعم اللغة العربية والإنجليزية' : 'Arabic and English support',
       ],
-      premium: [
-        { en: "Unlimited messages", ar: "رسائل غير محدودة" },
-        { en: "Advanced chat features", ar: "ميزات دردشة متقدمة" },
-        { en: "Priority support", ar: "دعم ذو أولوية" },
-        { en: "Custom chat history", ar: "سجل محادثة مخصص" },
-        { en: "Voice messages (coming soon)", ar: "رسائل صوتية (قريبًا)" },
-      ]
+      cta: language === 'ar' ? 'البدء مجاناً' : 'Start for Free',
+      variant: 'outline' as const,
     },
-    paymentOptions: {
-      title: {
-        en: "Payment Options",
-        ar: "خيارات الدفع"
-      },
-      egypt: {
-        en: "Egypt",
-        ar: "مصر"
-      },
-      global: {
-        en: "Global",
-        ar: "عالمي"
-      },
-      options: {
-        egypt: [
-          { en: "InstaPay", ar: "انستاباي" },
-          { en: "Fawry", ar: "فوري" },
-          { en: "Bank Transfer", ar: "تحويل بنكي" },
-        ],
-        global: [
-          { en: "Credit Card", ar: "بطاقة ائتمان" },
-          { en: "PayPal", ar: "باي بال" },
-        ]
-      }
-    }
-  };
+    {
+      title: language === 'ar' ? 'الباقة المميزة' : 'Premium Plan',
+      price: language === 'ar' ? '10 جنيه مصري/شهر' : '10 EGP/month',
+      features: [
+        language === 'ar' ? 'محادثات غير محدودة' : 'Unlimited messages',
+        language === 'ar' ? 'دعم جميع التخصصات' : 'All expert personas',
+        language === 'ar' ? 'البحث المتقدم على الويب' : 'Advanced web searching',
+        language === 'ar' ? 'تحليل الصور' : 'Image analysis',
+        language === 'ar' ? 'المحادثات الصوتية' : 'Voice conversations',
+        language === 'ar' ? 'تحويل النص إلى كلام' : 'Text-to-speech capabilities',
+      ],
+      cta: language === 'ar' ? 'ترقية الآن' : 'Upgrade Now',
+      variant: 'default' as const,
+      highlight: true,
+    },
+  ];
 
   return (
-    <div className={cn(
-      "min-h-screen bg-background",
-      language === 'ar' ? 'rtl' : ''
-    )}>
-      <SEOHead 
-        title={language === 'ar' ? "ميمي - الأسعار" : "Mimi - Pricing"}
-        description={language === 'ar' ? "خطط تسعير بسيطة وشفافة. استمتع بميمي مجانًا خلال فترة البيتا المحدودة. خطة بريميوم قادمة قريبا!" : "Simple and transparent pricing plans. Enjoy Mimi for free during our limited time beta. Premium plan coming soon!"}
-        canonicalUrl="https://mimi-ai.app/pricing"
-      />
-      <Navbar />
-      <main className="py-16 px-4">
-        <Motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="container mx-auto max-w-5xl"
-        >
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4 gradient-text">
-              {texts.title[language]}
-            </h1>
-            <p className="text-xl text-muted-foreground">
-              {texts.subtitle[language]}
-            </p>
-          </div>
-          
-          {/* Pricing cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-            {/* Free plan */}
-            <Motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="border rounded-xl p-8 bg-white dark:bg-mimi-dark/20 shadow-sm hover:shadow-md transition-shadow relative"
+    <div className="min-h-screen bg-background py-12">
+      <SEOHead title={language === 'ar' ? "ميمي - الأسعار" : "Mimi - Pricing"} />
+      <div className="container mx-auto px-4">
+        <h1 className="text-3xl font-semibold text-center mb-8">
+          {language === 'ar' ? 'اختر خطتك' : 'Choose Your Plan'}
+        </h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {pricingData.map((plan, index) => (
+            <div
+              key={index}
+              className={cn(
+                "p-6 rounded-lg shadow-md",
+                plan.highlight
+                  ? "bg-gradient-to-br from-primary to-secondary text-white"
+                  : "bg-card text-card-foreground dark:bg-card dark:text-card-foreground",
+                plan.highlight ? "border-4 border-accent" : "border border-input",
+                "flex flex-col justify-between"
+              )}
             >
-              <Badge className="absolute top-4 right-4 bg-green-500/10 text-green-500 hover:bg-green-500/20 border-none">
-                {texts.limitedTime[language]}
-              </Badge>
-              <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-2">
-                  {texts.free[language]}
-                </h2>
-                <div className="flex items-end">
-                  <span className="text-4xl font-bold">0</span>
-                  <span className="text-muted-foreground ml-1">{texts.currency[language]}</span>
-                </div>
-                <p className="text-muted-foreground">
-                  {texts.perMonth[language]}
-                </p>
-              </div>
-              
-              <ul className="space-y-3 mb-8">
-                {texts.features.free.map((feature, index) => (
-                  <li key={index} className="flex items-center">
-                    <Check className="h-5 w-5 text-green-500 mr-2" />
-                    <span>{feature[language]}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              <Button variant="outline" className="w-full" disabled>
-                {texts.current[language]}
-              </Button>
-            </Motion.div>
-            
-            {/* Premium plan */}
-            <Motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="border border-mimi-primary rounded-xl p-8 bg-white dark:bg-mimi-dark/20 shadow-md hover:shadow-lg transition-shadow relative"
-            >
-              <Badge className="absolute top-4 right-4 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-none flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {texts.comingSoon[language]}
-              </Badge>
-              
-              <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-2">
-                  {texts.premium[language]}
-                </h2>
-                <div className="flex items-end">
-                  <span className="text-4xl font-bold">4.99</span>
-                  <span className="text-muted-foreground ml-1">{texts.currency[language]}</span>
-                </div>
-                <p className="text-muted-foreground">
-                  {texts.perMonth[language]}
-                </p>
-              </div>
-              
-              <ul className="space-y-3 mb-8">
-                {texts.features.premium.map((feature, index) => (
-                  <li key={index} className="flex items-center">
-                    <Check className="h-5 w-5 text-green-500 mr-2" />
-                    <span>{feature[language]}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              <Button className="w-full bg-mimi-primary hover:bg-mimi-secondary">
-                {texts.notifyMe[language]}
-              </Button>
-            </Motion.div>
-          </div>
-          
-          {/* Payment options */}
-          <Motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="border rounded-xl p-8 bg-white dark:bg-mimi-dark/20"
-          >
-            <h2 className="text-2xl font-bold mb-6 text-center">
-              {texts.paymentOptions.title[language]}
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Egypt payment options */}
               <div>
-                <h3 className="text-xl font-semibold mb-4 text-mimi-primary">
-                  {texts.paymentOptions.egypt[language]}
-                </h3>
-                <ul className="space-y-2">
-                  {texts.paymentOptions.options.egypt.map((option, index) => (
-                    <li key={index} className="flex items-center">
-                      <Check className="h-4 w-4 text-mimi-primary mr-2" />
-                      {option[language]}
+                <h2 className="text-2xl font-semibold mb-4">{plan.title}</h2>
+                <p className="text-xl mb-4">
+                  {plan.price}
+                </p>
+                <ul className="list-disc pl-5 mb-6">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="mb-2">
+                      {feature}
                     </li>
                   ))}
                 </ul>
               </div>
-              
-              {/* Global payment options */}
-              <div>
-                <h3 className="text-xl font-semibold mb-4 text-mimi-primary">
-                  {texts.paymentOptions.global[language]}
-                </h3>
-                <ul className="space-y-2">
-                  {texts.paymentOptions.options.global.map((option, index) => (
-                    <li key={index} className="flex items-center">
-                      <Check className="h-4 w-4 text-mimi-primary mr-2" />
-                      {option[language]}
-                    </li>
-                  ))}
-                </ul>
-                
-                {/* PayPal Payment Button - Disabled since it's coming soon */}
-                <div className="mt-4 pt-4 border-t">
-                  <Button 
-                    variant="outline" 
-                    className="w-full border-blue-500 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center justify-center gap-2"
-                    disabled
-                  >
-                    <CreditCard className="w-5 h-5" />
-                    {language === 'ar' ? "قريبًا" : "Coming Soon"}
-                  </Button>
-                </div>
-              </div>
+              <Link to="/chat">
+                <Button variant={plan.variant} className="w-full">
+                  {plan.cta}
+                </Button>
+              </Link>
             </div>
-          </Motion.div>
-        </Motion.div>
-      </main>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

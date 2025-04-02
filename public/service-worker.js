@@ -1,6 +1,6 @@
 
 // Service worker for Mimi AI Assistant PWA
-const CACHE_NAME = 'mimi-ai-v1.1';
+const CACHE_NAME = 'mimi-ai-v1.2';
 
 const STATIC_ASSETS = [
   '/',
@@ -59,12 +59,18 @@ self.addEventListener('fetch', (event) => {
       !event.request.url.startsWith(self.location.origin)) {
     return;
   }
-
+  
+  // Special handling for iOS Safari 
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  
   // For navigation requests (HTML pages), use a network-first strategy
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
         .then(response => {
+          if (!response.ok && response.status === 0) {
+            throw new Error('Network response was not ok');
+          }
           // Cache a copy of the response
           const responseToCache = response.clone();
           caches.open(CACHE_NAME)
@@ -82,42 +88,68 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For all other requests, try the cache first, then network
-  event.respondWith(
-    caches.match(event.request)
-      .then(cachedResponse => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-
-        return fetch(event.request)
-          .then(response => {
-            // Don't cache if not a success response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
-            // Cache a copy of the response
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
-          })
-          .catch(() => {
-            // If both cache and network fail, return a basic offline message for HTML
-            if (event.request.headers.get('accept')?.includes('text/html')) {
-              return caches.match('/index.html');
-            }
-            return new Response('Network error happened', {
-              status: 408,
-              headers: { 'Content-Type': 'text/plain' }
+  // Modified approach for iOS Safari to prevent conflicts
+  if (isIOS) {
+    // Network-first approach for iOS
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          
+          // Only cache successful responses
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME)
+            .then(cache => {
+              cache.put(event.request, responseToCache);
             });
-          });
-      })
-  );
+          
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cache if network fails
+          return caches.match(event.request);
+        })
+    );
+  } else {
+    // Standard cache-first approach for other browsers
+    event.respondWith(
+      caches.match(event.request)
+        .then(cachedResponse => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+
+          return fetch(event.request)
+            .then(response => {
+              // Don't cache if not a success response
+              if (!response || response.status !== 200 || response.type !== 'basic') {
+                return response;
+              }
+
+              // Cache a copy of the response
+              const responseToCache = response.clone();
+              caches.open(CACHE_NAME)
+                .then(cache => {
+                  cache.put(event.request, responseToCache);
+                });
+
+              return response;
+            })
+            .catch(() => {
+              // If both cache and network fail, return a basic offline message for HTML
+              if (event.request.headers.get('accept')?.includes('text/html')) {
+                return caches.match('/index.html');
+              }
+              return new Response('Network error happened', {
+                status: 408,
+                headers: { 'Content-Type': 'text/plain' }
+              });
+            });
+        })
+    );
+  }
 });
 
 // Handle push notifications
