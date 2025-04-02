@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Message as MessageType } from "@/types";
 import MessageReferences from "./MessageReferences";
@@ -60,9 +59,9 @@ const Message = ({ message }: MessageProps) => {
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
         components={{
-          code({ node, inline, className, children, ...props }) {
+          code({node, className, children, ...props}) {
             const match = /language-(\w+)/.exec(className || "");
-            return !inline && match ? (
+            return match ? (
               <SyntaxHighlighter
                 style={atomDark}
                 language={match[1]}
@@ -77,7 +76,7 @@ const Message = ({ message }: MessageProps) => {
               </code>
             );
           },
-          pre({ children }) {
+          pre({children}) {
             return (
               <pre className="overflow-auto p-0 rounded-lg my-2">
                 {children}
