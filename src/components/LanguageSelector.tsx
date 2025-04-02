@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useChat } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Language } from "@/types";
@@ -17,6 +17,7 @@ import {
 const LanguageSelector: React.FC = () => {
   const { state, setLanguage } = useChat();
   const { language } = state;
+  const [open, setOpen] = useState(false);
   
   const languages = [
     { code: 'en', label: 'English' },
@@ -36,6 +37,7 @@ const LanguageSelector: React.FC = () => {
 
   const handleLanguageChange = (code: Language) => {
     setLanguage(code);
+    setOpen(false);
   };
 
   // Group languages by region for better dropdown organization
@@ -55,7 +57,7 @@ const LanguageSelector: React.FC = () => {
   return (
     <div className="flex items-center gap-2">
       <Globe className="h-4 w-4 opacity-70" />
-      <DropdownMenu>
+      <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="text-xs py-1 px-3">
             {currentLanguage}
