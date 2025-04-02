@@ -45,14 +45,14 @@ const Index = () => {
             <p className="text-2xl md:text-3xl font-medium italic mb-8">
               "{texts.quote[language]}"
             </p>
-            <Button 
-              as={Link} 
-              to="/chat" 
-              size="lg"
-              className="bg-mimi-primary hover:bg-mimi-secondary"
-            >
-              {texts.getStarted[language]}
-            </Button>
+            <Link to="/chat">
+              <Button 
+                size="lg"
+                className="bg-mimi-primary hover:bg-mimi-secondary"
+              >
+                {texts.getStarted[language]}
+              </Button>
+            </Link>
           </div>
         </section>
         

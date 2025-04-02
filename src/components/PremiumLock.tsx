@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useChat } from "@/context/ChatContext";
 import { cn } from "@/lib/utils";
+import { PayPal } from "lucide-react";
 
 const PremiumLock = () => {
   const { state } = useChat();
@@ -14,6 +15,7 @@ const PremiumLock = () => {
       : 'To continue chatting with Mimi, please upgrade to premium',
     payEgypt: language === 'ar' ? 'الدفع عبر حوالة محلية (مصر)' : 'Pay via local transfer (Egypt)',
     payGlobal: language === 'ar' ? 'الدفع عبر بوابة دفع عالمية' : 'Pay via global payment',
+    payPaypal: language === 'ar' ? 'الدفع عبر باي بال' : 'Pay with PayPal',
     contactUs: language === 'ar' ? 'تواصل معنا عبر واتساب' : 'Contact us via WhatsApp',
   };
 
@@ -50,6 +52,13 @@ const PremiumLock = () => {
           </Button>
           <Button variant="outline" className="w-full border-mimi-primary text-mimi-primary hover:bg-mimi-soft">
             {texts.payGlobal}
+          </Button>
+          <Button 
+            variant="outline" 
+            className="w-full border-blue-500 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center justify-center gap-2"
+          >
+            <PayPal className="w-5 h-5" />
+            {texts.payPaypal}
           </Button>
           <Button variant="link" className="w-full text-mimi-secondary">
             {texts.contactUs}

@@ -2,7 +2,7 @@
 import { useChat } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Language } from "@/types";
-import { Language as LanguageIcon } from "lucide-react";
+import { Globe } from "lucide-react";
 
 const LanguageSelector = () => {
   const { state, setLanguage } = useChat();
@@ -19,7 +19,7 @@ const LanguageSelector = () => {
 
   return (
     <div className="flex items-center gap-2">
-      <LanguageIcon className="h-4 w-4 opacity-70" />
+      <Globe className="h-4 w-4 opacity-70" />
       <div className="flex border rounded-md overflow-hidden">
         {languages.map((lang) => (
           <Button

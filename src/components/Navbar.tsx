@@ -2,7 +2,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useChat } from "@/context/ChatContext";
-import { Moon, Sun, Language } from "lucide-react";
+import { Moon, Sun, Globe } from "lucide-react";
 import { Language as LanguageType } from "@/types";
 import { 
   DropdownMenu, 
@@ -71,7 +71,7 @@ const Navbar = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Select Language">
-                <Language className="h-5 w-5" />
+                <Globe className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

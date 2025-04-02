@@ -15,9 +15,26 @@ const Chat = () => {
     document.title = language === 'ar' ? "ميمي - المحادثة" : "Mimi - Chat";
   }, [language]);
 
+  // Get mood-specific background class
+  const getMoodBackgroundClass = () => {
+    switch (mood) {
+      case 'calm':
+        return 'bg-calm-gradient';
+      case 'friendly':
+        return 'bg-friendly-gradient';
+      case 'deep':
+        return 'bg-deep-gradient';
+      case 'focus':
+        return 'bg-focus-gradient';
+      default:
+        return 'bg-background';
+    }
+  };
+
   return (
     <div className={cn(
-      "min-h-screen bg-background",
+      "min-h-screen transition-colors duration-300",
+      getMoodBackgroundClass(),
       language === 'ar' ? 'rtl' : ''
     )}>
       <Navbar />

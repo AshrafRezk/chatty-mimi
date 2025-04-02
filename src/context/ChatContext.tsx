@@ -41,6 +41,8 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
         language: action.payload,
       };
     case 'SET_MOOD':
+      // Save mood preference to localStorage
+      localStorage.setItem('mimi-mood', action.payload);
       return {
         ...state,
         mood: action.payload,
@@ -98,6 +100,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Load preferences from localStorage
     const savedLanguage = localStorage.getItem('mimi-language') as Language;
     const savedTheme = localStorage.getItem('mimi-theme') as Theme;
+    const savedMood = localStorage.getItem('mimi-mood') as Mood;
     
     if (savedLanguage) {
       dispatch({ type: 'SET_LANGUAGE', payload: savedLanguage });
@@ -106,6 +109,15 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (savedTheme) {
       dispatch({ type: 'SET_THEME', payload: savedTheme });
       document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+    } else {
+      // Check system preference if no saved theme
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      dispatch({ type: 'SET_THEME', payload: prefersDark ? 'dark' : 'light' });
+      document.documentElement.classList.toggle('dark', prefersDark);
+    }
+    
+    if (savedMood) {
+      dispatch({ type: 'SET_MOOD', payload: savedMood });
     }
     
     // Detect user location
@@ -123,12 +135,31 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     getLocation();
+
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      // Only update if theme is set to 'auto' or 'system'
+      if (state.theme === 'auto' || state.theme === 'system') {
+        document.documentElement.classList.toggle('dark', e.matches);
+        dispatch({ type: 'SET_THEME', payload: e.matches ? 'dark' : 'light' });
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   // Update document class when theme changes
   useEffect(() => {
     document.documentElement.classList.toggle('dark', state.theme === 'dark');
-  }, [state.theme]);
+    
+    // Apply mood-based styling to body
+    document.body.dataset.mood = state.mood;
+    
+    // Apply language direction
+    document.documentElement.dir = state.language === 'ar' ? 'rtl' : 'ltr';
+  }, [state.theme, state.mood, state.language]);
 
   const addMessage = (message: Omit<Message, 'id' | 'timestamp'>) => {
     const newMessage: Message = {

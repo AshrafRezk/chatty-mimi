@@ -1,7 +1,7 @@
 
-export type Language = 'en' | 'ar';
+export type Language = 'en' | 'ar' | 'fr' | 'es' | 'de' | 'it' | 'pt' | 'ru' | 'zh' | 'ja' | 'ko' | 'tr';
 
-export type Theme = 'light' | 'dark';
+export type Theme = 'light' | 'dark' | 'system' | 'auto';
 
 export type Mood = 'calm' | 'friendly' | 'deep' | 'focus';
 
