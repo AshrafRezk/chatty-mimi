@@ -117,10 +117,6 @@ export default {
 			backgroundImage: {
 				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
 				'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-				'calm-gradient': 'linear-gradient(to right, #D3E4FD, #E5DEFF)',
-				'friendly-gradient': 'linear-gradient(to right, #E5DEFF, #D6BCFA)',
-				'deep-gradient': 'linear-gradient(to right, #7E69AB, #9B87F5)',
-				'focus-gradient': 'linear-gradient(to right, #1A1F2C, #7E69AB)',
 			}
 		}
 	},

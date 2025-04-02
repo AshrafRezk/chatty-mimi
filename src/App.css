@@ -55,6 +55,9 @@ html, body {
   position: relative;
   margin-bottom: 8px;
   z-index: 1;
+  overflow-wrap: break-word; /* Ensure text wraps */
+  word-break: break-word; /* Allow words to break if necessary */
+  max-width: 100%; /* Ensure content doesn't overflow */
 }
 
 /* Position the copy and download buttons in a way that doesn't overlap with text */
@@ -76,13 +79,34 @@ html, body {
   animation: fadeIn 0.3s ease-out forwards;
 }
 
-/* Fix for deep and focus modes */
-.bg-deep-gradient .text-white,
-.bg-focus-gradient .text-white {
-  color: rgba(255, 255, 255, 0.95) !important;
+/* Message styling improvements */
+.chat-bubble-assistant pre,
+.chat-bubble-user pre {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  max-width: 100%;
 }
 
-.bg-deep-gradient .bg-white\/20,
-.bg-focus-gradient .bg-white\/20 {
-  background-color: rgba(255, 255, 255, 0.15) !important;
+.chat-bubble-assistant img,
+.chat-bubble-user img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Ensure proper scrolling throughout the app */
+.overflow-auto, 
+.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* Prevent horizontal overflow */
+.max-w-full {
+  max-width: 100%;
+}
+
+/* Improved text constraints */
+p, h1, h2, h3, h4, h5, h6, span, div {
+  max-width: 100%;
+  overflow-wrap: break-word;
 }

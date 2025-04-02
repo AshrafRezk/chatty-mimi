@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, useCallback, memo } from "react";
 import Message from "./Message";
 import ChatInput from "./ChatInput";
-import MoodSelector from "./MoodSelector";
 import PersonaSelector from "./PersonaSelector";
 import ThinkingAnimation from "./ThinkingAnimation";
 import VoiceChat from "./VoiceChat";
@@ -26,17 +25,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { scheduleWeatherNotification, scheduleTipNotification } from "@/utils/pushNotificationUtils";
 
-// Memoize individual messages for better performance
 const MemoizedMessage = memo(Message);
 
 const ChatInterface = () => {
   const { state, addMessage, setTyping, clearMessages, setVoiceMode } = useChat();
-  const { messages, mood, language, isTyping, userLocation, aiConfig, isVoiceMode } = state;
+  const { messages, language, isTyping, userLocation, aiConfig, isVoiceMode } = state;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   
-  const [moodSelectorOpen, setMoodSelectorOpen] = useState(false);
+  const [personaSelectorOpen, setPersonaSelectorOpen] = useState(false);
   const [showVoiceChat, setShowVoiceChat] = useState(false);
   const welcomeMessageSentRef = useRef(false);
   
@@ -45,7 +43,6 @@ const ChatInterface = () => {
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // For iOS, use system sounds
       try {
         messageSentSound.current = new Audio('/sounds/message-sent.mp3');
         messageReceivedSound.current = new Audio('/sounds/message-received.mp3');
@@ -277,7 +274,7 @@ const ChatInterface = () => {
           text, 
           messages,
           language, 
-          mood,
+          'friendly',
           locationString,
           aiConfig.persona,
           referencesContext,
@@ -353,7 +350,6 @@ const ChatInterface = () => {
         "• Location awareness for personalized answers\n" +
         "• Expert in multiple domains (programming, medicine, real estate, etc.)\n" +
         "• Image processing and analysis capabilities\n" +
-        "• Conversation in different moods (calm, friendly, deep, focused)\n" +
         "• Interactive chart and visualization creation\n" +
         "• Text-to-speech functionality\n" +
         "• Voice chat support\n" +
@@ -395,7 +391,7 @@ const ChatInterface = () => {
     if (imageSrc) {
       URL.revokeObjectURL(imageSrc);
     }
-  }, [addMessage, aiConfig.persona, extractNutritionData, extractPropertyData, language, messages, mood, playMessageReceivedSound, playMessageSentSound, setTyping, userLocation]);
+  }, [addMessage, aiConfig.persona, extractNutritionData, extractPropertyData, language, messages, playMessageReceivedSound, playMessageSentSound, setTyping, userLocation]);
   
   const handleVoiceChatClose = useCallback(() => {
     setShowVoiceChat(false);
@@ -406,45 +402,14 @@ const ChatInterface = () => {
     setShowVoiceChat(!showVoiceChat);
     setVoiceMode(!showVoiceChat);
   }, [setVoiceMode, showVoiceChat]);
-  
-  const getTextColor = () => {
-    switch (mood) {
-      case 'deep':
-      case 'focus':
-        return 'text-white';
-      default:
-        return '';
-    }
-  };
-
-  const getMoodStyle = () => {
-    const baseClasses = "flex flex-col rounded-lg shadow-lg transition-colors";
-    
-    const heightClass = "h-full";
-    
-    const mobileClasses = isMobile ? "mx-0 rounded-none" : "";
-    
-    switch (mood) {
-      case 'calm':
-        return cn(baseClasses, heightClass, "bg-calm-gradient", mobileClasses);
-      case 'friendly':
-        return cn(baseClasses, heightClass, "bg-friendly-gradient", mobileClasses);
-      case 'deep':
-        return cn(baseClasses, heightClass, "bg-deep-gradient text-white", mobileClasses);
-      case 'focus':
-        return cn(baseClasses, heightClass, "bg-focus-gradient text-white", mobileClasses);
-      default:
-        return cn(baseClasses, heightClass, "bg-background", mobileClasses);
-    }
-  };
 
   if (isMobile) {
     return (
-      <div className={getMoodStyle()}>
+      <div className="flex flex-col h-full rounded-lg shadow-lg transition-colors bg-background">
         <Collapsible 
           className="px-2 bg-background/50 backdrop-blur-sm"
-          open={moodSelectorOpen}
-          onOpenChange={setMoodSelectorOpen}
+          open={personaSelectorOpen}
+          onOpenChange={setPersonaSelectorOpen}
         >
           <div className="flex justify-center py-1">
             <CollapsibleTrigger asChild>
@@ -453,9 +418,9 @@ const ChatInterface = () => {
                 size="sm" 
                 className="h-6 w-full flex items-center justify-center rounded-full opacity-70 hover:opacity-100"
               >
-                {moodSelectorOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                {personaSelectorOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 <span className="ml-1 text-xs">
-                  {moodSelectorOpen ? 
+                  {personaSelectorOpen ? 
                     (language === 'ar' ? "إخفاء الإعدادات" : "Hide Settings") : 
                     (language === 'ar' ? "الإعدادات" : "Settings")}
                 </span>
@@ -464,7 +429,6 @@ const ChatInterface = () => {
           </div>
           <CollapsibleContent className="pb-2">
             <div className="space-y-2">
-              <MoodSelector />
               <PersonaSelector />
             </div>
           </CollapsibleContent>
@@ -472,10 +436,7 @@ const ChatInterface = () => {
         
         <div 
           ref={messagesContainerRef}
-          className={cn(
-            "flex-1 pb-3 pt-0 space-y-3 overflow-y-auto scroll-container",
-            getTextColor()
-          )}
+          className="flex-1 pb-3 pt-0 space-y-3 overflow-y-auto scroll-container"
         >
           <div className="px-3 space-y-3">
             {messages.map((message) => (
@@ -484,10 +445,7 @@ const ChatInterface = () => {
             
             {isTyping && (
               <div className="flex mb-4 animate-fade-in">
-                <div className={cn(
-                  "chat-bubble-assistant",
-                  mood === 'deep' || mood === 'focus' ? "bg-slate-800/50" : ""
-                )}>
+                <div className="chat-bubble-assistant">
                   <ThinkingAnimation />
                 </div>
               </div>
@@ -519,10 +477,9 @@ const ChatInterface = () => {
   }
   
   return (
-    <div className={getMoodStyle()}>
+    <div className="flex flex-col h-full bg-background rounded-lg shadow-lg transition-colors">
       <div className="p-2 md:p-4 flex flex-col md:flex-row justify-between items-center gap-2 ios-glass bg-white/20 backdrop-blur-md">
         <div className="flex items-center gap-2">
-          <MoodSelector />
           <Button
             variant="outline"
             size="sm"
@@ -538,10 +495,7 @@ const ChatInterface = () => {
       
       <div 
         ref={messagesContainerRef}
-        className={cn(
-          "flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto scroll-container hardware-accelerated",
-          getTextColor()
-        )}
+        className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto scroll-container hardware-accelerated"
       >
         <div className="space-y-3 md:space-y-4">
           {messages.map((message) => (
@@ -550,10 +504,7 @@ const ChatInterface = () => {
           
           {isTyping && (
             <div className="flex mb-4 animate-fade-in">
-              <div className={cn(
-                "chat-bubble-assistant",
-                mood === 'deep' || mood === 'focus' ? "bg-slate-800/50" : ""
-              )}>
+              <div className="chat-bubble-assistant">
                 <ThinkingAnimation />
               </div>
             </div>

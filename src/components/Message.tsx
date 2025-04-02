@@ -26,7 +26,7 @@ interface MessageProps {
 
 const Message = ({ message }: MessageProps) => {
   const { state } = useChat();
-  const { mood, language } = state;
+  const { language } = state;
   const isMobile = useIsMobile();
   const [baseUrl, setBaseUrl] = useState("");
   const [chartData, setChartData] = useState<ChartData[] | null>(null);
@@ -175,21 +175,12 @@ const Message = ({ message }: MessageProps) => {
     );
   };
 
-  // Get bubble styles with improved contrast for text in deep/focus modes
+  // Get bubble styles - simplified without mood-specific styling
   const getBubbleStyle = () => {
     if (message.sender === "user") {
-      return cn(
-        "chat-bubble-user ios-glass shadow-lg",
-        mood === "deep" ? "bg-slate-700 text-white" : "",
-        mood === "focus" ? "bg-zinc-700 text-white" : ""
-      );
+      return "chat-bubble-user ios-glass shadow-lg";
     } else {
-      // Assistant bubble style with improved contrast for deep/focus modes
-      return cn(
-        "chat-bubble-assistant ios-glass shadow-lg",
-        mood === "deep" ? "bg-white/30 text-white" : "",
-        mood === "focus" ? "bg-white/30 text-white" : ""
-      );
+      return "chat-bubble-assistant ios-glass shadow-lg";
     }
   };
   
@@ -201,7 +192,9 @@ const Message = ({ message }: MessageProps) => {
     )}>
       <div className={cn(
         "relative max-w-[85%] md:max-w-[70%] rounded-2xl px-4 py-3",
-        getBubbleStyle()
+        getBubbleStyle(),
+        // Added overflow-hidden to prevent content from extending outside
+        "overflow-hidden"
       )}>
         {message.imageSrc && (
           <div className="mb-2">

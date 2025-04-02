@@ -1,6 +1,5 @@
-
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { AIConfig, ChatState, Language, Message, Mood, Persona, Theme, UserLocation } from '../types';
+import { AIConfig, ChatState, Language, Message, Persona, Theme, UserLocation } from '../types';
 import { detectUserLocation, getDefaultLanguageFromLocation } from '../utils/locationUtils';
 
 // Initial state
@@ -10,22 +9,22 @@ const initialState: ChatState = {
   mood: 'friendly',
   isTyping: false,
   userLocation: null,
-  isFreeLimit: false, // If true, will trigger premium lock UI
+  isFreeLimit: false,
   theme: 'light',
   aiConfig: {
-    service: 'mimi', // Default service name (not exposing underlying API)
-    contextLength: 5, // Default context length (number of messages to include)
-    persona: 'general', // Default persona
-    webSearch: true, // Default to enable web search
+    service: 'mimi',
+    contextLength: 5,
+    persona: 'general',
+    webSearch: true,
   },
-  isVoiceMode: false, // New state for voice mode
+  isVoiceMode: false,
 };
 
 // Action types
 type ChatAction = 
   | { type: 'ADD_MESSAGE'; payload: Message }
   | { type: 'SET_LANGUAGE'; payload: Language }
-  | { type: 'SET_MOOD'; payload: Mood }
+  | { type: 'SET_MOOD'; payload: string }
   | { type: 'SET_TYPING'; payload: boolean }
   | { type: 'SET_USER_LOCATION'; payload: UserLocation }
   | { type: 'SET_FREE_LIMIT'; payload: boolean }
@@ -45,19 +44,13 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
         messages: [...state.messages, action.payload],
       };
     case 'SET_LANGUAGE':
-      // Save language preference to localStorage
       localStorage.setItem('mimi-language', action.payload);
       return {
         ...state,
         language: action.payload,
       };
     case 'SET_MOOD':
-      // Save mood preference to localStorage
-      localStorage.setItem('mimi-mood', action.payload);
-      return {
-        ...state,
-        mood: action.payload,
-      };
+      return state;
     case 'SET_TYPING':
       return {
         ...state,
@@ -74,7 +67,6 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
         isFreeLimit: action.payload,
       };
     case 'SET_THEME':
-      // Save theme preference to localStorage
       localStorage.setItem('mimi-theme', action.payload);
       return {
         ...state,
@@ -124,7 +116,7 @@ interface ChatContextType {
   state: ChatState;
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
   setLanguage: (language: Language) => void;
-  setMood: (mood: Mood) => void;
+  setMood: (mood: string) => void;
   setTyping: (isTyping: boolean) => void;
   setTheme: (theme: Theme) => void;
   setAIConfig: (config: Partial<AIConfig>) => void;
@@ -141,10 +133,8 @@ export const ChatProvider: React.FC<{children: React.ReactNode}> = ({ children }
   const [state, dispatch] = useReducer(chatReducer, initialState);
 
   useEffect(() => {
-    // Load preferences from localStorage
     const savedLanguage = localStorage.getItem('mimi-language') as Language;
     const savedTheme = localStorage.getItem('mimi-theme') as Theme;
-    const savedMood = localStorage.getItem('mimi-mood') as Mood;
     
     if (savedLanguage) {
       dispatch({ type: 'SET_LANGUAGE', payload: savedLanguage });
@@ -154,23 +144,16 @@ export const ChatProvider: React.FC<{children: React.ReactNode}> = ({ children }
       dispatch({ type: 'SET_THEME', payload: savedTheme });
       document.documentElement.classList.toggle('dark', savedTheme === 'dark');
     } else {
-      // Check system preference if no saved theme
       const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       dispatch({ type: 'SET_THEME', payload: prefersDark ? 'dark' : 'light' });
       document.documentElement.classList.toggle('dark', prefersDark);
     }
     
-    if (savedMood) {
-      dispatch({ type: 'SET_MOOD', payload: savedMood });
-    }
-    
-    // Detect user location
     const getLocation = async () => {
       const location = await detectUserLocation();
       if (location) {
         dispatch({ type: 'SET_USER_LOCATION', payload: location });
         
-        // If no saved language preference, set based on location
         if (!savedLanguage) {
           const detectedLanguage = getDefaultLanguageFromLocation(location.countryCode);
           dispatch({ type: 'SET_LANGUAGE', payload: detectedLanguage });
@@ -180,10 +163,8 @@ export const ChatProvider: React.FC<{children: React.ReactNode}> = ({ children }
     
     getLocation();
 
-    // Listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e: MediaQueryListEvent) => {
-      // Only update if theme is set to 'system'
       if (state.theme === 'system') {
         document.documentElement.classList.toggle('dark', e.matches);
         dispatch({ type: 'SET_THEME', payload: e.matches ? 'dark' : 'light' });
@@ -194,16 +175,11 @@ export const ChatProvider: React.FC<{children: React.ReactNode}> = ({ children }
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
-  // Update document class when theme changes
   useEffect(() => {
     document.documentElement.classList.toggle('dark', state.theme === 'dark');
     
-    // Apply mood-based styling to body
-    document.body.dataset.mood = state.mood;
-    
-    // Apply language direction
     document.documentElement.dir = state.language === 'ar' ? 'rtl' : 'ltr';
-  }, [state.theme, state.mood, state.language]);
+  }, [state.theme, state.language]);
 
   const addMessage = (message: Omit<Message, 'id' | 'timestamp'>) => {
     const newMessage: Message = {
@@ -213,7 +189,6 @@ export const ChatProvider: React.FC<{children: React.ReactNode}> = ({ children }
     };
     dispatch({ type: 'ADD_MESSAGE', payload: newMessage });
 
-    // Check if we should show premium lock after message
     if (state.messages.length >= 15 && message.sender === 'user') {
       dispatch({ type: 'SET_FREE_LIMIT', payload: true });
     }
@@ -223,7 +198,7 @@ export const ChatProvider: React.FC<{children: React.ReactNode}> = ({ children }
     dispatch({ type: 'SET_LANGUAGE', payload: language });
   };
 
-  const setMood = (mood: Mood) => {
+  const setMood = (mood: string) => {
     dispatch({ type: 'SET_MOOD', payload: mood });
   };
 

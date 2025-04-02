@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -200,34 +201,12 @@
   animation: ios-pulse 2s infinite;
 }
 
-/* Improved text contrast for dark backgrounds */
-.bg-deep-gradient .chat-bubble-assistant,
-.bg-focus-gradient .chat-bubble-assistant {
-  --tw-bg-opacity: 0.3;
-  --tw-text-opacity: 1;
-  color: rgba(255, 255, 255, var(--tw-text-opacity));
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-  background-color: rgba(40, 40, 40, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Improved text contrast in different mood backgrounds */
-.bg-deep-gradient,
-.bg-focus-gradient {
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.bg-deep-gradient .text-muted-foreground,
-.bg-focus-gradient .text-muted-foreground {
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
-}
-
 /* Code block styling */
 pre {
   white-space: pre-wrap;
   word-break: break-word;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 code {
@@ -257,11 +236,6 @@ code {
 /* PWA install button styles */
 .pwa-install-button {
   @apply fixed bottom-20 right-4 z-50 bg-mimi-primary text-white rounded-full px-4 py-2 shadow-lg flex items-center gap-2 hover:bg-mimi-secondary transition-colors;
-}
-
-.bg-focus-gradient button,
-.bg-deep-gradient button {
-  text-shadow: none;
 }
 
 .pwa-toast {
