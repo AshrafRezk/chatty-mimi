@@ -297,6 +297,13 @@ const ChatInterface = () => {
         }
       }
       
+      const extractedLinks = await extractLinksFromMessage(response);
+      
+      if (extractedLinks.length > 0) {
+        references = combineLinksAndSearchResults(extractedLinks, references);
+        console.log("Combined references:", references.length);
+      }
+      
       const nutritionData = extractNutritionData(response);
       
       const propertyData = extractPropertyData(response);
@@ -322,7 +329,7 @@ const ChatInterface = () => {
         "• دعم متعدد اللغات (العربية والإنجليزية)\n" +
         "• وعي بالموقع الجغرافي لتقديم إجابات مخصصة\n" +
         "• خبير في مجالات متعددة (برمجة، طب، عقارات، إلخ)\n" +
-        "• إمكا��ية معالجة الصور وتحليلها\n" +
+        "• إمكانية معالجة الصور وتحليلها\n" +
         "• محادثة بأنماط مزاجية مختلفة (هادئ، ودي، عميق، مركّز)\n" +
         "• إنشاء مخططات ورسومات بيانية تفاعلية\n" +
         "• تحويل النص إلى كلام\n" +
@@ -331,7 +338,7 @@ const ChatInterface = () => {
         "• توفير مراجع موثوقة للمعلومات\n" +
         "• خبرة في تحليل القيم الغذائية للأطعمة\n" +
         "• استشارات عقارية مع رؤى استثمارية\n\n" +
-        "كيف يمكنني مساعدتك اليوم؟" :
+        "كيف يمكنني مساعدت�� اليوم؟" :
         
         "I'm Mimi, your intelligent AI assistant with multiple advanced features:\n\n" +
         "• Multilingual support (English and Arabic)\n" +

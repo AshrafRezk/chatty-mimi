@@ -34,6 +34,63 @@ export const isGoogleSearchConfigured = (): boolean => {
 };
 
 /**
+ * Extract URLs from message text and convert them to reference format
+ * @param text The message text to extract URLs from
+ * @returns Array of reference objects
+ */
+export const extractLinksFromMessage = async (text: string): Promise<Reference[]> => {
+  // Match URLs in the text
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const matches = text.match(urlRegex);
+  
+  if (!matches || matches.length === 0) return [];
+  
+  const references: Reference[] = [];
+  
+  // Process each URL
+  for (const url of matches) {
+    try {
+      // Clean the URL (remove trailing punctuation, etc.)
+      let cleanUrl = url;
+      if (cleanUrl.endsWith('.') || cleanUrl.endsWith(',') || 
+          cleanUrl.endsWith(')') || cleanUrl.endsWith(']')) {
+        cleanUrl = cleanUrl.slice(0, -1);
+      }
+      
+      // Try to get metadata from the URL
+      const response = await fetch(cleanUrl, { 
+        method: 'HEAD',
+        mode: 'no-cors' // This might limit what we can get, but helps avoid CORS issues
+      }).catch(() => null);
+      
+      // Add to references with available info
+      const urlObj = new URL(cleanUrl);
+      const domain = urlObj.hostname;
+      
+      references.push({
+        title: domain, // Use domain as fallback title
+        url: cleanUrl,
+        snippet: `Referenced link from the conversation.`
+      });
+    } catch (error) {
+      console.warn("Error processing URL:", error);
+      // Still add the URL even if we couldn't fetch metadata
+      try {
+        references.push({
+          title: new URL(url).hostname,
+          url: url,
+          snippet: "Link referenced in conversation"
+        });
+      } catch (e) {
+        // If URL parsing fails, just skip this one
+      }
+    }
+  }
+  
+  return references;
+};
+
+/**
  * Perform a Google search using the Custom Search JSON API
  * @param query The search query
  * @returns Array of reference objects
@@ -105,4 +162,27 @@ export const performFallbackSearch = async (query: string, fallbackSearchFn: (qu
     console.error("Google search failed, using fallback:", error);
     return await fallbackSearchFn(query);
   }
+};
+
+/**
+ * Combine manually extracted links with search results
+ */
+export const combineLinksAndSearchResults = (links: Reference[], searchResults: Reference[]): Reference[] => {
+  // Create a map of URLs to prevent duplicates
+  const uniqueReferences = new Map<string, Reference>();
+  
+  // Add links first (they were explicitly mentioned in the message)
+  for (const link of links) {
+    uniqueReferences.set(link.url, link);
+  }
+  
+  // Then add search results if they don't duplicate links
+  for (const result of searchResults) {
+    if (!uniqueReferences.has(result.url)) {
+      uniqueReferences.set(result.url, result);
+    }
+  }
+  
+  // Return as array
+  return Array.from(uniqueReferences.values());
 };

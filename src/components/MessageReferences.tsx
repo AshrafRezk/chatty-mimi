@@ -13,6 +13,12 @@ import {
   AccordionItem,
   AccordionTrigger
 } from "@/components/ui/accordion";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface MessageReferencesProps {
   references: Reference[];
@@ -89,6 +95,7 @@ const MessageReferences = ({ references, certaintyScore = 0 }: MessageReferences
   const sourcesLabel = isArabic ? "المصادر" : "Sources";
   const certaintyLabel = isArabic ? "درجة الثقة" : "Reliability";
   const copyLabel = isArabic ? "نسخ" : "Copy";
+  const visitLabel = isArabic ? "زيارة الموقع" : "Visit Website";
   
   return (
     <div className={cn(
@@ -115,25 +122,34 @@ const MessageReferences = ({ references, certaintyScore = 0 }: MessageReferences
               {references.map((ref, index) => (
                 <div key={index} className="border-t pt-2">
                   <div className="flex items-center justify-between">
-                    <a 
-                      href={ref.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={cn(
-                        "flex items-center gap-2 transition-colors",
-                        isDark ? "text-mimi-light hover:text-white" : "text-mimi-primary hover:text-mimi-secondary"
-                      )}
-                    >
-                      {getFavicon(ref.url) && (
-                        <img 
-                          src={getFavicon(ref.url) || ''} 
-                          alt="" 
-                          className="w-4 h-4 rounded-sm"
-                        />
-                      )}
-                      <span className="font-medium">{getDomainName(ref.url)}</span>
-                      <ExternalLink className="w-3 h-3 ml-1 inline-block" />
-                    </a>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <a 
+                            href={ref.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={cn(
+                              "flex items-center gap-2 transition-colors max-w-[85%]",
+                              isDark ? "text-mimi-light hover:text-white" : "text-mimi-primary hover:text-mimi-secondary"
+                            )}
+                          >
+                            {getFavicon(ref.url) && (
+                              <img 
+                                src={getFavicon(ref.url) || ''} 
+                                alt="" 
+                                className="w-4 h-4 rounded-sm flex-shrink-0"
+                              />
+                            )}
+                            <span className="font-medium truncate">{getDomainName(ref.url)}</span>
+                            <ExternalLink className="w-3 h-3 ml-1 flex-shrink-0" />
+                          </a>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          {visitLabel}: {ref.title}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     <Button
                       variant="ghost"
                       size="sm"
