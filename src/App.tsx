@@ -25,14 +25,12 @@ const AnimatedRoutes = () => {
   
   return (
     <>
-      <AnimatePresence mode="sync">
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<Index />} />
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </AnimatePresence>
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<Index />} />
+        <Route path="/chat" element={<Chat />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
       <FooterWithLocation />
     </>
   );
@@ -44,7 +42,9 @@ const App: React.FC = () => {
       <ThemeProvider defaultTheme="system" storageKey="mimi-theme">
         <ChatProvider>
           <Router>
-            <AnimatedRoutes />
+            <AnimatePresence mode="sync">
+              <AnimatedRoutes />
+            </AnimatePresence>
             <Toaster />
           </Router>
         </ChatProvider>
