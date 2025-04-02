@@ -44,17 +44,14 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// Ensure React 18 works with strict mode consistently
 const container = document.getElementById('root');
 if (!container) {
   throw new Error('Failed to find the root element');
 }
 
-// Create a root using the new React 18 createRoot API
+// Create a root using the React 18 createRoot API
 const root = createRoot(container);
 
-// Render the app
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+// Render the app without StrictMode to avoid double initialization issues
+root.render(<App />);
