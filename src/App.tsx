@@ -3,7 +3,6 @@ import React from 'react';
 import { ChatProvider } from './context/ChatContext';
 import Chat from './pages/Chat';
 import { ThemeProvider } from './hooks/use-theme';
-import Features from './components/Features';
 import Footer from './components/Footer';
 import SEOHead from './components/SEOHead';
 import { HelmetProvider } from 'react-helmet-async';
@@ -21,23 +20,25 @@ const FooterWithLocation = () => {
 
 const App = () => {
   return (
-    <HelmetProvider>
-      <ThemeProvider defaultTheme="system" storageKey="mimi-theme">
-        <ChatProvider>
-          <Router>
-            <AnimatePresence mode="wait">
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/chat" element={<Chat />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <FooterWithLocation />
-            </AnimatePresence>
-          </Router>
-        </ChatProvider>
-      </ThemeProvider>
-    </HelmetProvider>
+    <React.StrictMode>
+      <HelmetProvider>
+        <ThemeProvider defaultTheme="system" storageKey="mimi-theme">
+          <ChatProvider>
+            <Router>
+              <AnimatePresence mode="wait">
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/chat" element={<Chat />} />
+                  <Route path="/pricing" element={<Pricing />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                <FooterWithLocation />
+              </AnimatePresence>
+            </Router>
+          </ChatProvider>
+        </ThemeProvider>
+      </HelmetProvider>
+    </React.StrictMode>
   );
 };
 
