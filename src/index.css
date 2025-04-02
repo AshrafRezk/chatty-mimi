@@ -193,3 +193,43 @@
   --tw-text-opacity: 1;
   color: rgba(255, 255, 255, var(--tw-text-opacity));
 }
+
+/* Improve text contrast in different mood backgrounds */
+.bg-deep-gradient,
+.bg-focus-gradient {
+  color: white;
+}
+
+.bg-deep-gradient .text-muted-foreground,
+.bg-focus-gradient .text-muted-foreground {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Code block styling */
+pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+code {
+  font-family: 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+/* Dark mode specific styles for chat bubbles */
+.dark .chat-bubble-assistant {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+/* Speech synthesis voice panel */
+.voice-panel {
+  @apply bg-background/80 backdrop-blur-md rounded-lg p-4 shadow-lg border border-border;
+}
+
+.voice-option {
+  @apply p-3 rounded-md flex items-center gap-3 cursor-pointer transition-colors hover:bg-muted;
+}
+
+.voice-option.active {
+  @apply bg-primary/10 border border-primary/30;
+}

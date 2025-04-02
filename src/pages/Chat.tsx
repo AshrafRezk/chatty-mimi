@@ -43,7 +43,8 @@ const Chat = () => {
       className={cn(
         "min-h-screen transition-colors duration-300",
         getMoodBackgroundClass(),
-        language === 'ar' ? 'rtl' : ''
+        language === 'ar' ? 'rtl' : '',
+        mood === 'deep' || mood === 'focus' ? 'text-white' : ''
       )}
     >
       <Navbar />

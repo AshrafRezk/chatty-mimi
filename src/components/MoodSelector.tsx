@@ -44,8 +44,10 @@ const MoodSelector = () => {
               mood === m.type 
                 ? "bg-mimi-primary text-white border-mimi-primary shadow-md" 
                 : cn(
-                    "bg-white/80 backdrop-blur-sm hover:bg-mimi-soft hover:text-mimi-primary dark:bg-white/20",
-                    (m.type === 'deep' || m.type === 'focus') ? "text-white" : "text-mimi-dark"
+                    "backdrop-blur-sm hover:bg-mimi-soft hover:text-mimi-primary",
+                    (m.type === 'deep' || m.type === 'focus') 
+                      ? "bg-white/30 text-white hover:text-white hover:bg-white/40" 
+                      : "bg-white/80 text-mimi-dark"
                   )
             )}
           >

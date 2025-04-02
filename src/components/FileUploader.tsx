@@ -1,11 +1,12 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Paperclip, FileText, X, Loader2 } from "lucide-react";
+import { Paperclip, FileText, X, Loader2, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/context/ChatContext";
 import { extractTextFromImage } from "@/utils/ocrUtils";
 import { toast } from "sonner";
+import { Motion } from "@/components/ui/motion";
 
 interface FileUploaderProps {
   onTextExtracted: (text: string) => void;
@@ -77,58 +78,110 @@ const FileUploader = ({ onTextExtracted }: FileUploaderProps) => {
   };
   
   return (
-    <div className="flex flex-col">
+    <Motion.div 
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.2 }}
+      className="flex flex-col"
+    >
       {file ? (
-        <div className="flex items-center gap-2 p-2 rounded-md bg-mimi-soft/20 mb-2">
-          <FileText className="h-4 w-4 text-mimi-primary" />
-          <span className="text-sm truncate flex-1">{file.name}</span>
-          
-          {isProcessing ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <div className="flex gap-1">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 p-3 rounded-md bg-muted/30 border border-border">
+            <FileText className="h-5 w-5 text-mimi-primary" />
+            <span className="text-sm truncate flex-1">{file.name}</span>
+            
+            {isProcessing ? (
+              <Loader2 className="h-5 w-5 animate-spin text-mimi-primary" />
+            ) : (
               <Button 
                 size="sm" 
-                variant="ghost" 
-                onClick={processFile}
-                className="h-6 px-2 text-xs"
-              >
-                {language === 'ar' ? 'استخراج' : 'Extract'}
-              </Button>
-              <Button
-                size="sm"
                 variant="ghost"
                 onClick={clearFile}
-                className="h-6 w-6 p-0"
+                className="h-8 w-8 p-0"
               >
-                <X className="h-3 w-3" />
+                <X className="h-4 w-4" />
               </Button>
-            </div>
-          )}
+            )}
+          </div>
+          
+          <div className="flex gap-2 justify-end">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={clearFile}
+              disabled={isProcessing}
+              className="px-3"
+            >
+              {language === 'ar' ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button 
+              size="sm" 
+              onClick={processFile}
+              disabled={isProcessing}
+              className="px-3 bg-mimi-primary text-white hover:bg-mimi-secondary"
+            >
+              {isProcessing ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {language === 'ar' ? 'جارٍ المعالجة...' : 'Processing...'}
+                </span>
+              ) : (
+                language === 'ar' ? 'استخراج النص' : 'Extract Text'
+              )}
+            </Button>
+          </div>
         </div>
       ) : (
-        <div className={cn(
-          "relative overflow-hidden",
-          language === 'ar' ? "rtl" : ""
-        )}>
-          <input
-            type="file"
-            id="file-upload"
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            onChange={handleFileChange}
-            accept=".pdf,.jpg,.jpeg,.png,.tiff,.webp"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="p-1 h-8 w-8"
-          >
-            <Paperclip className="h-4 w-4" />
-          </Button>
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="relative">
+              <input
+                type="file"
+                id="file-upload"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                onChange={handleFileChange}
+                accept=".pdf,.jpg,.jpeg,.png,.tiff,.webp"
+              />
+              <Button
+                variant="outline"
+                className="w-full h-20 flex flex-col items-center justify-center gap-2 border-dashed"
+              >
+                <Paperclip className="h-6 w-6 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">
+                  {language === 'ar' ? 'اختر ملفًا' : 'Upload File'}
+                </span>
+              </Button>
+            </div>
+            
+            <div className="relative">
+              <input
+                type="file"
+                id="camera-capture"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                onChange={handleFileChange}
+                accept="image/*"
+                capture="environment"
+              />
+              <Button
+                variant="outline"
+                className="w-full h-20 flex flex-col items-center justify-center gap-2 border-dashed"
+              >
+                <Camera className="h-6 w-6 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">
+                  {language === 'ar' ? 'التقط صورة' : 'Take Photo'}
+                </span>
+              </Button>
+            </div>
+          </div>
+          
+          <p className="text-xs text-center text-muted-foreground">
+            {language === 'ar' 
+              ? 'يدعم PDF والصور (JPG، PNG، WEBP)' 
+              : 'Supports PDF and images (JPG, PNG, WEBP)'}
+          </p>
         </div>
       )}
-    </div>
+    </Motion.div>
   );
 };
 
