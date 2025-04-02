@@ -1,7 +1,7 @@
 
 import { Reference } from "@/types";
 import { ExternalLink, ChevronDown, ChevronUp, Copy, Check } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useChat } from "@/context/ChatContext";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/use-theme";
@@ -19,6 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface MessageReferencesProps {
   references: Reference[];
@@ -39,24 +40,27 @@ const MessageReferences = ({ references, certaintyScore = 0 }: MessageReferences
     }
   }, [references]);
   
-  // Get favicon for a URL
-  const getFavicon = (url: string) => {
+  // Get favicon for a URL with error handling and defaults
+  const getFavicon = useCallback((url: string) => {
     try {
       const domain = new URL(url).hostname;
       return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
     } catch (error) {
+      // Default icon for invalid URLs
       return null;
     }
-  };
+  }, []);
   
-  // Get domain name for display
-  const getDomainName = (url: string) => {
+  // Get domain name for display with improved formatting
+  const getDomainName = useCallback((url: string) => {
     try {
-      return new URL(url).hostname;
+      const hostname = new URL(url).hostname;
+      // Remove www. prefix for cleaner display
+      return hostname.replace(/^www\./, '');
     } catch (error) {
       return url;
     }
-  };
+  }, []);
 
   // Handle copying reference to clipboard
   const handleCopy = async (text: string) => {
@@ -134,19 +138,25 @@ const MessageReferences = ({ references, certaintyScore = 0 }: MessageReferences
                               isDark ? "text-mimi-light hover:text-white" : "text-mimi-primary hover:text-mimi-secondary"
                             )}
                           >
-                            {getFavicon(ref.url) && (
+                            {getFavicon(ref.url) ? (
                               <img 
                                 src={getFavicon(ref.url) || ''} 
                                 alt="" 
                                 className="w-4 h-4 rounded-sm flex-shrink-0"
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.style.display = "none";
+                                }}
                               />
+                            ) : (
+                              <div className="w-4 h-4 rounded-sm bg-gray-200 flex-shrink-0" />
                             )}
                             <span className="font-medium truncate">{getDomainName(ref.url)}</span>
                             <ExternalLink className="w-3 h-3 ml-1 flex-shrink-0" />
                           </a>
                         </TooltipTrigger>
                         <TooltipContent side="bottom">
-                          {visitLabel}: {ref.title}
+                          {visitLabel}: {ref.title || getDomainName(ref.url)}
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -163,7 +173,7 @@ const MessageReferences = ({ references, certaintyScore = 0 }: MessageReferences
                   </div>
                   
                   <p className="line-clamp-2 mt-1 text-xs text-gray-600 dark:text-gray-300">
-                    {ref.title}
+                    {ref.title || getDomainName(ref.url)}
                   </p>
                   <p className={cn(
                     "line-clamp-2 mt-1 text-xs",

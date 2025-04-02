@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import Message from "./Message";
 import ChatInput from "./ChatInput";
@@ -257,6 +256,7 @@ const ChatInterface = () => {
       } catch (error) {
         console.error("Web search error:", error);
         try {
+          console.log("Trying fallback search method");
           references = await performWebSearch(text);
           certaintyScore = calculateCertaintyScore(references);
         } catch (fallbackError) {
@@ -306,6 +306,7 @@ const ChatInterface = () => {
       const extractedLinks = await extractLinksFromMessage(response);
       
       if (extractedLinks.length > 0) {
+        console.log(`Extracted ${extractedLinks.length} links from the response`);
         references = combineLinksAndSearchResults(extractedLinks, references);
         console.log("Combined references:", references.length);
       }

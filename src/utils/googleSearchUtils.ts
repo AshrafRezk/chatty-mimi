@@ -1,4 +1,3 @@
-
 import { Reference } from "@/types";
 
 // Get API keys from localStorage if available
@@ -53,28 +52,45 @@ export const extractLinksFromMessage = async (text: string): Promise<Reference[]
       // Clean the URL (remove trailing punctuation, etc.)
       let cleanUrl = url;
       if (cleanUrl.endsWith('.') || cleanUrl.endsWith(',') || 
-          cleanUrl.endsWith(')') || cleanUrl.endsWith(']')) {
+          cleanUrl.endsWith(')') || cleanUrl.endsWith(']') || 
+          cleanUrl.endsWith('"') || cleanUrl.endsWith("'")) {
         cleanUrl = cleanUrl.slice(0, -1);
       }
       
-      // Try to get metadata from the URL
-      const response = await fetch(cleanUrl, { 
-        method: 'HEAD',
-        mode: 'no-cors' // This might limit what we can get, but helps avoid CORS issues
-      }).catch(() => null);
-      
-      // Add to references with available info
       const urlObj = new URL(cleanUrl);
       const domain = urlObj.hostname;
       
+      // Create a more descriptive reference
       references.push({
-        title: domain, // Use domain as fallback title
+        title: domain.replace(/^www\./, ''), // Remove 'www.' prefix for cleaner display
         url: cleanUrl,
-        snippet: `Referenced link from the conversation.`
+        snippet: `Link referenced from ${domain}`
       });
+      
+      // Attempt to fetch metadata in the background to enhance reference details
+      // This is done asynchronously to not block the UI
+      fetch(`https://api.microlink.io/?url=${encodeURIComponent(cleanUrl)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.data && data.data.title) {
+            // Find and update the reference with metadata
+            const index = references.findIndex(ref => ref.url === cleanUrl);
+            if (index !== -1) {
+              references[index].title = data.data.title;
+              if (data.data.description) {
+                references[index].snippet = data.data.description;
+              }
+            }
+          }
+        })
+        .catch(() => {
+          // If metadata fetch fails, keep the original reference
+          console.log("Failed to fetch metadata for:", cleanUrl);
+        });
+      
     } catch (error) {
       console.warn("Error processing URL:", error);
-      // Still add the URL even if we couldn't fetch metadata
+      // Still add the URL even if we couldn't parse it properly
       try {
         references.push({
           title: new URL(url).hostname,
