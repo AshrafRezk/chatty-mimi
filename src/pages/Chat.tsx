@@ -69,7 +69,7 @@ const Chat = () => {
       >
         <Navbar />
         <div className={cn(
-          "flex-1 flex flex-col overflow-hidden",
+          "flex-1 flex flex-col",
           isMobile ? "max-w-full p-0" : "container mx-auto py-2 px-2 md:py-4 md:px-4"
         )}
         style={{ position: 'relative', zIndex: 1 }}
