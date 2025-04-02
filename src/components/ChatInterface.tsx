@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import Message from "./Message";
 import ChatInput from "./ChatInput";
@@ -11,7 +12,12 @@ import { cn } from "@/lib/utils";
 import { getWelcomeMessage, getPersonaWelcomeMessage } from "@/utils/locationUtils";
 import { generateGeminiResponse } from "@/utils/geminiUtils";
 import { performWebSearch, calculateCertaintyScore } from "@/utils/searchUtils";
-import { performFallbackSearch, performGoogleSearch } from "@/utils/googleSearchUtils";
+import { 
+  performFallbackSearch, 
+  performGoogleSearch, 
+  extractLinksFromMessage, 
+  combineLinksAndSearchResults 
+} from "@/utils/googleSearchUtils";
 import { toast } from "sonner";
 import { NutritionData, PropertyData, PropertyImage, Reference } from "@/types";
 import { useIsMobile } from "@/hooks/use-mobile";
