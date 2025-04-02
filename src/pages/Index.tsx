@@ -28,11 +28,11 @@ const Index = () => {
 
   return (
     <div className={cn(
-      "min-h-screen bg-background",
+      "min-h-screen bg-background overflow-auto",
       language === 'ar' ? 'rtl' : ''
     )}>
       <Navbar />
-      <main>
+      <main className="overflow-auto">
         <Hero />
         <Features />
         
