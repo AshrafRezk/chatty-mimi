@@ -30,26 +30,22 @@ const LANGUAGES = [
   { code: 'no', label: 'Norsk', group: 'european' },
 ];
 
-// Separate component for language items to avoid nesting component declarations
-const LanguageDropdownItems = React.memo(({ 
+// Define group items renderer as a separate component
+const LanguageGroup = React.memo(({ 
+  title,
+  languages, 
   currentLanguage, 
   onSelectLanguage 
 }: { 
+  title: string;
+  languages: typeof LANGUAGES;
   currentLanguage: Language; 
   onSelectLanguage: (code: Language) => void;
 }) => {
-  // Group languages
-  const popularLanguages = LANGUAGES.filter(lang => lang.group === 'popular');
-  const europeanLanguages = LANGUAGES.filter(lang => lang.group === 'european');
-  const asianLanguages = LANGUAGES.filter(lang => lang.group === 'asian');
-  const otherLanguages = LANGUAGES.filter(lang => lang.group === 'other');
-
   return (
     <>
-      <DropdownMenuLabel>Select language</DropdownMenuLabel>
-      <DropdownMenuSeparator />
-      
-      {popularLanguages.map(lang => (
+      <DropdownMenuLabel>{title}</DropdownMenuLabel>
+      {languages.map(lang => (
         <DropdownMenuItem 
           key={lang.code}
           className={currentLanguage === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
@@ -61,65 +57,13 @@ const LanguageDropdownItems = React.memo(({
           )}
         </DropdownMenuItem>
       ))}
-      
-      <DropdownMenuSeparator />
-      <DropdownMenuLabel>European</DropdownMenuLabel>
-      
-      {europeanLanguages.map(lang => (
-        <DropdownMenuItem 
-          key={lang.code}
-          className={currentLanguage === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
-          onClick={() => onSelectLanguage(lang.code as Language)}
-        >
-          {lang.label}
-          {currentLanguage === lang.code && (
-            <Check className="ml-auto h-4 w-4" />
-          )}
-        </DropdownMenuItem>
-      ))}
-      
-      <DropdownMenuSeparator />
-      <DropdownMenuLabel>Asian</DropdownMenuLabel>
-      
-      {asianLanguages.map(lang => (
-        <DropdownMenuItem 
-          key={lang.code}
-          className={currentLanguage === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
-          onClick={() => onSelectLanguage(lang.code as Language)}
-        >
-          {lang.label}
-          {currentLanguage === lang.code && (
-            <Check className="ml-auto h-4 w-4" />
-          )}
-        </DropdownMenuItem>
-      ))}
-      
-      {otherLanguages.length > 0 && (
-        <>
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel>Other</DropdownMenuLabel>
-          
-          {otherLanguages.map(lang => (
-            <DropdownMenuItem 
-              key={lang.code}
-              className={currentLanguage === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
-              onClick={() => onSelectLanguage(lang.code as Language)}
-            >
-              {lang.label}
-              {currentLanguage === lang.code && (
-                <Check className="ml-auto h-4 w-4" />
-              )}
-            </DropdownMenuItem>
-          ))}
-        </>
-      )}
     </>
   );
 });
 
-LanguageDropdownItems.displayName = "LanguageDropdownItems";
+LanguageGroup.displayName = "LanguageGroup";
 
-// Main LanguageSelector component - extracted from nested components
+// Main LanguageSelector component
 const LanguageSelector = () => {
   const { state, setLanguage } = useChat();
   const { language } = state;
@@ -127,6 +71,12 @@ const LanguageSelector = () => {
   const handleLanguageChange = (code: Language) => {
     setLanguage(code);
   };
+
+  // Group languages
+  const popularLanguages = LANGUAGES.filter(lang => lang.group === 'popular');
+  const europeanLanguages = LANGUAGES.filter(lang => lang.group === 'european');
+  const asianLanguages = LANGUAGES.filter(lang => lang.group === 'asian');
+  const otherLanguages = LANGUAGES.filter(lang => lang.group === 'other');
 
   // Find current language label
   const currentLanguage = LANGUAGES.find(lang => lang.code === language)?.label || 'English';
@@ -141,10 +91,40 @@ const LanguageSelector = () => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48 bg-popover">
-          <LanguageDropdownItems 
+          <LanguageGroup 
+            title="Select language"
+            languages={popularLanguages} 
             currentLanguage={language} 
             onSelectLanguage={handleLanguageChange} 
           />
+          
+          <DropdownMenuSeparator />
+          <LanguageGroup 
+            title="European"
+            languages={europeanLanguages} 
+            currentLanguage={language} 
+            onSelectLanguage={handleLanguageChange} 
+          />
+          
+          <DropdownMenuSeparator />
+          <LanguageGroup 
+            title="Asian"
+            languages={asianLanguages} 
+            currentLanguage={language} 
+            onSelectLanguage={handleLanguageChange} 
+          />
+          
+          {otherLanguages.length > 0 && (
+            <>
+              <DropdownMenuSeparator />
+              <LanguageGroup 
+                title="Other"
+                languages={otherLanguages} 
+                currentLanguage={language} 
+                onSelectLanguage={handleLanguageChange} 
+              />
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
