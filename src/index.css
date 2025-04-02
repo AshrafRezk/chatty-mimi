@@ -186,23 +186,26 @@
   animation: ios-pulse 2s infinite;
 }
 
-/* Fix for chat bubbles in dark modes */
+/* Improved text contrast for dark backgrounds */
 .bg-deep-gradient .chat-bubble-assistant,
 .bg-focus-gradient .chat-bubble-assistant {
-  --tw-bg-opacity: 0.2;
+  --tw-bg-opacity: 0.3;
   --tw-text-opacity: 1;
   color: rgba(255, 255, 255, var(--tw-text-opacity));
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* Improve text contrast in different mood backgrounds */
+/* Improved text contrast in different mood backgrounds */
 .bg-deep-gradient,
 .bg-focus-gradient {
   color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .bg-deep-gradient .text-muted-foreground,
 .bg-focus-gradient .text-muted-foreground {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 }
 
 /* Code block styling */
@@ -215,10 +218,11 @@ code {
   font-family: 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 }
 
-/* Dark mode specific styles for chat bubbles */
+/* Dark mode specific styles for chat bubbles with improved contrast */
 .dark .chat-bubble-assistant {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.15);
   color: white;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
 }
 
 /* Speech synthesis voice panel */
@@ -232,4 +236,18 @@ code {
 
 .voice-option.active {
   @apply bg-primary/10 border border-primary/30;
+}
+
+/* PWA install button styles */
+.pwa-install-button {
+  @apply fixed bottom-20 right-4 z-50 bg-mimi-primary text-white rounded-full px-4 py-2 shadow-lg flex items-center gap-2 hover:bg-mimi-secondary transition-colors;
+}
+
+.bg-focus-gradient button,
+.bg-deep-gradient button {
+  text-shadow: none;
+}
+
+.pwa-toast {
+  @apply bg-black/80 text-white shadow-xl border border-white/10;
 }

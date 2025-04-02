@@ -5,6 +5,7 @@ import ChatInterface from "@/components/ChatInterface";
 import PremiumLock from "@/components/PremiumLock";
 import ComplianceBanner from "@/components/ComplianceBanner";
 import ChatSEOHead from "@/components/ChatSEOHead";
+import PWAInstallButton from "@/components/PWAInstallButton";
 import { useChat } from "@/context/ChatContext";
 import { cn } from "@/lib/utils";
 import { Motion } from "@/components/ui/motion";
@@ -64,6 +65,9 @@ const Chat = () => {
       
       {/* Show premium lock if free limit reached */}
       {isFreeLimit && <PremiumLock />}
+      
+      {/* PWA Install Button */}
+      <PWAInstallButton />
     </Motion.div>
   );
 };
