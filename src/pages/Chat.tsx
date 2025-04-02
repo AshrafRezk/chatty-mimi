@@ -42,7 +42,6 @@ const Chat = () => {
     const handleDisplayModeChange = () => {
       if (window.matchMedia('(display-mode: standalone)').matches) {
         console.log('App is running in standalone mode (PWA)');
-        // You could update state here if needed
       }
     };
     
@@ -87,36 +86,38 @@ const Chat = () => {
   }, []);
 
   return (
-    <Motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.4, ease: "easeInOut" }}
-      className={cn(
-        "min-h-screen transition-colors duration-300 flex flex-col",
-        getMoodBackgroundClass(),
-        language === 'ar' ? 'rtl' : '',
-        mood === 'deep' || mood === 'focus' ? 'text-white' : '',
-        "fixed inset-0"
-      )}
-    >
+    <>
       <ChatSEOHead />
-      <Navbar />
-      <div className={cn(
-        "flex-1 flex flex-col overflow-hidden",
-        isMobile ? "max-w-full p-0" : "container mx-auto py-2 px-2 md:py-4 md:px-4"
-      )}
-      style={{ position: 'relative', zIndex: 1 }}
+      <Motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, ease: "easeInOut" }}
+        className={cn(
+          "min-h-screen transition-colors duration-300 flex flex-col",
+          getMoodBackgroundClass(),
+          language === 'ar' ? 'rtl' : '',
+          mood === 'deep' || mood === 'focus' ? 'text-white' : '',
+          "fixed inset-0"
+        )}
       >
-        <ComplianceBanner />
-        <ChatInterface />
-      </div>
-      
-      {/* Show premium lock if free limit reached */}
-      {isFreeLimit && <PremiumLock />}
-      
-      {/* PWA Install Button */}
-      <PWAInstallButton />
-    </Motion.div>
+        <Navbar />
+        <div className={cn(
+          "flex-1 flex flex-col overflow-hidden",
+          isMobile ? "max-w-full p-0" : "container mx-auto py-2 px-2 md:py-4 md:px-4"
+        )}
+        style={{ position: 'relative', zIndex: 1 }}
+        >
+          <ComplianceBanner />
+          <ChatInterface />
+        </div>
+        
+        {/* Show premium lock if free limit reached */}
+        {isFreeLimit && <PremiumLock />}
+        
+        {/* PWA Install Button */}
+        <PWAInstallButton />
+      </Motion.div>
+    </>
   );
 };
 

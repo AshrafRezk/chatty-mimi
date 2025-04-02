@@ -10,7 +10,7 @@ import InteractiveChart, { ChartData } from "./InteractiveChart";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Download } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -109,6 +109,34 @@ const Message = ({ message }: MessageProps) => {
     }
   };
   
+  const handleDownload = () => {
+    try {
+      // Create a blob with the message content
+      const blob = new Blob([message.text], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      
+      // Create a temporary anchor element to download the file
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `mimi-response-${new Date().toISOString().slice(0, 10)}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast.success(
+        language === 'ar' ? "تم تنزيل المحتوى" : "Content downloaded"
+      );
+    } catch (err) {
+      toast.error(
+        language === 'ar' ? "فشل تنزيل المحتوى" : "Failed to download content"
+      );
+      console.error("Failed to download:", err);
+    }
+  };
+  
   // Function to detect and highlight code blocks
   const renderContent = () => {
     return (
@@ -183,7 +211,7 @@ const Message = ({ message }: MessageProps) => {
           {renderContent()}
           
           {message.sender === "assistant" && (
-            <div className="absolute top-0 right-0">
+            <div className="absolute top-0 right-0 flex space-x-1">
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -192,6 +220,16 @@ const Message = ({ message }: MessageProps) => {
               >
                 {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                 <span className="sr-only">{language === 'ar' ? "نسخ" : "Copy"}</span>
+              </Button>
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 w-6 p-0 opacity-50 hover:opacity-100 rounded-full"
+                onClick={handleDownload}
+              >
+                <Download size={14} />
+                <span className="sr-only">{language === 'ar' ? "تنزيل" : "Download"}</span>
               </Button>
             </div>
           )}

@@ -16,10 +16,9 @@ import { NutritionData, PropertyData, PropertyImage, Reference } from "@/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Motion } from "@/components/ui/motion";
 import { ChevronDown, ChevronUp, Mic } from "lucide-react";
-import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { scheduleWeatherNotification, scheduleTipNotification } from "@/utils/pushNotificationUtils";
 
 const ChatInterface = () => {
@@ -36,14 +35,21 @@ const ChatInterface = () => {
   const messageReceivedSound = useRef<HTMLAudioElement | null>(null);
   
   useEffect(() => {
-    messageSentSound.current = new Audio('/sounds/message-sent.mp3');
-    messageReceivedSound.current = new Audio('/sounds/message-received.mp3');
-    
-    if (messageSentSound.current) messageSentSound.current.volume = 0.3;
-    if (messageReceivedSound.current) messageReceivedSound.current.volume = 0.3;
-    
-    messageSentSound.current?.load();
-    messageReceivedSound.current?.load();
+    if (typeof window !== 'undefined') {
+      // For iOS, use system sounds
+      try {
+        messageSentSound.current = new Audio('/sounds/message-sent.mp3');
+        messageReceivedSound.current = new Audio('/sounds/message-received.mp3');
+        
+        if (messageSentSound.current) messageSentSound.current.volume = 0.15;
+        if (messageReceivedSound.current) messageReceivedSound.current.volume = 0.15;
+        
+        messageSentSound.current?.load();
+        messageReceivedSound.current?.load();
+      } catch (error) {
+        console.error("Error loading sound effects:", error);
+      }
+    }
     
     return () => {
       messageSentSound.current = null;
@@ -66,7 +72,7 @@ const ChatInterface = () => {
   };
 
   useEffect(() => {
-    if (userLocation && Notification.permission === 'granted') {
+    if (userLocation && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
       const now = new Date();
       const tomorrow = new Date(now);
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -409,12 +415,7 @@ const ChatInterface = () => {
 
   if (isMobile) {
     return (
-      <Motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className={getMoodStyle()}
-      >
+      <div className={getMoodStyle()}>
         <Collapsible 
           className="px-2 bg-background/50 backdrop-blur-sm"
           open={moodSelectorOpen}
@@ -444,8 +445,8 @@ const ChatInterface = () => {
           </CollapsibleContent>
         </Collapsible>
         
-        <ScrollArea className={cn(
-          "flex-1 pb-3 pt-0 space-y-3",
+        <div className={cn(
+          "flex-1 pb-3 pt-0 space-y-3 overflow-y-auto",
           getTextColor()
         )}>
           <div className="px-3 space-y-3">
@@ -468,7 +469,7 @@ const ChatInterface = () => {
             
             <div ref={messagesEndRef}></div>
           </div>
-        </ScrollArea>
+        </div>
         
         <div className="p-3 border-t bg-background/80 backdrop-blur-sm rounded-b-lg flex flex-col">
           <ChatInput onSendMessage={handleSendMessage} />
@@ -487,17 +488,12 @@ const ChatInterface = () => {
         {showVoiceChat && (
           <VoiceChat onSendMessage={handleSendMessage} onClose={handleVoiceChatClose} />
         )}
-      </Motion.div>
+      </div>
     );
   }
   
   return (
-    <Motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className={getMoodStyle()}
-    >
+    <div className={getMoodStyle()}>
       <div className="p-2 md:p-4 flex flex-col md:flex-row justify-between items-center gap-2 ios-glass bg-white/20 backdrop-blur-md">
         <div className="flex items-center gap-2">
           <MoodSelector />
@@ -514,8 +510,8 @@ const ChatInterface = () => {
         <PersonaSelector />
       </div>
       
-      <ScrollArea className={cn(
-        "flex-1 p-3 md:p-4 space-y-3 md:space-y-4",
+      <div className={cn(
+        "flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto",
         getTextColor()
       )}>
         <div className="space-y-3 md:space-y-4">
@@ -538,7 +534,7 @@ const ChatInterface = () => {
           
           <div ref={messagesEndRef}></div>
         </div>
-      </ScrollArea>
+      </div>
       
       <div className="p-3 md:p-4 border-t bg-background/80 backdrop-blur-sm ios-glass">
         <ChatInput onSendMessage={handleSendMessage} />
@@ -547,7 +543,7 @@ const ChatInterface = () => {
       {showVoiceChat && (
         <VoiceChat onSendMessage={handleSendMessage} onClose={handleVoiceChatClose} />
       )}
-    </Motion.div>
+    </div>
   );
 };
 
