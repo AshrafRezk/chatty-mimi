@@ -1,12 +1,13 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { FileText, Camera } from "lucide-react";
+import { FileText, Camera, Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useChat } from "@/context/ChatContext";
+import { cn } from "@/lib/utils";
 
 interface FileUploaderProps {
-  onTextExtracted?: (text: string) => void;
   onImageSelected: (file: File, analysisType: "extractText" | "analyzeImage" | null) => void;
 }
 
@@ -14,6 +15,9 @@ const FileUploader = ({ onImageSelected }: FileUploaderProps) => {
   const { state } = useChat();
   const { language } = state;
   const [analysisType, setAnalysisType] = useState<"extractText" | "analyzeImage">("extractText");
+  const [fileName, setFileName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -26,16 +30,70 @@ const FileUploader = ({ onImageSelected }: FileUploaderProps) => {
       return;
     }
     
+    setFileName(file.name);
+    
     // Pass the file and analysis type to the parent component
     onImageSelected(file, analysisType);
+  };
+  
+  const openFileSelector = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  
+  const openCamera = () => {
+    if (cameraInputRef.current) {
+      cameraInputRef.current.click();
+    }
   };
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-col gap-3 md:flex-row md:gap-4">
+        <Button 
+          onClick={openFileSelector}
+          className={cn(
+            "bg-purple-500 hover:bg-purple-600 text-white rounded-full",
+            "flex items-center justify-center gap-2 px-6 py-2"
+          )}
+        >
+          <Upload className="h-4 w-4" />
+          {language === 'ar' ? "اختيار ملف" : "Choose file"}
+        </Button>
+        
+        <Button 
+          onClick={openCamera}
+          className={cn(
+            "bg-purple-500 hover:bg-purple-600 text-white rounded-full",
+            "flex items-center justify-center gap-2 px-6 py-2"
+          )}
+        >
+          <Camera className="h-4 w-4" />
+          {language === 'ar' ? "التقاط صورة" : "Take photo"}
+        </Button>
+        
+        {fileName && (
+          <span className="text-sm text-gray-500 self-center">
+            {fileName}
+          </span>
+        )}
+      </div>
+      
       <input
+        ref={fileInputRef}
         type="file"
         accept="image/*"
-        className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:bg-mimi-primary file:text-white hover:file:bg-mimi-secondary"
+        className="hidden"
+        onChange={handleFileSelect}
+      />
+      
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
         onChange={handleFileSelect}
       />
       
