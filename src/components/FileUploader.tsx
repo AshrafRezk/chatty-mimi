@@ -1,10 +1,10 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Paperclip, FileText, X, Loader2, Camera } from "lucide-react";
+import { Paperclip, FileText, X, Loader2, Camera, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/context/ChatContext";
-import { extractTextFromImage } from "@/utils/ocrUtils";
+import { extractTextFromImage, smartSightAnalysis } from "@/utils/ocrUtils";
 import { toast } from "sonner";
 import { Motion } from "@/components/ui/motion";
 
@@ -64,23 +64,69 @@ const FileUploader = ({ onTextExtracted, onImageSelected }: FileUploaderProps) =
         return;
       }
       
-      const extractedText = await extractTextFromImage(file);
-      
-      if (extractedText && extractedText.trim()) {
-        onTextExtracted(extractedText);
+      // For images, use the new SmartSight analysis
+      if (file.type.startsWith('image/')) {
+        toast.loading(language === 'ar' 
+          ? "جاري تحليل الصورة..."
+          : "Scanning your image...");
+        
+        const result = await smartSightAnalysis(file);
+        
+        // Dismiss loading toast
+        toast.dismiss();
+        
+        // Prepare user-friendly message with analysis results
+        let analysisMessage = '';
+        
+        if (result.text && result.caption) {
+          // Both text and visual analysis available
+          analysisMessage = language === 'ar'
+            ? `إليك ما أراه: "${result.text}". وبصريًا؟ ${result.caption}`
+            : `Here's what I see: "${result.text}". And visually? ${result.caption}`;
+        } else if (result.text) {
+          // Only text detected
+          analysisMessage = language === 'ar'
+            ? `النص المكتشف: "${result.text}"`
+            : `Detected text: "${result.text}"`;
+        } else if (result.caption) {
+          // Only visual content detected
+          analysisMessage = language === 'ar'
+            ? `يبدو أن الصورة تظهر: ${result.caption}`
+            : `It looks like: ${result.caption}`;
+        } else {
+          // No useful information extracted
+          analysisMessage = language === 'ar'
+            ? "لم أتمكن من استخراج أي معلومات مفيدة من هذه الصورة."
+            : "I couldn't extract any useful information from this image.";
+        }
+        
+        onTextExtracted(analysisMessage);
         toast.success(language === 'ar' 
-          ? "تم استخراج النص بنجاح"
-          : "Text successfully extracted");
+          ? "تم تحليل الصورة بنجاح"
+          : "Image successfully analyzed");
         
         // Reset file after successful processing
         setFile(null);
       } else {
-        toast.error(language === 'ar' 
-          ? "لم يتم العثور على نص في هذا الملف"
-          : "No text found in this file");
+        // For PDFs and other files, use traditional OCR only
+        const extractedText = await extractTextFromImage(file);
+        
+        if (extractedText && extractedText.trim()) {
+          onTextExtracted(extractedText);
+          toast.success(language === 'ar' 
+            ? "تم استخراج النص بنجاح"
+            : "Text successfully extracted");
+          
+          // Reset file after successful processing
+          setFile(null);
+        } else {
+          toast.error(language === 'ar' 
+            ? "لم يتم العثور على نص في هذا الملف"
+            : "No text found in this file");
+        }
       }
     } catch (error) {
-      console.error("OCR error:", error);
+      console.error("Processing error:", error);
       toast.error(language === 'ar' 
         ? "حدث خطأ أثناء معالجة الملف"
         : "Error processing the file");
@@ -142,8 +188,13 @@ const FileUploader = ({ onTextExtracted, onImageSelected }: FileUploaderProps) =
                   {language === 'ar' ? 'جارٍ المعالجة...' : 'Processing...'}
                 </span>
               ) : (
-                aiConfig.persona === 'diet_coach' && file.type.startsWith('image/') 
-                  ? (language === 'ar' ? 'تحليل الصورة' : 'Analyze Image')
+                file.type.startsWith('image/') 
+                  ? (
+                    <span className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      {language === 'ar' ? 'تحليل ذكي' : 'SmartSight'}
+                    </span>
+                  )
                   : (language === 'ar' ? 'استخراج النص' : 'Extract Text')
               )}
             </Button>
@@ -196,10 +247,10 @@ const FileUploader = ({ onTextExtracted, onImageSelected }: FileUploaderProps) =
             {language === 'ar' 
               ? aiConfig.persona === 'diet_coach'
                 ? 'التقط صورة للطعام لتحليل المحتوى الغذائي'
-                : 'يدعم PDF والصور (JPG، PNG، WEBP)'
+                : 'تحليل ذكي للصور والنصوص'
               : aiConfig.persona === 'diet_coach' 
                 ? 'Take a photo of food to analyze nutritional content'
-                : 'Supports PDF and images (JPG, PNG, WEBP)'}
+                : 'SmartSight analysis for images and text'}
           </p>
         </div>
       )}

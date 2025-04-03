@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useChat } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, Send, Paperclip, Camera } from "lucide-react";
+import { Mic, Send, Paperclip, Camera, Sparkles } from "lucide-react";
 import FileUploader from "./FileUploader";
 import { Motion } from "@/components/ui/motion";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -25,27 +25,22 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   
-  // Sound effects
   const messageSentSound = useRef<HTMLAudioElement | null>(null);
   const messageReceivedSound = useRef<HTMLAudioElement | null>(null);
   
-  // Initialize audio on component mount
   useEffect(() => {
     messageSentSound.current = new Audio('/sounds/message-sent.mp3');
     messageReceivedSound.current = new Audio('/sounds/message-received.mp3');
     
-    // Set volumes to be gentle
     if (messageSentSound.current) messageSentSound.current.volume = 0.3;
-    if (messageReceivedSound.current) messageSentSound.current.volume = 0.3;
+    if (messageReceivedSound.current) messageReceivedSound.current.volume = 0.3;
     
     return () => {
-      // Cleanup
       messageSentSound.current = null;
       messageReceivedSound.current = null;
     };
   }, []);
   
-  // Play sent sound when user sends a message
   const playMessageSentSound = () => {
     if (messageSentSound.current) {
       messageSentSound.current.currentTime = 0;
@@ -69,14 +64,13 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
   };
 
   const handleTextExtracted = (extractedText: string) => {
-    // Append the extracted text to the current message
     const updatedMessage = message.trim() 
       ? `${message}\n\n${extractedText}`
       : extractedText;
     
     setMessage(updatedMessage);
     setShowFileUploader(false);
-    toast.success(language === 'ar' ? "تم استخراج النص بنجاح" : "Text extracted successfully");
+    toast.success(language === 'ar' ? "تم تحليل المحتوى بنجاح" : "Content analyzed successfully");
   };
   
   const handleImageSelected = (file: File) => {
@@ -97,13 +91,10 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
     }
   };
   
-  // Get input background color based on mood
   const getInputBackground = () => {
-    // Make input always visible regardless of mood
     return "bg-white dark:bg-zinc-800 shadow-inner";
   };
   
-  // Get button colors based on mood
   const getButtonStyle = () => {
     let baseClasses = "rounded-full shadow-sm transition-all";
     
@@ -130,7 +121,7 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
           <div className="bg-white dark:bg-zinc-800 backdrop-blur-sm p-3 rounded-lg border border-border">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-sm font-medium">
-                {language === 'ar' ? "رفع مستند أو صورة" : "Upload Document or Image"}
+                {language === 'ar' ? "تحليل مستند أو صورة" : "Analyze Document or Image"}
               </h3>
               <Button 
                 variant="ghost" 
@@ -207,10 +198,10 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
               size="icon" 
               className="h-8 w-8 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
               onClick={() => setShowFileUploader(prev => !prev)}
-              title={language === 'ar' ? "إرفاق ملف" : "Attach file"}
+              title={language === 'ar' ? "تحليل ذكي" : "SmartSight"}
             >
-              <Paperclip className="h-4 w-4" />
-              <span className="sr-only">Attach file</span>
+              <Sparkles className="h-4 w-4" />
+              <span className="sr-only">SmartSight</span>
             </Button>
             <Button 
               type="button" 
