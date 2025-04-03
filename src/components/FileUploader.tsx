@@ -1,279 +1,154 @@
 
-import { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Paperclip, FileText, X, Loader2, Camera } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useChat } from "@/context/ChatContext";
 import { extractTextFromImage, analyzeImage } from "@/utils/ocrUtils";
 import { toast } from "sonner";
-import { Motion } from "@/components/ui/motion";
+import { useChat } from "@/context/ChatContext";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { Camera, FileText } from "lucide-react";
 
 interface FileUploaderProps {
   onTextExtracted: (text: string) => void;
-  onImageSelected?: (file: File) => void;
+  onImageSelected: (file: File) => void;
 }
 
 const FileUploader = ({ onTextExtracted, onImageSelected }: FileUploaderProps) => {
-  const [file, setFile] = useState<File | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [analysisType, setAnalysisType] = useState<"text" | "image">("text");
   const { state } = useChat();
-  const { language, aiConfig } = state;
-  
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
+  const { language } = state;
+  const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [analysisType, setAnalysisType] = useState<"extractText" | "analyzeImage">("extractText");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
     
-    const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/tiff', 'image/webp'];
+    const file = files[0];
     
-    if (!validTypes.includes(selectedFile.type)) {
+    // Check if file is an image
+    if (!file.type.startsWith("image/")) {
       toast.error(language === 'ar' 
-        ? "نوع الملف غير مدعوم. يرجى تحميل PDF أو صورة."
-        : "Unsupported file type. Please upload a PDF or image.");
+        ? "يرجى تحديد ملف صورة فقط" 
+        : "Please select an image file only");
       return;
     }
     
-    if (selectedFile.size > 5 * 1024 * 1024) {
-      toast.error(language === 'ar' 
-        ? "حجم الملف كبير جدًا. الحد الأقصى هو 5 ميغابايت."
-        : "File too large. Maximum size is 5MB.");
-      return;
-    }
+    // Pass the file to the parent for preview
+    onImageSelected(file);
     
-    setFile(selectedFile);
+    // If we only want to attach the image without analysis, we're done
+    if (!analysisType) return;
     
-    // Set appropriate default analysis type based on file type
-    if (selectedFile.type.startsWith('image/')) {
-      // For diet coach, directly select the image
-      if (aiConfig.persona === 'diet_coach' && onImageSelected) {
-        onImageSelected(selectedFile);
-        setFile(null);
-      }
-    } else {
-      // For PDFs, default to text extraction
-      setAnalysisType("text");
-    }
-  };
-  
-  const processFile = async () => {
-    if (!file) return;
-    
-    setIsProcessing(true);
+    setIsLoading(true);
+    setProgress(10);
     
     try {
-      if (file.type.startsWith('image/') && aiConfig.persona === 'diet_coach' && onImageSelected) {
-        onImageSelected(file);
-        setFile(null);
-        setIsProcessing(false);
-        return;
-      }
+      let result = "";
       
-      // Process according to the selected analysis type
-      if (analysisType === "text") {
-        // Text extraction only
-        toast.loading(language === 'ar' 
-          ? "جاري استخراج النص..."
-          : "Extracting text...");
-          
-        const extractedText = await extractTextFromImage(file);
-        toast.dismiss();
+      if (analysisType === "extractText") {
+        // Extract text using OCR
+        setProgress(30);
+        result = await extractTextFromImage(file);
+        setProgress(100);
         
-        if (extractedText && extractedText.trim()) {
-          const textResult = language === 'ar'
-            ? `النص المكتشف: "${extractedText}"`
-            : `Detected text: "${extractedText}"`;
-            
-          onTextExtracted(textResult);
+        if (result.trim()) {
+          onTextExtracted(result);
           toast.success(language === 'ar' 
-            ? "تم استخراج النص بنجاح"
-            : "Text successfully extracted");
-          
-          setFile(null);
+            ? "تم استخراج النص بنجاح" 
+            : "Text extracted successfully");
         } else {
-          toast.error(language === 'ar' 
-            ? "لم يتم العثور على نص في هذا الملف"
-            : "No text found in this file");
+          toast.info(language === 'ar' 
+            ? "لم يتم العثور على نص في الصورة" 
+            : "No text found in the image");
         }
-      } else {
-        // Image analysis only
-        toast.loading(language === 'ar' 
-          ? "جاري تحليل الصورة..."
-          : "Analyzing image...");
-          
-        const imageCaption = await analyzeImage(file);
-        toast.dismiss();
+      } else if (analysisType === "analyzeImage") {
+        // Analyze the image content
+        setProgress(30);
+        result = await analyzeImage(file);
+        setProgress(100);
         
-        if (imageCaption && imageCaption.trim()) {
-          const visualResult = language === 'ar'
-            ? `يبدو أن الصورة تظهر: ${imageCaption}`
-            : `It looks like: ${imageCaption}`;
-            
-          onTextExtracted(visualResult);
+        if (result) {
+          onTextExtracted(`Image analysis: ${result}`);
           toast.success(language === 'ar' 
-            ? "تم تحليل الصورة بنجاح"
-            : "Image successfully analyzed");
-          
-          setFile(null);
+            ? "تم تحليل الصورة بنجاح" 
+            : "Image analyzed successfully");
         } else {
-          toast.error(language === 'ar' 
-            ? "لم أتمكن من تحليل هذه الصورة"
-            : "Couldn't analyze this image");
+          toast.info(language === 'ar' 
+            ? "لم نتمكن من تحليل الصورة" 
+            : "Could not analyze the image");
         }
       }
     } catch (error) {
-      console.error("Processing error:", error);
+      console.error("Error processing file:", error);
       toast.error(language === 'ar' 
-        ? "حدث خطأ أثناء معالجة الملف"
+        ? "حدث خطأ أثناء معالجة الملف" 
         : "Error processing the file");
     } finally {
-      setIsProcessing(false);
+      setIsLoading(false);
+      setProgress(0);
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
-  
-  const clearFile = () => {
-    setFile(null);
+
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
-  
+
   return (
-    <Motion.div 
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.2 }}
-      className="flex flex-col"
-    >
-      {file ? (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 p-3 rounded-md bg-muted/30 border border-border">
-            <FileText className="h-5 w-5 text-mimi-primary" />
-            <span className="text-sm truncate flex-1">{file.name}</span>
-            
-            {isProcessing ? (
-              <Loader2 className="h-5 w-5 animate-spin text-mimi-primary" />
-            ) : (
-              <Button 
-                size="sm" 
-                variant="ghost"
-                onClick={clearFile}
-                className="h-8 w-8 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          
-          {file.type.startsWith('image/') && (
-            <div className="p-2 bg-muted/10 rounded-md">
-              <div className="text-sm font-medium mb-2">
-                {language === 'ar' ? 'اختر نوع التحليل:' : 'Choose analysis type:'}
-              </div>
-              <RadioGroup
-                value={analysisType}
-                onValueChange={(value) => setAnalysisType(value as "text" | "image")}
-                className="flex flex-col space-y-1"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="text" id="text-option" />
-                  <label htmlFor="text-option" className="text-sm cursor-pointer">
-                    {language === 'ar' ? 'استخراج النص' : 'Extract text'}
-                  </label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="image" id="image-option" />
-                  <label htmlFor="image-option" className="text-sm cursor-pointer">
-                    {language === 'ar' ? 'تحليل الصورة' : 'Analyze image'}
-                  </label>
-                </div>
-              </RadioGroup>
-            </div>
-          )}
-          
-          <div className="flex gap-2 justify-end">
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={clearFile}
-              disabled={isProcessing}
-              className="px-3"
-            >
-              {language === 'ar' ? 'إلغاء' : 'Cancel'}
-            </Button>
-            <Button 
-              size="sm" 
-              onClick={processFile}
-              disabled={isProcessing}
-              className="px-3 bg-mimi-primary text-white hover:bg-mimi-secondary"
-            >
-              {isProcessing ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {language === 'ar' ? 'جارٍ المعالجة...' : 'Processing...'}
-                </span>
-              ) : (
-                <span>
-                  {analysisType === "text" 
-                    ? (language === 'ar' ? 'استخراج النص' : 'Extract Text')
-                    : (language === 'ar' ? 'تحليل الصورة' : 'Analyze Image')}
-                </span>
-              )}
-            </Button>
-          </div>
+    <div className="space-y-4">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileSelect}
+      />
+      
+      <RadioGroup 
+        value={analysisType} 
+        onValueChange={(value) => setAnalysisType(value as "extractText" | "analyzeImage")}
+        className="flex gap-4"
+      >
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="extractText" id="extractText" />
+          <Label htmlFor="extractText" className="flex items-center gap-1">
+            <FileText className="h-4 w-4" />
+            {language === 'ar' ? "استخراج النص" : "Extract Text"}
+          </Label>
         </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="relative">
-              <input
-                type="file"
-                id="file-upload"
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                onChange={handleFileChange}
-                accept=".pdf,.jpg,.jpeg,.png,.tiff,.webp"
-              />
-              <Button
-                variant="outline"
-                className="w-full h-20 flex flex-col items-center justify-center gap-2 border-dashed"
-              >
-                <Paperclip className="h-6 w-6 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">
-                  {language === 'ar' ? 'اختر ملفًا' : 'Upload File'}
-                </span>
-              </Button>
-            </div>
-            
-            <div className="relative">
-              <input
-                type="file"
-                id="camera-capture"
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                onChange={handleFileChange}
-                accept="image/*"
-                capture="environment"
-              />
-              <Button
-                variant="outline"
-                className="w-full h-20 flex flex-col items-center justify-center gap-2 border-dashed"
-              >
-                <Camera className="h-6 w-6 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">
-                  {language === 'ar' ? 'التقط صورة' : 'Take Photo'}
-                </span>
-              </Button>
-            </div>
-          </div>
-          
-          <p className="text-xs text-center text-muted-foreground">
-            {language === 'ar' 
-              ? aiConfig.persona === 'diet_coach'
-                ? 'التقط صورة للطعام لتحليل المحتوى الغذائي'
-                : 'تحليل الصور والنصوص'
-              : aiConfig.persona === 'diet_coach' 
-                ? 'Take a photo of food to analyze nutritional content'
-                : 'Analyze images and text'}
-          </p>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="analyzeImage" id="analyzeImage" />
+          <Label htmlFor="analyzeImage" className="flex items-center gap-1">
+            <Camera className="h-4 w-4" />
+            {language === 'ar' ? "تحليل الصورة" : "Analyze Image"}
+          </Label>
         </div>
+      </RadioGroup>
+      
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        onClick={triggerFileInput}
+        disabled={isLoading}
+      >
+        {isLoading 
+          ? (language === 'ar' ? "جاري المعالجة..." : "Processing...")
+          : (language === 'ar' ? "حدد ملفًا" : "Select File")}
+      </Button>
+      
+      {isLoading && (
+        <Progress value={progress} className="h-2 w-full" />
       )}
-    </Motion.div>
+    </div>
   );
 };
 
