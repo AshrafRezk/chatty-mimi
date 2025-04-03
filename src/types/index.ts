@@ -1,6 +1,6 @@
 
 // Define available languages
-export type Language = 'en' | 'ar';
+export type Language = 'en' | 'ar' | 'fr' | 'es' | 'de' | 'it' | 'pt' | 'ru' | 'zh' | 'ja' | 'ko' | 'tr' | 'no';
 
 // Define available moods
 export type Mood = 'calm' | 'friendly' | 'deep' | 'focus';

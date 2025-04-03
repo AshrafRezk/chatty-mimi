@@ -57,11 +57,20 @@ const TranscriptDisplay = ({
       )}
       
       {/* Visual indicator for listening state */}
-      {isListening && !isMusicMode && !transcript && (
+      {isListening && !isMusicMode && (
         <div className="flex space-x-1 mt-2">
-          <div className="w-2 h-2 bg-mimi-primary rounded-full animate-pulse"></div>
-          <div className="w-2 h-2 bg-mimi-primary rounded-full animate-pulse delay-100"></div>
-          <div className="w-2 h-2 bg-mimi-primary rounded-full animate-pulse delay-200"></div>
+          <div className={cn(
+            "w-2 h-2 bg-mimi-primary rounded-full animate-pulse",
+            transcript ? "opacity-50" : "opacity-100"
+          )}></div>
+          <div className={cn(
+            "w-2 h-2 bg-mimi-primary rounded-full animate-pulse delay-100",
+            transcript ? "opacity-50" : "opacity-100"
+          )}></div>
+          <div className={cn(
+            "w-2 h-2 bg-mimi-primary rounded-full animate-pulse delay-200",
+            transcript ? "opacity-50" : "opacity-100"
+          )}></div>
         </div>
       )}
     </div>
