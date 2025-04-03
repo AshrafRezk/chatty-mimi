@@ -24,9 +24,10 @@ const Chat = () => {
   const isMobile = useIsMobile();
   const [showApiSetup, setShowApiSetup] = useState(false);
   
-  // Redirect to auth if not logged in
-  if (!loading && !user) {
-    return <Navigate to="/auth" replace />;
+  // Allow guests to access chat
+  if (!loading && !user && window.location.pathname !== '/auth') {
+    // Continue as guest
+    console.log('Access granted for guest user');
   }
 
   // Set document title based on language

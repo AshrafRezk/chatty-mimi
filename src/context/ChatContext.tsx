@@ -25,6 +25,7 @@ const initialState: ChatState = {
   isVoiceMode: false,
   currentConversationId: null,
   conversationHistory: [],
+  isGuestMode: false,
 };
 
 // Action types
@@ -43,6 +44,7 @@ type ChatAction =
   | { type: 'SET_CURRENT_CONVERSATION_ID'; payload: string | null }
   | { type: 'SET_CONVERSATION_HISTORY'; payload: any[] }
   | { type: 'LOAD_CONVERSATION'; payload: { messages: Message[], conversationId: string } }
+  | { type: 'SET_GUEST_MODE'; payload: boolean }
   | { type: 'CLEAR_MESSAGES' };
 
 // Reducer
@@ -127,6 +129,11 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
         messages: action.payload.messages,
         currentConversationId: action.payload.conversationId,
       };
+    case 'SET_GUEST_MODE':
+      return {
+        ...state,
+        isGuestMode: action.payload,
+      };
     case 'CLEAR_MESSAGES':
       return {
         ...state,
@@ -150,6 +157,7 @@ interface ChatContextType {
   setPersona: (persona: Persona) => void;
   toggleWebSearch: (enabled: boolean) => void;
   setVoiceMode: (enabled: boolean) => void;
+  setGuestMode: (enabled: boolean) => void;
   clearMessages: () => void;
   createNewConversation: () => Promise<string | null>;
   loadConversation: (conversationId: string) => Promise<void>;
@@ -162,6 +170,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 export const ChatProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const [state, dispatch] = useReducer(chatReducer, initialState);
   const { user } = useAuth();
+  const [guestNoticeShown, setGuestNoticeShown] = useState(false);
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('mimi-language') as Language;
@@ -208,10 +217,25 @@ export const ChatProvider: React.FC<{children: React.ReactNode}> = ({ children }
     if (user) {
       fetchConversationHistory();
       checkForCurrentConversation();
+    } else if (!user && !guestNoticeShown && window.location.pathname === '/') {
+      // Show guest mode notification
+      dispatch({ type: 'SET_GUEST_MODE', payload: true });
+      setGuestNoticeShown(true);
+      
+      setTimeout(() => {
+        toast.info(
+          state.language === 'ar' 
+            ? 'أنت تستخدم الوضع الزائر. لا نجمع بياناتك، لكن تسجيل الدخول سيمنحك تجربة شخصية أفضل.'
+            : 'You are using guest mode. We do not collect your data, but signing in will give you a better personalized experience.',
+          {
+            duration: 8000,
+          }
+        );
+      }, 1500);
     }
     
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [user]);
+  }, [user, guestNoticeShown, state.language]);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', state.theme === 'dark');
@@ -261,7 +285,11 @@ export const ChatProvider: React.FC<{children: React.ReactNode}> = ({ children }
   };
 
   const createNewConversation = async () => {
-    if (!user) return null;
+    if (!user) {
+      // For guest users, just clear messages
+      dispatch({ type: 'CLEAR_MESSAGES' });
+      return null;
+    }
     
     try {
       // Create a new conversation
@@ -447,6 +475,10 @@ export const ChatProvider: React.FC<{children: React.ReactNode}> = ({ children }
   const setVoiceMode = (enabled: boolean) => {
     dispatch({ type: 'SET_VOICE_MODE', payload: enabled });
   };
+  
+  const setGuestMode = (enabled: boolean) => {
+    dispatch({ type: 'SET_GUEST_MODE', payload: enabled });
+  };
 
   const clearMessages = () => {
     dispatch({ type: 'CLEAR_MESSAGES' });
@@ -465,6 +497,7 @@ export const ChatProvider: React.FC<{children: React.ReactNode}> = ({ children }
         setPersona,
         toggleWebSearch,
         setVoiceMode,
+        setGuestMode,
         clearMessages,
         createNewConversation,
         loadConversation,

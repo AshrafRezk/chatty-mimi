@@ -14,25 +14,44 @@ const AssistantAvatar = ({ isSpeaking, mood, status }: AssistantAvatarProps) => 
   const [mouthOpen, setMouthOpen] = useState(false);
   const [mouthWidth, setMouthWidth] = useState(10);
   const [mouthHeight, setMouthHeight] = useState(1);
+  const [eyeState, setEyeState] = useState<'open' | 'half' | 'closed'>('open');
   
   useEffect(() => {
-    let id: number;
+    let mouthInterval: number;
+    let blinkInterval: number;
     
     if (isSpeaking) {
       // Create a more natural speaking pattern with variable mouth shapes
-      id = window.setInterval(() => {
+      mouthInterval = window.setInterval(() => {
         setMouthOpen(prev => !prev);
         // Randomize mouth shape for more natural animation
-        setMouthWidth(8 + Math.random() * 4);
-        setMouthHeight(1 + Math.random() * 4);
+        setMouthWidth(8 + Math.random() * 6);
+        setMouthHeight(2 + Math.random() * 5);
       }, 120);
+      
+      // Add occasional blinking during speech
+      blinkInterval = window.setInterval(() => {
+        setEyeState('closed');
+        setTimeout(() => setEyeState('half'), 80);
+        setTimeout(() => setEyeState('open'), 160);
+      }, 3000);
     } else {
       setMouthOpen(false);
       setMouthWidth(10);
       setMouthHeight(1);
+      
+      // Normal blinking pattern when not speaking
+      blinkInterval = window.setInterval(() => {
+        setEyeState('closed');
+        setTimeout(() => setEyeState('half'), 60);
+        setTimeout(() => setEyeState('open'), 120);
+      }, 4000);
     }
     
-    return () => window.clearInterval(id);
+    return () => {
+      window.clearInterval(mouthInterval);
+      window.clearInterval(blinkInterval);
+    };
   }, [isSpeaking]);
   
   const getBorderColor = () => {
@@ -45,34 +64,68 @@ const AssistantAvatar = ({ isSpeaking, mood, status }: AssistantAvatarProps) => 
     }
   };
   
+  const getLoadingAnimation = () => {
+    if (status === 'connecting') {
+      return (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-24 h-24 rounded-full border-4 border-transparent border-t-mimi-primary animate-spin"></div>
+        </div>
+      );
+    }
+    return null;
+  };
+  
+  const getEyeHeight = () => {
+    switch(eyeState) {
+      case 'closed': return 0.5;
+      case 'half': return 1;
+      case 'open': return 2.5;
+      default: return 2;
+    }
+  };
+  
   return (
     <div className={cn(
       "relative rounded-full overflow-hidden w-32 h-32 mb-4",
       getBorderColor(),
-      "border-2",
-      status === 'ended' ? "opacity-60" : "opacity-100"
+      "border-4 shadow-lg",
+      status === 'ended' ? "opacity-60" : "opacity-100",
+      status === 'connecting' ? "animate-pulse" : ""
     )}>
       <Avatar className="w-full h-full">
         <AvatarImage src="/placeholder.svg" alt="AI Assistant" />
-        <AvatarFallback>
-          <User className="w-12 h-12" />
+        <AvatarFallback className="bg-gradient-to-b from-mimi-100 to-mimi-200">
+          <User className="w-12 h-12 text-mimi-primary" />
         </AvatarFallback>
       </Avatar>
+      
+      {/* Loading animation */}
+      {getLoadingAnimation()}
       
       {/* Face features */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         {/* Eyes */}
         <div className="flex justify-between w-16 mt-2">
           <div className={cn(
-            "w-4 h-2 rounded-full",
-            mood === 'deep' || mood === 'focus' ? "bg-white" : "bg-gray-800",
-            isSpeaking && "animate-blink"
-          )}/>
+            "rounded-full transition-all duration-150",
+            mood === 'deep' || mood === 'focus' ? "bg-white" : "bg-gray-800"
+          )}
+          style={{
+            width: '10px',
+            height: `${getEyeHeight()}px`,
+            transform: isSpeaking ? 'scaleY(1.1)' : 'scaleY(1)'
+          }}
+          />
           <div className={cn(
-            "w-4 h-2 rounded-full",
-            mood === 'deep' || mood === 'focus' ? "bg-white" : "bg-gray-800",
-            isSpeaking && "animate-blink"
-          )}/>
+            "rounded-full transition-all duration-150",
+            mood === 'deep' || mood === 'focus' ? "bg-white" : "bg-gray-800"
+          )}
+          style={{
+            width: '10px',
+            height: `${getEyeHeight()}px`,
+            transform: isSpeaking ? 'scaleY(1.1)' : 'scaleY(1)'
+          }}
+          />
         </div>
         
         {/* Animated mouth */}

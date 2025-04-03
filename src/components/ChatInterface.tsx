@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { NutritionData, PropertyData, PropertyImage, Reference } from "@/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Motion } from "@/components/ui/motion";
-import { ChevronDown, ChevronUp, Mic } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -64,6 +64,10 @@ const ChatInterface = () => {
       messageReceivedSound.current = null;
     };
   }, []);
+  
+  useEffect(() => {
+    setShowVoiceChat(isVoiceMode);
+  }, [isVoiceMode]);
   
   const playMessageSentSound = useCallback(() => {
     if (messageSentSound.current) {
@@ -419,11 +423,6 @@ const ChatInterface = () => {
     setShowVoiceChat(false);
     setVoiceMode(false);
   }, [setVoiceMode]);
-  
-  const toggleVoiceChat = useCallback(() => {
-    setShowVoiceChat(!showVoiceChat);
-    setVoiceMode(!showVoiceChat);
-  }, [setVoiceMode, showVoiceChat]);
 
   if (isMobile) {
     return (
@@ -480,18 +479,8 @@ const ChatInterface = () => {
           </div>
         </div>
         
-        <div className="p-3 border-t bg-background/80 backdrop-blur-sm rounded-b-lg flex flex-col">
+        <div className="p-3 border-t bg-background/80 backdrop-blur-sm rounded-b-lg">
           <ChatInput onSendMessage={handleSendMessage} />
-          
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-2 self-center rounded-full bg-white/90 border border-gray-200 shadow-sm"
-            onClick={toggleVoiceChat}
-          >
-            <Mic className="h-4 w-4 mr-2" />
-            {language === 'ar' ? "وضع الصوت" : "Voice Mode"}
-          </Button>
         </div>
         
         {showVoiceChat && (
@@ -503,18 +492,7 @@ const ChatInterface = () => {
   
   return (
     <div className="flex flex-col h-full bg-background rounded-lg shadow-lg transition-colors">
-      <div className="p-2 md:p-4 flex flex-col md:flex-row justify-between items-center gap-2 ios-glass bg-white/20 backdrop-blur-md">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleVoiceChat}
-            className="rounded-full bg-white/90 border border-gray-200 shadow-sm"
-          >
-            <Mic className="h-4 w-4 mr-2" />
-            {language === 'ar' ? "وضع الصوت" : "Voice Mode"}
-          </Button>
-        </div>
+      <div className="p-2 md:p-4 flex justify-between items-center gap-2 ios-glass bg-white/20 backdrop-blur-md">
         <PersonaSelector />
       </div>
       

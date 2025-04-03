@@ -29,6 +29,8 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
   const [isRecognizingMusic, setIsRecognizingMusic] = useState(false);
   const [recognizedTrack, setRecognizedTrack] = useState<RecognizedTrack | null>(null);
   const [volume, setVolume] = useState(1.0);
+  const [transcriptHistory, setTranscriptHistory] = useState<Array<{role: 'user' | 'assistant', text: string}>>([]);
+  const [showHistory, setShowHistory] = useState(false);
   
   // Store audio data for music recognition
   const audioDataRef = useRef<Float32Array | null>(null);
@@ -50,6 +52,10 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
       if (isMusicMode) {
         audioDataRef.current = data;
       }
+    },
+    onTranscript: (text) => {
+      // Update UI immediately with real-time transcription
+      console.log("Transcript received:", text);
     }
   });
   
@@ -62,13 +68,27 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
       if (isSupported) {
         startListening();
         playNotificationSound('received');
+        
+        // Add welcome message to transcript history
+        const welcomeMessage = language === 'ar' 
+          ? 'مرحباً بك في المكالمة الصوتية، كيف يمكنني مساعدتك اليوم؟'
+          : 'Welcome to the voice call. How can I help you today?';
+        
+        setTranscriptHistory([{
+          role: 'assistant',
+          text: welcomeMessage
+        }]);
+        
+        // Simulate AI speaking during welcome
+        setIsSpeaking(true);
+        setTimeout(() => setIsSpeaking(false), 3000);
       }
     }, 1500);
     
     return () => {
       clearTimeout(connectionTimer);
     };
-  }, [isSupported, startListening]);
+  }, [isSupported, startListening, language]);
   
   // Check if speech synthesis is speaking
   useEffect(() => {
@@ -119,6 +139,12 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
       // Play sending sound
       await playNotificationSound('sent');
       
+      // Add user transcript to history
+      setTranscriptHistory(prev => [...prev, {
+        role: 'user',
+        text: transcript.trim()
+      }]);
+      
       // Send message
       onSendMessage(transcript.trim());
       
@@ -128,8 +154,45 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
       // Simulate AI thinking time
       setTimeout(() => {
         setIsSpeaking(true);
-        setTimeout(() => setIsSpeaking(false), 2000);
+        
+        // Simulate AI response time (1.5-3 seconds based on message length)
+        const responseTime = Math.min(1500 + transcript.length * 20, 3000);
+        
+        setTimeout(() => {
+          // Generate simulated response
+          const responses = [
+            language === 'ar' ? 'بالطبع، سأساعدك في ذلك' : 'Of course, I can help you with that',
+            language === 'ar' ? 'هذا سؤال مثير للاهتمام' : 'That\'s an interesting question',
+            language === 'ar' ? 'دعني أبحث عن ذلك لك' : 'Let me look that up for you',
+            language === 'ar' ? 'يسعدني مساعدتك' : 'I\'m happy to assist you'
+          ];
+          
+          const responseIndex = Math.floor(Math.random() * responses.length);
+          const aiResponse = responses[responseIndex];
+          
+          // Add AI response to transcript history
+          setTranscriptHistory(prev => [...prev, {
+            role: 'assistant',
+            text: aiResponse
+          }]);
+          
+          // Simulate speech ending
+          setTimeout(() => setIsSpeaking(false), 2000);
+          
+        }, responseTime);
       }, 500);
+      
+      // Speak response
+      if (window.speechSynthesis && 'speechSynthesis' in window) {
+        try {
+          const utterance = new SpeechSynthesisUtterance(transcript.trim());
+          utterance.lang = language === 'ar' ? 'ar-SA' : 'en-US';
+          utterance.volume = volume;
+          window.speechSynthesis.speak(utterance);
+        } catch (err) {
+          console.error("Speech synthesis error:", err);
+        }
+      }
     }
   };
   
@@ -185,6 +248,12 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
         const message = language === 'ar'
           ? `لقد تعرفت على أغنية "${track.title}" للفنان ${track.artist} من ألبوم ${track.album || 'غير معروف'}.`
           : `I've identified the song "${track.title}" by ${track.artist} from the album ${track.album || 'unknown'}.`;
+        
+        // Add music recognition result to transcript history
+        setTranscriptHistory(prev => [...prev, {
+          role: 'assistant',
+          text: message
+        }]);
         
         onSendMessage(message);
       } else {
@@ -279,7 +348,7 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
           </h2>
           
           <p className={cn(
-            "text-sm mb-6",
+            "text-sm mb-4",
             mood === 'deep' || mood === 'focus' ? "text-gray-300" : "text-gray-500"
           )}>
             {callStatus === 'connecting' ? 
@@ -291,7 +360,7 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
           </p>
           
           <div className={cn(
-            "w-full p-4 mb-4 rounded-xl min-h-16",
+            "w-full p-4 mb-4 rounded-xl min-h-16 transition-all",
             mood === 'deep' || mood === 'focus' ? "bg-gray-800/50 text-white" : "bg-gray-100 text-gray-800",
             "flex items-center justify-center text-center",
             callStatus !== 'active' && "opacity-60"
@@ -305,6 +374,43 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
               )
             }
           </div>
+          
+          {/* Conversation history toggle */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowHistory(!showHistory)}
+            className="mb-4 text-xs"
+          >
+            {showHistory ? 
+              (language === 'ar' ? 'إخفاء المحادثة' : 'Hide Conversation') : 
+              (language === 'ar' ? 'عرض المحادثة' : 'Show Conversation')
+            }
+          </Button>
+          
+          {/* Conversation history */}
+          {showHistory && transcriptHistory.length > 0 && (
+            <div className={cn(
+              "w-full p-4 mb-4 rounded-xl max-h-40 overflow-y-auto",
+              mood === 'deep' || mood === 'focus' ? "bg-gray-800/30 text-white" : "bg-gray-50 text-gray-800",
+              "text-sm transition-all"
+            )}>
+              {transcriptHistory.map((item, index) => (
+                <div key={index} className={cn(
+                  "mb-2 py-1",
+                  item.role === 'assistant' ? 'text-mimi-primary' : 'text-gray-700'
+                )}>
+                  <span className="font-semibold">
+                    {item.role === 'assistant' ? 
+                      (language === 'ar' ? 'المساعد: ' : 'Assistant: ') : 
+                      (language === 'ar' ? 'أنت: ' : 'You: ')
+                    }
+                  </span>
+                  {item.text}
+                </div>
+              ))}
+            </div>
+          )}
           
           {isMusicMode && (
             <MusicRecognition 
