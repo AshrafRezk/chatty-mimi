@@ -1,62 +1,20 @@
 
-export type Language = 'en' | 'ar' | 'fr' | 'es' | 'de' | 'it' | 'pt' | 'ru' | 'zh' | 'ja' | 'ko' | 'tr' | 'no';
-export type Theme = 'light' | 'dark' | 'system';
-export type Persona = 
-  | 'general' 
-  | 'professional' 
-  | 'creative' 
-  | 'academic' 
-  | 'software' 
-  | 'medicine' 
-  | 'architecture' 
-  | 'project_management' 
-  | 'finance' 
-  | 'education' 
-  | 'legal' 
-  | 'christianity'
-  | 'islam'
-  | 'diet_coach'
-  | 'real_estate';
+// Define available languages
+export type Language = 'en' | 'ar';
 
-export interface Reference {
-  title: string;
-  url: string;
-  snippet: string;
-}
+// Define available moods
+export type Mood = 'calm' | 'friendly' | 'deep' | 'focus';
 
-export interface NutritionData {
-  calories: number;
-  protein: number;
-  fats: number;
-  carbohydrates: number;
-}
+// Define persona types
+export type Persona = 'general';
 
-export interface PropertyPaymentPlan {
-  downPayment: number;
-  monthlyInstallment: number;
-  years: number;
-}
-
-export interface PropertyData {
-  price: number;
-  location: string;
-  area: number;
-  bedrooms: number;
-  bathrooms: number;
-  paymentPlan?: PropertyPaymentPlan;
-}
-
-export interface PropertyImage {
-  url: string;
-  caption?: string;
-}
-
+// Interface for user messages
 export interface Message {
   id: string;
   text: string;
   sender: 'user' | 'assistant';
   timestamp: number;
-  imageSrc?: string | null;
+  imageSrc?: string;
   references?: Reference[];
   certaintyScore?: number;
   nutritionData?: NutritionData;
@@ -64,6 +22,7 @@ export interface Message {
   propertyImages?: PropertyImage[];
 }
 
+// Interface for user location
 export interface UserLocation {
   city: string;
   country: string;
@@ -73,24 +32,54 @@ export interface UserLocation {
   timezone: string;
 }
 
-export interface AIConfig {
-  service: 'mimi' | 'google';
-  contextLength: number;
-  persona: Persona;
-  webSearch: boolean;
-}
-
+// Interface for chat state
 export interface ChatState {
   messages: Message[];
-  language: Language;
-  mood: string;
   isTyping: boolean;
+  language: Language;
+  mood: Mood;
   userLocation: UserLocation | null;
-  isFreeLimit: boolean;
-  theme: Theme;
-  aiConfig: AIConfig;
-  isVoiceMode: boolean;
+  aiConfig: {
+    persona: Persona;
+    useMultimodal: boolean;
+  };
   currentConversationId: string | null;
-  conversationHistory: any[];
-  isGuestMode: boolean;
+  isFreeLimit: boolean;
+  isVoiceMode: boolean;
+}
+
+// Interface for references/sources
+export interface Reference {
+  title: string;
+  link: string;
+  snippet: string;
+}
+
+// Interface for nutrition data
+export interface NutritionData {
+  calories: number;
+  protein: number;
+  fats: number;
+  carbohydrates: number;
+}
+
+// Interface for property data
+export interface PropertyData {
+  price: number;
+  location: string;
+  area: number;
+  bedrooms: number;
+  bathrooms: number;
+  paymentPlan?: {
+    downPayment: number;
+    monthlyInstallment: number;
+    years: number;
+  };
+}
+
+// Interface for property images
+export interface PropertyImage {
+  url: string;
+  description: string;
+  title: string; // Added the required title property
 }

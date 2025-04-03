@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from './ui/button';
 import { PhoneOff } from 'lucide-react';
 import { useChat } from '@/context/ChatContext';
@@ -12,7 +12,9 @@ import AssistantAvatar from './VoiceCall/AssistantAvatar';
 import CallControls from './VoiceCall/CallControls';
 import MusicRecognition from './VoiceCall/MusicRecognition';
 import { RecognizedTrack, recognizeMusic, prepareAudioForRecognition } from '@/utils/musicRecognition';
-import { playNotificationSound, playAudioBuffer } from '@/utils/audioUtils';
+import { playNotificationSound } from '@/utils/audioUtils';
+import VoiceCallAvatar from './VoiceCall/VoiceCallAvatar';
+import TranscriptDisplay from './VoiceCall/TranscriptDisplay';
 
 interface VoiceChatProps {
   onSendMessage: (text: string) => void;
@@ -44,7 +46,6 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
     stopListening,
     resetTranscript,
     isSupported,
-    audioBuffer,
     error
   } = useSpeechRecognition({ 
     language,
@@ -66,6 +67,7 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
     // Simulate connecting and then active call
     const connectionTimer = setTimeout(() => {
       setCallStatus('active');
+      
       // Auto start listening
       if (isSupported) {
         startListening();
@@ -103,7 +105,7 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
     return () => {
       clearTimeout(connectionTimer);
     };
-  }, [isSupported, startListening, language]);
+  }, [isSupported, language, startListening, volume]);
   
   // Check if speech synthesis is speaking
   useEffect(() => {
@@ -144,7 +146,17 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
     setCurrentTranscript(transcript);
   }, [transcript]);
   
-  const toggleListening = () => {
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopListening();
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [stopListening]);
+  
+  const toggleListening = useCallback(() => {
     if (isListening) {
       stopListening();
       
@@ -159,9 +171,9 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
       resetTranscript();
       startListening();
     }
-  };
+  }, [currentTranscript, isListening, resetTranscript, startListening, stopListening]);
   
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (currentTranscript.trim()) {
       // Play sending sound
       await playNotificationSound('sent');
@@ -239,9 +251,9 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
         }, responseTime);
       }, 500);
     }
-  };
+  }, [callStatus, currentTranscript, isSupported, language, onSendMessage, resetTranscript, startListening, volume]);
   
-  const handleEndCall = () => {
+  const handleEndCall = useCallback(() => {
     setCallStatus('ended');
     stopListening();
     
@@ -253,9 +265,9 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
     setTimeout(() => {
       onClose();
     }, 500);
-  };
+  }, [onClose, stopListening]);
   
-  const toggleMusicMode = () => {
+  const toggleMusicMode = useCallback(() => {
     if (isMusicMode) {
       setIsMusicMode(false);
       setRecognizedTrack(null);
@@ -267,9 +279,9 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
           : 'Music recognition mode. Press identify when you hear a song.'
       );
     }
-  };
+  }, [isMusicMode, language]);
   
-  const handleRecognizeMusic = async () => {
+  const handleRecognizeMusic = useCallback(async () => {
     if (!audioDataRef.current || isRecognizingMusic) return;
     
     setIsRecognizingMusic(true);
@@ -318,9 +330,9 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
     } finally {
       setIsRecognizingMusic(false);
     }
-  };
+  }, [isRecognizingMusic, language, onSendMessage]);
   
-  const adjustVolume = () => {
+  const adjustVolume = useCallback(() => {
     // Cycle through volume levels: 1.0 -> 0.7 -> 0.4 -> 0.1 -> 1.0
     const newVolume = volume <= 0.1 ? 1.0 : volume - 0.3;
     setVolume(parseFloat(newVolume.toFixed(1)));
@@ -330,7 +342,7 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
         ? `مستوى الصوت: ${Math.round(newVolume * 100)}%`
         : `Volume: ${Math.round(newVolume * 100)}%`
     );
-  };
+  }, [language, volume]);
   
   return (
     <Motion.div
@@ -379,11 +391,7 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
         </div>
         
         <div className="p-6 flex flex-col items-center">
-          <AssistantAvatar 
-            isSpeaking={isSpeaking}
-            mood={mood}
-            status={callStatus}
-          />
+          <VoiceCallAvatar isSpeaking={isSpeaking} mood={mood} />
           
           <h2 className={cn(
             "text-xl font-semibold mb-2",
@@ -404,44 +412,14 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
             }
           </p>
           
-          {/* Improved transcript display to make it more prominent */}
-          <div className={cn(
-            "w-full p-4 mb-4 rounded-xl min-h-20 transition-all",
-            mood === 'deep' || mood === 'focus' ? "bg-gray-800/50 text-white" : "bg-gray-100 text-gray-800",
-            isListening && currentTranscript ? "border-2 border-mimi-primary" : "",
-            "flex flex-col items-center justify-center text-center"
-          )}>
-            {/* Show explicit transcript label when user is speaking */}
-            {isListening && !isMusicMode && (
-              <div className={cn(
-                "text-xs font-medium mb-1",
-                mood === 'deep' || mood === 'focus' ? "text-gray-400" : "text-gray-500"
-              )}>
-                {language === 'ar' ? 'أنت تتحدث:' : 'You are saying:'}
-              </div>
-            )}
-            
-            {/* The actual transcript content */}
-            <div className={cn("w-full", isListening && currentTranscript ? "font-medium" : "")}>
-              {isMusicMode ? 
-                (language === 'ar' ? 'وضع التعرف على الموسيقى نشط' : 'Music recognition mode active') :
-                currentTranscript || (
-                  isListening ? 
-                    (language === 'ar' ? 'أنا أستمع... انطق الآن' : 'I\'m listening... speak now') : 
-                    (language === 'ar' ? 'اضغط على الميكروفون وابدأ الحديث' : 'Tap mic to speak')
-                )
-              }
-            </div>
-            
-            {/* Visual indicator for listening state */}
-            {isListening && !isMusicMode && !currentTranscript && (
-              <div className="flex space-x-1 mt-2">
-                <div className="w-2 h-2 bg-mimi-primary rounded-full animate-pulse"></div>
-                <div className="w-2 h-2 bg-mimi-primary rounded-full animate-pulse delay-100"></div>
-                <div className="w-2 h-2 bg-mimi-primary rounded-full animate-pulse delay-200"></div>
-              </div>
-            )}
-          </div>
+          {/* Improved transcript display */}
+          <TranscriptDisplay
+            isListening={isListening}
+            isMusicMode={isMusicMode}
+            transcript={currentTranscript}
+            mood={mood}
+            language={language}
+          />
           
           {/* Conversation history toggle */}
           <Button

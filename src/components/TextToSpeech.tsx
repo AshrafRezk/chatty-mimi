@@ -84,17 +84,6 @@ const TextToSpeech = ({ text, size = "sm", variant = "ghost", autoplay = false }
     switch (lang) {
       case 'ar': return 'ar-SA';
       case 'en': return 'en-US';
-      case 'fr': return 'fr-FR';
-      case 'es': return 'es-ES';
-      case 'de': return 'de-DE';
-      case 'it': return 'it-IT';
-      case 'pt': return 'pt-BR';
-      case 'ru': return 'ru-RU';
-      case 'ja': return 'ja-JP';
-      case 'zh': return 'zh-CN';
-      case 'ko': return 'ko-KR';
-      case 'tr': return 'tr-TR';
-      case 'no': return 'nb-NO';
       default: return 'en-US';
     }
   };

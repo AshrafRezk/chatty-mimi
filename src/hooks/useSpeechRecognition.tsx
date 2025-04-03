@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 
 // Add global type definitions for SpeechRecognition
@@ -28,8 +28,11 @@ interface UseSpeechRecognitionReturn {
   error: string | null;
 }
 
-const useSpeechRecognition = ({ 
-  language, 
+/**
+ * Custom hook for speech recognition functionality
+ */
+const useSpeechRecognition = ({
+  language,
   onTranscript,
   onAudioData,
   autoStart = false
@@ -49,6 +52,55 @@ const useSpeechRecognition = ({
   const silenceTimeoutRef = useRef<number | null>(null);
   const isMountedRef = useRef(true);
 
+  // Get speech recognition language code
+  const getSpeechLanguageCode = useCallback((lang: string): string => {
+    // Map language codes to speech recognition language codes
+    switch (lang) {
+      case 'ar': return 'ar-SA';
+      case 'en': return 'en-US';
+      default: return lang || navigator.language || 'en-US';
+    }
+  }, []);
+
+  // Clean up resources
+  const cleanupResources = useCallback(() => {
+    // Clean up recognition
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        // Ignore errors when stopping
+      }
+    }
+
+    // Clean up audio processing
+    if (audioSourceRef.current) {
+      audioSourceRef.current.disconnect();
+      audioSourceRef.current = null;
+    }
+    
+    if (audioProcessorRef.current) {
+      audioProcessorRef.current.disconnect();
+      audioProcessorRef.current = null;
+    }
+    
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach(track => track.stop());
+      audioStreamRef.current = null;
+    }
+    
+    if (audioContextRef.current) {
+      audioContextRef.current.close().catch(console.error);
+      audioContextRef.current = null;
+    }
+
+    // Clear any timeouts
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+      silenceTimeoutRef.current = null;
+    }
+  }, []);
+
   // Initialize speech recognition
   useEffect(() => {
     // Check if browser supports speech recognition
@@ -63,12 +115,12 @@ const useSpeechRecognition = ({
       recognitionRef.current.continuous = true;
       recognitionRef.current.interimResults = true;
       
-      // Set language dynamically - default to user preference or browser default
-      const userLang = language || navigator.language || 'en-US';
-      recognitionRef.current.lang = userLang;
+      // Set language
+      const speechLang = getSpeechLanguageCode(language);
+      recognitionRef.current.lang = speechLang;
+      console.log("Speech recognition initialized with language:", speechLang);
       
-      console.log("Speech recognition initialized with language:", userLang);
-      
+      // Setup event handlers
       recognitionRef.current.onresult = (event: any) => {
         if (!isMountedRef.current) return;
         
@@ -98,10 +150,9 @@ const useSpeechRecognition = ({
           clearTimeout(silenceTimeoutRef.current);
         }
         
-        // Set a new silence timeout
+        // Set a new silence timeout (2 seconds)
         silenceTimeoutRef.current = window.setTimeout(() => {
           console.log("Silence detected - 2 seconds of no speech");
-          // This could trigger the submission if needed
         }, 2000);
       };
       
@@ -130,86 +181,34 @@ const useSpeechRecognition = ({
           }
         }
       };
-    } else if (!supported) {
+    } else {
       setError('Speech recognition not supported');
       toast.error('Speech recognition is not supported by your browser');
     }
     
     return () => {
       isMountedRef.current = false;
-      cleanupRecognition();
-      if (silenceTimeoutRef.current) {
-        clearTimeout(silenceTimeoutRef.current);
-      }
+      cleanupResources();
     };
-  }, [language]);
+  }, [language, getSpeechLanguageCode, cleanupResources]);
   
   // Update recognition language if language changes
   useEffect(() => {
     if (recognitionRef.current) {
-      // Map language codes to speech recognition language codes
-      let speechRecognitionLang: string;
-      
-      // Handle common language codes
-      switch (language) {
-        case 'ar':
-          speechRecognitionLang = 'ar-SA';
-          break;
-        case 'en':
-          speechRecognitionLang = 'en-US';
-          break;
-        case 'fr':
-          speechRecognitionLang = 'fr-FR';
-          break;
-        case 'es':
-          speechRecognitionLang = 'es-ES';
-          break;
-        case 'de':
-          speechRecognitionLang = 'de-DE';
-          break;
-        case 'it':
-          speechRecognitionLang = 'it-IT';
-          break;
-        case 'pt':
-          speechRecognitionLang = 'pt-BR';
-          break;
-        case 'ru':
-          speechRecognitionLang = 'ru-RU';
-          break;
-        case 'ja':
-          speechRecognitionLang = 'ja-JP';
-          break;
-        case 'zh':
-          speechRecognitionLang = 'zh-CN';
-          break;
-        case 'ko':
-          speechRecognitionLang = 'ko-KR';
-          break;
-        case 'tr':
-          speechRecognitionLang = 'tr-TR';
-          break;
-        case 'no':
-          speechRecognitionLang = 'nb-NO';
-          break;
-        default:
-          // If we don't recognize the language code, try to use it directly
-          // or default to browser's language
-          speechRecognitionLang = language || navigator.language || 'en-US';
-          break;
-      }
-      
-      recognitionRef.current.lang = speechRecognitionLang;
-      console.log("Speech recognition language updated:", speechRecognitionLang);
+      const speechLang = getSpeechLanguageCode(language);
+      recognitionRef.current.lang = speechLang;
+      console.log("Speech recognition language updated:", speechLang);
     }
-  }, [language]);
+  }, [language, getSpeechLanguageCode]);
   
   // Setup audio processing for music recognition if onAudioData is provided
   useEffect(() => {
-    if (!onAudioData) return;
+    if (!onAudioData || !isListening) return;
     
     const setupAudioProcessing = async () => {
       try {
         console.log("Setting up audio processing");
+        
         // Get microphone access
         audioStreamRef.current = await navigator.mediaDevices.getUserMedia({
           audio: {
@@ -245,16 +244,33 @@ const useSpeechRecognition = ({
         console.log("Audio processing setup complete");
       } catch (error) {
         console.error('Error setting up audio processing:', error);
-        toast.error('Could not access microphone for music recognition');
+        toast.error('Could not access microphone for audio processing');
       }
     };
     
-    if (isListening && onAudioData) {
-      setupAudioProcessing();
-    }
+    setupAudioProcessing();
     
     return () => {
-      cleanupAudioProcessing();
+      // Clean up audio processing resources
+      if (audioSourceRef.current) {
+        audioSourceRef.current.disconnect();
+        audioSourceRef.current = null;
+      }
+      
+      if (audioProcessorRef.current) {
+        audioProcessorRef.current.disconnect();
+        audioProcessorRef.current = null;
+      }
+      
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach(track => track.stop());
+        audioStreamRef.current = null;
+      }
+      
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(console.error);
+        audioContextRef.current = null;
+      }
     };
   }, [isListening, onAudioData]);
   
@@ -271,7 +287,7 @@ const useSpeechRecognition = ({
     };
   }, [autoStart, isSupported]);
   
-  const startListening = () => {
+  const startListening = useCallback(() => {
     if (!isSupported || !recognitionRef.current) {
       toast.error('Speech recognition is not supported');
       return;
@@ -293,8 +309,6 @@ const useSpeechRecognition = ({
       // Request microphone access explicitly to ensure permissions
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then(stream => {
-          // Just to ensure permission - we don't need to use this stream directly
-          // as the SpeechRecognition API handles its own microphone access
           console.log("Microphone permission granted");
           
           // Add a visual toast to show listening has started
@@ -312,16 +326,15 @@ const useSpeechRecognition = ({
       setError(error.message);
       toast.error('Error starting speech recognition');
     }
-  };
+  }, [isSupported, language, transcript]);
   
-  const stopListening = () => {
+  const stopListening = useCallback(() => {
     if (!isSupported || !recognitionRef.current) return;
     
     try {
       console.log("Stopping speech recognition");
       recognitionRef.current.stop();
       setIsListening(false);
-      cleanupAudioProcessing();
       
       if (silenceTimeoutRef.current) {
         clearTimeout(silenceTimeoutRef.current);
@@ -330,52 +343,13 @@ const useSpeechRecognition = ({
     } catch (error) {
       console.error('Error stopping speech recognition', error);
     }
-  };
+  }, [isSupported]);
   
-  const resetTranscript = () => {
+  const resetTranscript = useCallback(() => {
     console.log("Resetting transcript");
     setTranscript('');
     finalTranscriptRef.current = '';
-  };
-  
-  const cleanupRecognition = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.onresult = null;
-      recognitionRef.current.onend = null;
-      recognitionRef.current.onerror = null;
-      
-      if (isListening) {
-        try {
-          recognitionRef.current.stop();
-        } catch (e) {
-          console.error('Error stopping recognition', e);
-        }
-      }
-    }
-  };
-  
-  const cleanupAudioProcessing = () => {
-    // Disconnect and clean up audio nodes
-    if (audioSourceRef.current) {
-      audioSourceRef.current.disconnect();
-      audioSourceRef.current = null;
-    }
-    
-    if (audioProcessorRef.current) {
-      audioProcessorRef.current.disconnect();
-      audioProcessorRef.current = null;
-    }
-    
-    if (audioStreamRef.current) {
-      audioStreamRef.current.getTracks().forEach(track => track.stop());
-      audioStreamRef.current = null;
-    }
-    
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-  };
+  }, []);
   
   return {
     isListening,

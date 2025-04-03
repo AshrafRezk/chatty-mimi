@@ -1,5 +1,5 @@
 
-import { UserLocation, Language } from '../types';
+import { UserLocation, Language, Persona } from '../types';
 
 /**
  * Detect user location through API
@@ -47,71 +47,44 @@ export const getDefaultLanguageFromLocation = (countryCode: string): Language =>
     case 'YE':
       return 'ar';
       
-    // French speaking countries
-    case 'FR':
-    case 'BE':
-    case 'CH':
-    case 'CA':
-    case 'CD':
-    case 'CI':
-    case 'MG':
-    case 'NE':
-      return 'fr';
-      
-    // Spanish speaking countries
-    case 'ES':
-    case 'MX':
-    case 'CO':
-    case 'AR':
-    case 'PE':
-    case 'VE':
-    case 'CL':
-    case 'EC':
-      return 'es';
-      
-    // German speaking countries
-    case 'DE':
-    case 'AT':
-    case 'CH':
-      return 'de';
-      
-    // Italian
-    case 'IT':
-      return 'it';
-      
-    // Portuguese speaking countries
-    case 'PT':
-    case 'BR':
-      return 'pt';
-      
-    // Russian
-    case 'RU':
-      return 'ru';
-      
-    // Chinese
-    case 'CN':
-    case 'TW':
-    case 'HK':
-      return 'zh';
-      
-    // Japanese
-    case 'JP':
-      return 'ja';
-      
-    // Korean
-    case 'KR':
-      return 'ko';
-      
-    // Turkish
-    case 'TR':
-      return 'tr';
-      
-    // Norwegian
-    case 'NO':
-      return 'no';
-      
     // Default to English
     default:
       return 'en';
+  }
+};
+
+/**
+ * Generate welcome message based on user location
+ */
+export const getWelcomeMessage = (location: UserLocation | null, language: Language): string => {
+  if (language === 'ar') {
+    return location ? 
+      `مرحباً بك في ميمي! أنت تتصفح من ${location.city}, ${location.country}.` :
+      'مرحباً بك في ميمي! كيف يمكنني مساعدتك اليوم؟';
+  }
+  
+  return location ? 
+    `Welcome to Mimi! You're browsing from ${location.city}, ${location.country}.` :
+    'Welcome to Mimi! How can I help you today?';
+};
+
+/**
+ * Generate persona-specific welcome message
+ */
+export const getPersonaWelcomeMessage = (persona: Persona, language: Language): string => {
+  if (language === 'ar') {
+    switch (persona) {
+      case 'general':
+        return 'أنا مساعدك الذكي الاصطناعي العام. يمكنني مساعدتك في مجموعة متنوعة من المهام.';
+      default:
+        return '';
+    }
+  }
+  
+  switch (persona) {
+    case 'general':
+      return 'I am your general AI assistant. I can help you with a variety of tasks.';
+    default:
+      return '';
   }
 };
