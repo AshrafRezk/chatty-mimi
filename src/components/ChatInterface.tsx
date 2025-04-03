@@ -216,6 +216,12 @@ const ChatInterface = () => {
     
     playMessageSentSound();
     
+    const languageInfo = language === 'ar' 
+      ? "أجب مع مراجع/مصادر وباللغة العربية" 
+      : "Answer with references/resources and in English";
+    
+    const userMessageWithPrompt = `${text}\n\n[${languageInfo}]`;
+    
     addMessage({
       text,
       sender: "user",
@@ -271,7 +277,7 @@ const ChatInterface = () => {
           
         console.log("Sending to Gemini with references:", references.length > 0);
         const responseData = await generateGeminiResponse(
-          text, 
+          userMessageWithPrompt,
           messages,
           language, 
           'friendly',
@@ -335,7 +341,7 @@ const ChatInterface = () => {
         "• وعي بالموقع الجغرافي لتقديم إجابات مخصصة\n" +
         "• خبير في مجالات متعددة (برمجة، طب، عقارات، إلخ)\n" +
         "• إمكانية معالجة الصور وتحليلها\n" +
-        "• محادثة بأنماط مزاجية مختلفة (هادئ، ودي، عميق، مركّز)\n" +
+        "• محادثة بأنماط مختلفة\n" +
         "• إنشاء مخططات ورسومات بيانية تفاعلية\n" +
         "• تحويل النص إلى كلام\n" +
         "• دعم المحادثات الصوتية\n" +
@@ -343,7 +349,7 @@ const ChatInterface = () => {
         "• توفير مراجع موثوقة للمعلومات\n" +
         "• خبرة في تحليل القيم الغذائية للأطعمة\n" +
         "• استشارات عقارية مع رؤى استثمارية\n\n" +
-        "كيف يمكنني مساعدت�� اليوم؟" :
+        "كيف يمكنني مساعدتك اليوم؟" :
         
         "I'm Mimi, your intelligent AI assistant with multiple advanced features:\n\n" +
         "• Multilingual support (English and Arabic)\n" +
