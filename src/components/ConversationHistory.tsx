@@ -6,12 +6,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Trash2, MessageSquare, History, ChevronRight, Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Motion } from "@/components/ui/motion";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { format } from "date-fns";
+import { History, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import ConversationHistoryItem from "./ConversationHistoryItem";
+import DeleteConversationDialog from "./DeleteConversationDialog";
+import EmptyConversationList from "./EmptyConversationList";
 
 const ConversationHistory = () => {
   const { state, loadConversation, createNewConversation, fetchConversationHistory } = useChat();
@@ -83,15 +82,6 @@ const ConversationHistory = () => {
     setSelectedConversation(null);
   };
 
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return format(date, 'MMM d, yyyy h:mm a');
-    } catch (error) {
-      return dateString;
-    }
-  };
-
   if (!user) {
     return null;
   }
@@ -130,48 +120,16 @@ const ConversationHistory = () => {
             
             <ScrollArea className="h-[350px] rounded-md p-3">
               {conversationHistory.length === 0 ? (
-                <div className="py-8 text-center text-gray-500">
-                  <MessageSquare className="mx-auto h-12 w-12 mb-2 opacity-30" />
-                  <p>{language === 'ar' ? "لا توجد محادثات" : "No conversations found"}</p>
-                </div>
+                <EmptyConversationList language={language} />
               ) : (
                 conversationHistory.map((convo) => (
-                  <Motion.div
+                  <ConversationHistoryItem 
                     key={convo.id}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    transition={{ duration: 0.2 }}
-                    onClick={() => handleSelectConversation(convo.id)}
-                    className={cn(
-                      "flex items-center justify-between p-3 rounded-lg mb-2 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 cursor-pointer transition-colors",
-                      currentConversationId === convo.id ? "bg-slate-100/80 dark:bg-slate-800/80 border border-mimi-primary/20" : "border border-transparent"
-                    )}
-                  >
-                    <div className="flex items-center gap-3 flex-1 truncate">
-                      <div className="bg-mimi-soft dark:bg-mimi-primary/20 p-2 rounded-full">
-                        <MessageSquare size={16} className="text-mimi-primary" />
-                      </div>
-                      <div className="flex flex-col truncate">
-                        <span className="font-medium truncate">{convo.title}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(convo.updated_at)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full"
-                        onClick={(e) => handleDeleteClick(convo.id, e)}
-                      >
-                        <Trash2 size={15} />
-                        <span className="sr-only">Delete</span>
-                      </Button>
-                      <ChevronRight size={16} className="text-muted-foreground ml-1" />
-                    </div>
-                  </Motion.div>
+                    conversation={convo}
+                    isActive={currentConversationId === convo.id}
+                    onSelect={handleSelectConversation}
+                    onDelete={handleDeleteClick}
+                  />
                 ))
               )}
             </ScrollArea>
@@ -179,31 +137,12 @@ const ConversationHistory = () => {
         </DialogContent>
       </Dialog>
       
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="rounded-xl ios-glass">
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {language === 'ar' ? "هل أنت متأكد؟" : "Are you sure?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {language === 'ar' 
-                ? "سيتم حذف هذه المحادثة ورسائلها بشكل دائم." 
-                : "This conversation and its messages will be permanently deleted."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-full">
-              {language === 'ar' ? "إلغاء" : "Cancel"}
-            </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteConversation}
-              className="bg-red-500 hover:bg-red-600 rounded-full"
-            >
-              {language === 'ar' ? "حذف" : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConversationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onDelete={handleDeleteConversation}
+        language={language}
+      />
     </>
   );
 };
