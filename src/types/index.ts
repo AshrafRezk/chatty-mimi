@@ -1,3 +1,4 @@
+
 export type Language = 'en' | 'ar' | 'fr' | 'es' | 'de' | 'it' | 'pt' | 'ru' | 'zh' | 'ja' | 'ko' | 'tr' | 'no';
 export type Mood = 'calm' | 'friendly' | 'deep' | 'focus';
 export type Theme = 'light' | 'dark' | 'system';
@@ -25,6 +26,14 @@ export interface Message {
   certaintyScore?: number;
   nutritionData?: NutritionData;
   propertyData?: PropertyData;
+  propertyImages?: PropertyImage[];
+}
+
+export interface Conversation {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Reference {
@@ -80,23 +89,12 @@ export interface ChatState {
   theme: Theme;
   aiConfig: AIConfig;
   isVoiceMode: boolean;
+  currentConversationId: string | null;
+  conversationHistory: Conversation[];
 }
 
 export interface PropertyImage {
   url: string;
   title: string;
   description?: string;
-}
-
-export interface Message {
-  id: string;
-  text: string;
-  sender: "user" | "assistant";
-  timestamp: number;
-  imageSrc?: string;
-  references?: Reference[];
-  certaintyScore?: number;
-  nutritionData?: NutritionData;
-  propertyData?: PropertyData;
-  propertyImages?: PropertyImage[];
 }

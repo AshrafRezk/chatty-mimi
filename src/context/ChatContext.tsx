@@ -1,6 +1,11 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+
+import React, { createContext, useContext, useReducer, useEffect, useState } from 'react';
 import { AIConfig, ChatState, Language, Message, Persona, Theme, UserLocation } from '../types';
 import { detectUserLocation, getDefaultLanguageFromLocation } from '../utils/locationUtils';
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "./AuthContext";
+import { nanoid } from 'nanoid';
+import { toast } from "sonner";
 
 // Initial state
 const initialState: ChatState = {
@@ -18,6 +23,8 @@ const initialState: ChatState = {
     webSearch: true,
   },
   isVoiceMode: false,
+  currentConversationId: null,
+  conversationHistory: [],
 };
 
 // Action types
@@ -33,6 +40,9 @@ type ChatAction =
   | { type: 'SET_PERSONA'; payload: Persona }
   | { type: 'TOGGLE_WEB_SEARCH'; payload: boolean }
   | { type: 'SET_VOICE_MODE'; payload: boolean }
+  | { type: 'SET_CURRENT_CONVERSATION_ID'; payload: string | null }
+  | { type: 'SET_CONVERSATION_HISTORY'; payload: any[] }
+  | { type: 'LOAD_CONVERSATION'; payload: { messages: Message[], conversationId: string } }
   | { type: 'CLEAR_MESSAGES' };
 
 // Reducer
@@ -101,10 +111,27 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
         ...state,
         isVoiceMode: action.payload,
       };
+    case 'SET_CURRENT_CONVERSATION_ID':
+      return {
+        ...state,
+        currentConversationId: action.payload,
+      };
+    case 'SET_CONVERSATION_HISTORY':
+      return {
+        ...state,
+        conversationHistory: action.payload,
+      };
+    case 'LOAD_CONVERSATION':
+      return {
+        ...state,
+        messages: action.payload.messages,
+        currentConversationId: action.payload.conversationId,
+      };
     case 'CLEAR_MESSAGES':
       return {
         ...state,
         messages: [],
+        currentConversationId: null,
       };
     default:
       return state;
@@ -124,6 +151,9 @@ interface ChatContextType {
   toggleWebSearch: (enabled: boolean) => void;
   setVoiceMode: (enabled: boolean) => void;
   clearMessages: () => void;
+  createNewConversation: () => Promise<string | null>;
+  loadConversation: (conversationId: string) => Promise<void>;
+  fetchConversationHistory: () => Promise<void>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -131,6 +161,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 // Provider component
 export const ChatProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const [state, dispatch] = useReducer(chatReducer, initialState);
+  const { user } = useAuth();
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('mimi-language') as Language;
@@ -172,8 +203,15 @@ export const ChatProvider: React.FC<{children: React.ReactNode}> = ({ children }
     };
 
     mediaQuery.addEventListener('change', handleChange);
+    
+    // Get conversation history if user is logged in
+    if (user) {
+      fetchConversationHistory();
+      checkForCurrentConversation();
+    }
+    
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', state.theme === 'dark');
@@ -181,13 +219,197 @@ export const ChatProvider: React.FC<{children: React.ReactNode}> = ({ children }
     document.documentElement.dir = state.language === 'ar' ? 'rtl' : 'ltr';
   }, [state.theme, state.language]);
 
-  const addMessage = (message: Omit<Message, 'id' | 'timestamp'>) => {
-    const newMessage: Message = {
+  // Check if there's a current conversation in local storage
+  const checkForCurrentConversation = async () => {
+    const currentConvId = localStorage.getItem('current-conversation-id');
+    if (currentConvId && user) {
+      // Verify this conversation belongs to the user
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('id', currentConvId)
+        .eq('user_id', user.id)
+        .single();
+      
+      if (data && !error) {
+        dispatch({ type: 'SET_CURRENT_CONVERSATION_ID', payload: currentConvId });
+        loadConversation(currentConvId);
+      } else {
+        localStorage.removeItem('current-conversation-id');
+      }
+    }
+  };
+
+  const fetchConversationHistory = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false });
+      
+      if (error) {
+        throw error;
+      }
+      
+      dispatch({ type: 'SET_CONVERSATION_HISTORY', payload: data || [] });
+    } catch (error) {
+      console.error('Error fetching conversation history:', error);
+    }
+  };
+
+  const createNewConversation = async () => {
+    if (!user) return null;
+    
+    try {
+      // Create a new conversation
+      const { data, error } = await supabase
+        .from('conversations')
+        .insert({
+          user_id: user.id,
+          title: 'New conversation'
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      const conversationId = data.id;
+      
+      // Set as current conversation
+      dispatch({ type: 'SET_CURRENT_CONVERSATION_ID', payload: conversationId });
+      localStorage.setItem('current-conversation-id', conversationId);
+      
+      // Clear messages
+      dispatch({ type: 'CLEAR_MESSAGES' });
+      
+      // Refresh conversation history
+      fetchConversationHistory();
+      
+      return conversationId;
+    } catch (error) {
+      console.error('Error creating new conversation:', error);
+      toast.error('Failed to create new conversation');
+      return null;
+    }
+  };
+
+  const loadConversation = async (conversationId: string) => {
+    if (!user) return;
+    
+    try {
+      // Fetch messages for this conversation
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Format messages for display
+      const formattedMessages = data.map((msg: any) => ({
+        id: msg.id,
+        text: msg.text,
+        sender: msg.sender,
+        timestamp: new Date(msg.created_at).getTime(),
+        imageSrc: msg.image_url,
+      }));
+      
+      // Load conversation
+      dispatch({ 
+        type: 'LOAD_CONVERSATION', 
+        payload: { 
+          messages: formattedMessages, 
+          conversationId 
+        } 
+      });
+      
+      // Update localStorage
+      localStorage.setItem('current-conversation-id', conversationId);
+      
+    } catch (error) {
+      console.error('Error loading conversation:', error);
+      toast.error('Failed to load conversation');
+    }
+  };
+
+  const addMessage = async (message: Omit<Message, 'id' | 'timestamp'>) => {
+    let conversationId = state.currentConversationId;
+    
+    // Generate a temporary ID and timestamp for frontend display
+    const tempId = nanoid();
+    const timestamp = Date.now();
+    
+    // Add message to UI immediately
+    const newMessageForUI: Message = {
       ...message,
-      id: Date.now().toString(),
-      timestamp: Date.now(),
+      id: tempId,
+      timestamp,
     };
-    dispatch({ type: 'ADD_MESSAGE', payload: newMessage });
+    
+    dispatch({ type: 'ADD_MESSAGE', payload: newMessageForUI });
+
+    // If user is logged in, save to database
+    if (user) {
+      try {
+        // If no conversation exists, create one
+        if (!conversationId) {
+          const newConvId = await createNewConversation();
+          if (!newConvId) throw new Error('Failed to create conversation');
+          conversationId = newConvId;
+        }
+        
+        // Update conversation title based on first user message if it's still "New conversation"
+        if (message.sender === 'user' && state.messages.length === 0) {
+          const title = message.text.length > 30 
+            ? `${message.text.substring(0, 30)}...` 
+            : message.text;
+          
+          await supabase
+            .from('conversations')
+            .update({ title })
+            .eq('id', conversationId);
+            
+          // Refresh conversation history
+          fetchConversationHistory();
+        }
+        
+        // Save message to database
+        const messageData = {
+          conversation_id: conversationId,
+          user_id: user.id,
+          text: message.text,
+          sender: message.sender,
+          image_url: message.imageSrc || null
+        };
+        
+        const { data, error } = await supabase
+          .from('messages')
+          .insert(messageData)
+          .select()
+          .single();
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Update conversation's updated_at timestamp
+        await supabase
+          .from('conversations')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', conversationId);
+      } catch (error) {
+        console.error('Error saving message:', error);
+      }
+    }
 
     if (state.messages.length >= 15 && message.sender === 'user') {
       dispatch({ type: 'SET_FREE_LIMIT', payload: true });
@@ -244,6 +466,9 @@ export const ChatProvider: React.FC<{children: React.ReactNode}> = ({ children }
         toggleWebSearch,
         setVoiceMode,
         clearMessages,
+        createNewConversation,
+        loadConversation,
+        fetchConversationHistory
       }}
     >
       {children}

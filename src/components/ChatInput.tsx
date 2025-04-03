@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useChat } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, Send, Paperclip, Camera, LoaderCircle } from "lucide-react";
+import { Mic, Send, Paperclip, Camera, LoaderCircle, X } from "lucide-react";
 import FileUploader from "./FileUploader";
 import { Motion } from "@/components/ui/motion";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -21,6 +21,7 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
   const [showFileUploader, setShowFileUploader] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [analysisType, setAnalysisType] = useState<"extractText" | "analyzeImage" | null>(null);
   const { state } = useChat();
@@ -44,6 +45,21 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
       messageReceivedSound.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    // Create a URL for the selected image
+    if (imageFile) {
+      const url = URL.createObjectURL(imageFile);
+      setImageSrc(url);
+      
+      // Cleanup function
+      return () => {
+        URL.revokeObjectURL(url);
+      };
+    } else {
+      setImageSrc(null);
+    }
+  }, [imageFile]);
   
   const playMessageSentSound = () => {
     if (messageSentSound.current) {
@@ -154,6 +170,12 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
     }
   };
   
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImageSrc(null);
+    setAnalysisType(null);
+  };
+  
   const getInputBackground = () => {
     return "bg-white dark:bg-zinc-800 shadow-inner";
   };
@@ -193,7 +215,7 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
                 onClick={() => setShowFileUploader(false)}
               >
                 <span className="sr-only">Close</span>
-                ✕
+                <X size={14} />
               </Button>
             </div>
             <FileUploader 
@@ -202,32 +224,43 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
           </div>
         )}
         
-        {imageFile && (
+        {imageFile && imageSrc && (
           <div className="bg-white/10 dark:bg-zinc-800/10 backdrop-blur-sm p-2 rounded-lg border border-border">
             <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Camera className="h-4 w-4 mr-2 text-muted-foreground" />
-                <span className="text-sm truncate">{imageFile.name}</span>
-                {analysisType && (
-                  <span className="ml-2 text-xs bg-mimi-primary/10 text-mimi-primary px-2 py-0.5 rounded-full">
-                    {analysisType === 'extractText' 
-                      ? (language === 'ar' ? 'استخراج النص' : 'Extract Text') 
-                      : (language === 'ar' ? 'تحليل الصورة' : 'Analyze Image')}
-                  </span>
-                )}
+              <div className="flex items-center flex-1 truncate">
+                <Camera className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+                <div className="flex flex-col">
+                  <span className="text-sm truncate">{imageFile.name}</span>
+                  {analysisType && (
+                    <span className="text-xs bg-mimi-primary/10 text-mimi-primary px-2 py-0.5 rounded-full inline-block mt-1">
+                      {analysisType === 'extractText' 
+                        ? (language === 'ar' ? 'استخراج النص' : 'Extract Text') 
+                        : (language === 'ar' ? 'تحليل الصورة' : 'Analyze Image')}
+                    </span>
+                  )}
+                </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0"
-                onClick={() => {
-                  setImageFile(null);
-                  setAnalysisType(null);
-                }}
-              >
-                <span className="sr-only">Remove</span>
-                ✕
-              </Button>
+              
+              <div className="flex gap-2 items-center">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                  onClick={handleRemoveImage}
+                >
+                  <Trash2 size={14} />
+                  <span className="sr-only">Remove</span>
+                </Button>
+              </div>
+            </div>
+            
+            <div className="mt-2 relative rounded-md overflow-hidden max-h-32">
+              <img 
+                src={imageSrc} 
+                alt="Selected file preview" 
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
         )}

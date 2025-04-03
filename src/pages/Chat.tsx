@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import ChatInterface from "@/components/ChatInterface";
 import PremiumLock from "@/components/PremiumLock";
@@ -8,17 +9,26 @@ import ChatSEOHead from "@/components/ChatSEOHead";
 import PWAInstallButton from "@/components/PWAInstallButton";
 import GoogleApiSetupDialog from "@/components/GoogleApiSetupDialog";
 import { useChat } from "@/context/ChatContext";
+import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { Motion } from "@/components/ui/motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
+import ConversationHistory from "@/components/ConversationHistory";
+import { Plus } from "lucide-react";
 
 const Chat = () => {
-  const { state } = useChat();
+  const { state, createNewConversation } = useChat();
   const { language, mood, isFreeLimit, isVoiceMode } = state;
+  const { user, loading } = useAuth();
   const isMobile = useIsMobile();
   const [showApiSetup, setShowApiSetup] = useState(false);
   
+  // Redirect to auth if not logged in
+  if (!loading && !user) {
+    return <Navigate to="/auth" replace />;
+  }
+
   // Set document title based on language
   useEffect(() => {
     document.title = language === 'ar' ? "ميمي - المحادثة" : "Mimi - Chat";
@@ -56,6 +66,18 @@ const Chat = () => {
     };
   }, []);
 
+  const handleNewChat = async () => {
+    await createNewConversation();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-mimi-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <>
       <ChatSEOHead />
@@ -78,6 +100,24 @@ const Chat = () => {
         style={{ position: 'relative', zIndex: 1 }}
         >
           <ComplianceBanner />
+          
+          <div className="my-2 flex justify-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full bg-white/90 border border-gray-200 shadow-sm flex items-center"
+              onClick={handleNewChat}
+              title={language === 'ar' ? "محادثة جديدة" : "New Chat"}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              <span className="sm:inline hidden">
+                {language === 'ar' ? "محادثة جديدة" : "New Chat"}
+              </span>
+            </Button>
+            
+            <ConversationHistory />
+          </div>
+          
           <ChatInterface />
         </div>
         
