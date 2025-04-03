@@ -9,9 +9,17 @@ interface TranscriptDisplayProps {
   transcript: string;
   mood: Mood;
   language: string;
+  isProcessing?: boolean;
 }
 
-const TranscriptDisplay = ({ isListening, isMusicMode, transcript, mood, language }: TranscriptDisplayProps) => {
+const TranscriptDisplay = ({ 
+  isListening, 
+  isMusicMode, 
+  transcript, 
+  mood, 
+  language, 
+  isProcessing = false 
+}: TranscriptDisplayProps) => {
   return (
     <div className={cn(
       "w-full p-4 mb-4 rounded-xl min-h-20 transition-all",
@@ -40,6 +48,13 @@ const TranscriptDisplay = ({ isListening, isMusicMode, transcript, mood, languag
           )
         }
       </div>
+      
+      {/* Processing indicator */}
+      {isProcessing && !isMusicMode && (
+        <div className="mt-2 text-xs text-mimi-primary font-medium">
+          {language === 'ar' ? 'جاري المعالجة...' : 'Processing...'}
+        </div>
+      )}
       
       {/* Visual indicator for listening state */}
       {isListening && !isMusicMode && !transcript && (

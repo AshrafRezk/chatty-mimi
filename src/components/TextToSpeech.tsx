@@ -17,9 +17,9 @@ interface TextToSpeechProps {
 const TextToSpeech = ({ text, size = "sm", variant = "ghost", autoplay = false }: TextToSpeechProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
-  const [currentVoice, setCurrentVoice] = useState<SpeechSynthesisVoice | null>(null);
+  const [currentVoice, setCurrentVoice] = useState<SpeechSynthesisUtterance | null>(null);
   const { state } = useChat();
-  const { language, isVoiceMode } = state;
+  const { language, isVoiceMode, mood, aiConfig } = state;
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const textRef = useRef(text);
   
@@ -27,6 +27,62 @@ const TextToSpeech = ({ text, size = "sm", variant = "ghost", autoplay = false }
   useEffect(() => {
     textRef.current = text;
   }, [text]);
+  
+  // Get emotion from text
+  const detectEmotion = (text: string): {pitch: number, rate: number} => {
+    const lowerText = text.toLowerCase();
+    
+    // Simple emotion detection based on keywords
+    if (lowerText.includes('happy') || 
+        lowerText.includes('great') || 
+        lowerText.includes('excellent') ||
+        lowerText.includes('wonderful')) {
+      return { pitch: 1.1, rate: 1.05 }; // Happy - higher pitch, slightly faster
+    }
+    
+    if (lowerText.includes('sad') || 
+        lowerText.includes('sorry') || 
+        lowerText.includes('unfortunate')) {
+      return { pitch: 0.9, rate: 0.9 }; // Sad - lower pitch, slower
+    }
+    
+    if (lowerText.includes('exciting') || 
+        lowerText.includes('amazing') || 
+        lowerText.includes('wow')) {
+      return { pitch: 1.15, rate: 1.1 }; // Excited - highest pitch, fastest
+    }
+    
+    if (lowerText.includes('calm') || 
+        lowerText.includes('relax') || 
+        lowerText.includes('gentle')) {
+      return { pitch: 1.0, rate: 0.85 }; // Calm - normal pitch, very slow
+    }
+    
+    // Default/neutral emotion with slight humanization
+    return { pitch: 1.05, rate: 0.95 };
+  };
+  
+  // Get voice characteristics based on persona
+  const getPersonaVoiceSettings = (): {pitch: number, rate: number} => {
+    switch(aiConfig.persona) {
+      case 'medicine':
+        return { pitch: 1.05, rate: 0.9 }; // Authoritative, careful
+      case 'legal':
+        return { pitch: 0.95, rate: 0.9 }; // Deep, precise, deliberate 
+      case 'software':
+        return { pitch: 1.0, rate: 1.0 }; // Clear, straightforward
+      case 'education':
+        return { pitch: 1.05, rate: 0.9 }; // Warm, explanatory
+      case 'diet_coach':
+        return { pitch: 1.1, rate: 1.0 }; // Encouraging, energetic
+      case 'finance': 
+        return { pitch: 0.95, rate: 0.95 }; // Serious, trustworthy
+      case 'real_estate':
+        return { pitch: 1.05, rate: 0.95 }; // Professional, enthusiastic
+      default:
+        return { pitch: 1.0, rate: 0.97 }; // Default natural voice
+    }
+  };
   
   useEffect(() => {
     // Check if browser supports speech synthesis
@@ -45,7 +101,7 @@ const TextToSpeech = ({ text, size = "sm", variant = "ghost", autoplay = false }
         
         if (preferredVoice) {
           utteranceRef.current!.voice = preferredVoice;
-          setCurrentVoice(preferredVoice);
+          console.log(`Set voice to: ${preferredVoice.name} (${preferredVoice.lang})`);
         } else {
           // If no matching voice found, use default voice
           console.log('No voice found for language:', langCode);
@@ -100,7 +156,6 @@ const TextToSpeech = ({ text, size = "sm", variant = "ghost", autoplay = false }
       const preferredVoice = voices.find(voice => voice.lang.includes(language));
       if (preferredVoice) {
         utteranceRef.current.voice = preferredVoice;
-        setCurrentVoice(preferredVoice);
       }
     }
   }, [language]);
@@ -134,9 +189,29 @@ const TextToSpeech = ({ text, size = "sm", variant = "ghost", autoplay = false }
     // Set the text to speak
     utteranceRef.current.text = textRef.current;
     
-    // Set pitch and rate for more natural sounding voice
-    utteranceRef.current.pitch = 1.0;
-    utteranceRef.current.rate = 1.0;
+    // Get emotion-based voice settings
+    const emotionSettings = detectEmotion(textRef.current);
+    
+    // Get persona-based voice settings
+    const personaSettings = getPersonaVoiceSettings();
+    
+    // Apply voice settings with a blend of emotion and persona characteristics
+    utteranceRef.current.pitch = (emotionSettings.pitch + personaSettings.pitch) / 2;
+    utteranceRef.current.rate = (emotionSettings.rate + personaSettings.rate) / 2;
+    
+    // Apply mood adjustments
+    if (mood === 'calm') {
+      utteranceRef.current.rate *= 0.95; // Slower for calm mood
+    } else if (mood === 'friendly') {
+      utteranceRef.current.pitch *= 1.05; // Slightly higher pitch for friendly mood
+    } else if (mood === 'deep') {
+      utteranceRef.current.rate *= 0.9;  // Slower for deep mood
+      utteranceRef.current.pitch *= 0.95; // Lower pitch for deep mood
+    }
+    
+    // Add small random variations for more natural sound
+    utteranceRef.current.pitch *= (0.98 + Math.random() * 0.04); // +/- 2%
+    utteranceRef.current.rate *= (0.98 + Math.random() * 0.04);  // +/- 2%
     
     // Start speaking
     window.speechSynthesis.cancel(); // Cancel any ongoing speech

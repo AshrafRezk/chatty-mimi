@@ -8,7 +8,6 @@ import { Motion } from './ui/motion';
 import { toast } from 'sonner';
 import useSpeechRecognition from '@/hooks/useSpeechRecognition';
 import CallTimer from './VoiceCall/CallTimer';
-import AssistantAvatar from './VoiceCall/AssistantAvatar';
 import CallControls from './VoiceCall/CallControls';
 import MusicRecognition from './VoiceCall/MusicRecognition';
 import { RecognizedTrack, recognizeMusic, prepareAudioForRecognition } from '@/utils/musicRecognition';
@@ -23,7 +22,7 @@ interface VoiceChatProps {
 
 const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
   const { state } = useChat();
-  const { language, mood } = state;
+  const { language, mood, aiConfig } = state;
   
   const [callStatus, setCallStatus] = useState<'connecting' | 'active' | 'ended'>('connecting');
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -34,6 +33,9 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
   const [transcriptHistory, setTranscriptHistory] = useState<Array<{role: 'user' | 'assistant', text: string}>>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [currentTranscript, setCurrentTranscript] = useState('');
+  const [isProcessingMessage, setIsProcessingMessage] = useState(false);
+  const [welcomeMessageShown, setWelcomeMessageShown] = useState(false);
+  const [emotionalTone, setEmotionalTone] = useState<'neutral'|'happy'|'concerned'|'excited'|'calm'>('neutral');
   
   // Store audio data for music recognition
   const audioDataRef = useRef<Float32Array | null>(null);
@@ -69,9 +71,10 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
       setCallStatus('active');
       
       // Auto start listening
-      if (isSupported) {
+      if (isSupported && !welcomeMessageShown) {
         startListening();
         playNotificationSound('received');
+        setWelcomeMessageShown(true);
         
         // Add welcome message to transcript history
         const welcomeMessage = language === 'ar' 
@@ -86,14 +89,19 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
         // Simulate AI speaking during welcome
         setIsSpeaking(true);
         
-        // Simulate actual speech
+        // Simulate actual speech with emotion
         if ('speechSynthesis' in window) {
           const utterance = new SpeechSynthesisUtterance(welcomeMessage);
           utterance.lang = language === 'ar' ? 'ar-SA' : 'en-US';
           utterance.volume = volume;
+          utterance.pitch = 1.1;  // Slightly higher pitch for more friendly tone
+          utterance.rate = 0.95;  // Slightly slower for more natural speech
+          
+          // Set up onend handler first to prevent race conditions
           utterance.onend = () => {
             setIsSpeaking(false);
           };
+          
           window.speechSynthesis.speak(utterance);
         } else {
           // Fallback if speech synthesis not available
@@ -173,8 +181,59 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
     }
   }, [currentTranscript, isListening, resetTranscript, startListening, stopListening]);
   
+  // Determine emotional tone based on message content
+  const detectEmotionalTone = (text: string): 'neutral'|'happy'|'concerned'|'excited'|'calm' => {
+    const lowerText = text.toLowerCase();
+    
+    // Simple heuristic emotion detection
+    if (lowerText.includes('thank') || lowerText.includes('great') || 
+        lowerText.includes('happy') || lowerText.includes('awesome') ||
+        lowerText.includes('excellent')) {
+      return 'happy';
+    } else if (lowerText.includes('worry') || lowerText.includes('problem') || 
+              lowerText.includes('issue') || lowerText.includes('help')) {
+      return 'concerned';
+    } else if (lowerText.includes('wow') || lowerText.includes('amazing') || 
+              lowerText.includes('fantastic')) {
+      return 'excited';
+    } else if (lowerText.includes('relax') || lowerText.includes('peace') ||
+              lowerText.includes('quiet') || lowerText.includes('gentle')) {
+      return 'calm';
+    }
+    
+    return 'neutral';
+  };
+  
+  // Configure voice based on emotional tone
+  const configureVoiceForEmotion = (utterance: SpeechSynthesisUtterance, tone: string) => {
+    switch(tone) {
+      case 'happy':
+        utterance.pitch = 1.2; // Higher pitch
+        utterance.rate = 1.1;  // Slightly faster
+        break;
+      case 'concerned':
+        utterance.pitch = 0.9; // Lower pitch
+        utterance.rate = 0.9;  // Slower
+        break;
+      case 'excited':
+        utterance.pitch = 1.3; // Highest pitch
+        utterance.rate = 1.2;  // Fastest
+        break;
+      case 'calm':
+        utterance.pitch = 1.0; // Normal pitch
+        utterance.rate = 0.85; // Slowest, most deliberate
+        break;
+      default: // neutral
+        utterance.pitch = 1.05;
+        utterance.rate = 0.95;
+    }
+  };
+  
   const handleSubmit = useCallback(async () => {
     if (currentTranscript.trim()) {
+      // Set processing state
+      setIsProcessingMessage(true);
+      
       // Play sending sound
       await playNotificationSound('sent');
       
@@ -199,6 +258,9 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
         const responseTime = Math.min(1500 + currentTranscript.length * 10, 3000);
         
         setTimeout(() => {
+          // No longer processing
+          setIsProcessingMessage(false);
+          
           // Generate simulated response
           const responses = [
             language === 'ar' ? 'بالطبع، سأساعدك في ذلك' : 'Of course, I can help you with that',
@@ -210,18 +272,25 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
           const responseIndex = Math.floor(Math.random() * responses.length);
           const aiResponse = responses[responseIndex];
           
+          // Detect emotional tone for response
+          const tone = detectEmotionalTone(aiResponse);
+          setEmotionalTone(tone);
+          
           // Add AI response to transcript history
           setTranscriptHistory(prev => [...prev, {
             role: 'assistant',
             text: aiResponse
           }]);
           
-          // Speak response using speech synthesis
+          // Speak response using speech synthesis with emotion
           if ('speechSynthesis' in window) {
             try {
               const utterance = new SpeechSynthesisUtterance(aiResponse);
               utterance.lang = language === 'ar' ? 'ar-SA' : 'en-US';
               utterance.volume = volume;
+              
+              // Configure voice based on emotional tone
+              configureVoiceForEmotion(utterance, tone);
               
               utterance.onend = () => {
                 setIsSpeaking(false);
@@ -391,7 +460,11 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
         </div>
         
         <div className="p-6 flex flex-col items-center">
-          <VoiceCallAvatar isSpeaking={isSpeaking} mood={mood} />
+          <VoiceCallAvatar 
+            isSpeaking={isSpeaking} 
+            mood={mood}
+            persona={aiConfig.persona}
+          />
           
           <h2 className={cn(
             "text-xl font-semibold mb-2",
@@ -412,13 +485,14 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
             }
           </p>
           
-          {/* Improved transcript display */}
+          {/* Improved transcript display with processing indicator */}
           <TranscriptDisplay
             isListening={isListening}
             isMusicMode={isMusicMode}
             transcript={currentTranscript}
             mood={mood}
             language={language}
+            isProcessing={isProcessingMessage}
           />
           
           {/* Conversation history toggle */}

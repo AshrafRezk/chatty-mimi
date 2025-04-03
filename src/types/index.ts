@@ -6,7 +6,9 @@ export type Language = 'en' | 'ar';
 export type Mood = 'calm' | 'friendly' | 'deep' | 'focus';
 
 // Define persona types
-export type Persona = 'general';
+export type Persona = 'general' | 'software' | 'medicine' | 'architecture' | 
+                     'project_management' | 'finance' | 'education' | 'legal' | 
+                     'christianity' | 'islam' | 'diet_coach' | 'real_estate';
 
 // Interface for user messages
 export interface Message {
@@ -32,6 +34,18 @@ export interface UserLocation {
   timezone: string;
 }
 
+// Define theme type
+export type Theme = 'light' | 'dark' | 'system';
+
+// Interface for AI configuration
+export interface AIConfig {
+  persona: Persona;
+  useMultimodal: boolean;
+  contextLength?: number;
+  webSearch?: boolean;
+  service?: string;
+}
+
 // Interface for chat state
 export interface ChatState {
   messages: Message[];
@@ -39,13 +53,13 @@ export interface ChatState {
   language: Language;
   mood: Mood;
   userLocation: UserLocation | null;
-  aiConfig: {
-    persona: Persona;
-    useMultimodal: boolean;
-  };
+  aiConfig: AIConfig;
   currentConversationId: string | null;
   isFreeLimit: boolean;
   isVoiceMode: boolean;
+  theme: Theme;
+  conversationHistory: any[];
+  isGuestMode: boolean;
 }
 
 // Interface for references/sources
@@ -53,6 +67,7 @@ export interface Reference {
   title: string;
   link: string;
   snippet: string;
+  url?: string; // Added for compatibility with existing code
 }
 
 // Interface for nutrition data
@@ -81,5 +96,5 @@ export interface PropertyData {
 export interface PropertyImage {
   url: string;
   description: string;
-  title: string; // Added the required title property
+  title: string;
 }
