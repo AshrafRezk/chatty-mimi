@@ -2,7 +2,7 @@
 import React, { useState, useRef } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { FileText, Camera, Upload } from "lucide-react";
+import { FileText, Camera, Upload, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useChat } from "@/context/ChatContext";
 import { cn } from "@/lib/utils";
@@ -54,19 +54,19 @@ const FileUploader = ({ onImageSelected }: FileUploaderProps) => {
         <Button 
           onClick={openFileSelector}
           className={cn(
-            "bg-purple-500 hover:bg-purple-600 text-white rounded-full",
-            "flex items-center justify-center gap-2 px-6 py-2"
+            "bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-md",
+            "rounded-xl flex items-center justify-center gap-2 px-6 py-2 transition-all hover:shadow-lg"
           )}
         >
-          <Upload className="h-4 w-4" />
+          <Image className="h-4 w-4" />
           {language === 'ar' ? "اختيار ملف" : "Choose file"}
         </Button>
         
         <Button 
           onClick={openCamera}
           className={cn(
-            "bg-purple-500 hover:bg-purple-600 text-white rounded-full",
-            "flex items-center justify-center gap-2 px-6 py-2"
+            "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-md",
+            "rounded-xl flex items-center justify-center gap-2 px-6 py-2 transition-all hover:shadow-lg"
           )}
         >
           <Camera className="h-4 w-4" />
