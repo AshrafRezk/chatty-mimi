@@ -1,5 +1,5 @@
 
-import { Mic, MicOff, Phone, Volume2, Music2 } from 'lucide-react';
+import { Mic, MicOff, Send, Volume2, Music2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +26,21 @@ const CallControls = ({
 }: CallControlsProps) => {
   return (
     <div className="flex gap-4">
+      {/* Send Message Button - Now First */}
+      <Button
+        onClick={onSendMessage}
+        disabled={callStatus !== 'active' || !hasTranscript}
+        className={cn(
+          "rounded-full h-16 w-16 flex items-center justify-center bg-green-500 hover:bg-green-600",
+          "disabled:bg-gray-300 disabled:opacity-50"
+        )}
+        aria-label="Send message"
+        title="Send message"
+      >
+        <Send size={24} />
+      </Button>
+      
+      {/* Microphone Button - Now Second */}
       <Button
         onClick={onToggleMic}
         disabled={callStatus !== 'active'}
@@ -40,19 +55,7 @@ const CallControls = ({
         {isListening ? <MicOff size={24} /> : <Mic size={24} />}
       </Button>
       
-      <Button
-        onClick={onSendMessage}
-        disabled={callStatus !== 'active' || !hasTranscript}
-        className={cn(
-          "rounded-full h-16 w-16 flex items-center justify-center bg-green-500 hover:bg-green-600",
-          "disabled:bg-gray-300 disabled:opacity-50"
-        )}
-        aria-label="Send message"
-        title="Send message"
-      >
-        <Phone size={24} />
-      </Button>
-      
+      {/* Audio settings and Music recognition buttons - kept in the same order */}
       {onToggleMusic && (
         <Button
           onClick={onToggleMusic}

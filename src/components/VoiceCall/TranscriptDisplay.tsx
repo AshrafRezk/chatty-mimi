@@ -23,6 +23,35 @@ const TranscriptDisplay = ({
   isProcessing = false,
   error = null
 }: TranscriptDisplayProps) => {
+  // Helper function to get appropriate placeholder text
+  const getPlaceholderText = () => {
+    if (error) {
+      return language === 'ar' ? 
+        'يرجى السماح بإذن الميكروفون أو تجربة متصفح آخر' : 
+        'Please allow microphone permission or try another browser';
+    }
+
+    if (isMusicMode) {
+      return language === 'ar' ? 
+        'وضع التعرف على الموسيقى نشط' : 
+        'Music recognition mode active';
+    }
+
+    if (transcript) {
+      return transcript;
+    }
+
+    if (isListening) {
+      return language === 'ar' ? 
+        'أنا أستمع... انطق الآن' : 
+        'I\'m listening... speak now';
+    }
+
+    return language === 'ar' ? 
+      'اضغط على الميكروفون وابدأ الحديث' : 
+      'Tap mic to speak';
+  };
+
   return (
     <div className={cn(
       "w-full p-4 mb-4 rounded-xl min-h-20 transition-all",
@@ -52,18 +81,7 @@ const TranscriptDisplay = ({
       
       {/* The actual transcript content */}
       <div className={cn("w-full", isListening && transcript ? "font-medium" : "")}>
-        {error ? 
-          (language === 'ar' ? 
-            'يرجى السماح بإذن الميكروفون أو تجربة متصفح آخر' : 
-            'Please allow microphone permission or try another browser') :
-          isMusicMode ? 
-            (language === 'ar' ? 'وضع التعرف على الموسيقى نشط' : 'Music recognition mode active') :
-            transcript || (
-              isListening ? 
-                (language === 'ar' ? 'أنا أستمع... انطق الآن' : 'I\'m listening... speak now') : 
-                (language === 'ar' ? 'اضغط على الميكروفون وابدأ الحديث' : 'Tap mic to speak')
-            )
-        }
+        {getPlaceholderText()}
       </div>
       
       {/* Processing indicator */}
