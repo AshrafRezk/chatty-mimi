@@ -2,7 +2,7 @@
 import { useTheme } from "@/hooks/use-theme";
 import { useChat } from "@/context/ChatContext";
 import { useState, useEffect } from "react";
-import { Activity, BarChart, PieChart, LineChart, FileText, Camera } from "lucide-react";
+import { Activity, BarChart, PieChart, LineChart, FileText, Camera, LoaderCircle } from "lucide-react";
 
 const ThinkingAnimation = () => {
   const { theme } = useTheme();
@@ -15,7 +15,7 @@ const ThinkingAnimation = () => {
   
   // Array of reasoning steps to show the user how Mimi is processing their request
   const reasoningSteps = language === 'ar' ? [
-    "تحليل الملفات المرفقة...",
+    "معالجة المرفقات...",
     "تحليل السؤال...",
     "البحث عن المعلومات ذات الصلة...",
     "تقييم مصادر المعلومات...",
@@ -48,9 +48,7 @@ const ThinkingAnimation = () => {
   const renderStageIcon = () => {
     switch (reasoningStage) {
       case 0:
-        return reasoningStage === 0 ? 
-          <FileText className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} /> :
-          <Activity className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
+        return <LoaderCircle className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-spin`} />;
       case 1:
         return <Camera className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
       case 2:

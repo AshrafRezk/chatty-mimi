@@ -25,11 +25,64 @@ export const extractTextFromImage = async (file: File): Promise<string> => {
     // Clean up the URL object
     URL.revokeObjectURL(fileURL);
     
-    return data.text;
+    // Clean up the extracted text to make it more useful
+    const cleanedText = cleanExtractedText(data.text);
+    
+    return cleanedText;
   } catch (error) {
     console.error('OCR extraction error:', error);
     throw new Error('Failed to extract text from file');
   }
+};
+
+/**
+ * Cleans up extracted OCR text to make it more useful
+ * @param text Raw OCR text
+ * @returns Cleaned text
+ */
+const cleanExtractedText = (text: string): string => {
+  // Basic cleaning - remove excess whitespace
+  let cleaned = text.replace(/\s+/g, ' ').trim();
+  
+  // Remove very common OCR errors and symbols that are likely errors
+  cleaned = cleaned.replace(/[^\w\s.,;:!?"'()[\]{}\-–—+*/=<>@#$%&|\\^`~©®™]/g, '');
+  
+  // Remove lines with too many special characters (likely gibberish)
+  const lines = cleaned.split('\n');
+  const cleanedLines = lines.filter(line => {
+    const specialCharCount = (line.match(/[^\w\s.,;:!?"'()]/g) || []).length;
+    const textLength = line.trim().length;
+    return textLength > 0 && (specialCharCount / textLength < 0.3);
+  });
+  
+  // Join lines back together
+  cleaned = cleanedLines.join('\n');
+  
+  // If the cleaned text is too short or appears to be garbage, return a more friendly message
+  if (cleaned.length < 10 || isGibberish(cleaned)) {
+    return "Unable to extract meaningful text from this image.";
+  }
+  
+  return cleaned;
+};
+
+/**
+ * Simple check for gibberish text
+ * @param text Text to check
+ * @returns True if the text appears to be gibberish
+ */
+const isGibberish = (text: string): boolean => {
+  // Check for too many unusual character combinations
+  const unusualCombos = (text.match(/[^a-zA-Z0-9\s]{2,}/g) || []).length;
+  
+  // Check for coherent words
+  const wordMatch = text.match(/\b[a-zA-Z]{3,}\b/g);
+  const wordCount = wordMatch ? wordMatch.length : 0;
+  
+  // If there are very few actual words but lots of text, it's likely gibberish
+  const totalLength = text.length;
+  
+  return (unusualCombos > 5) || (totalLength > 30 && wordCount < 3);
 };
 
 /**

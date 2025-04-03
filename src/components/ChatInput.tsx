@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useChat } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, Send, Paperclip, Camera } from "lucide-react";
+import { Mic, Send, Paperclip, Camera, LoaderCircle } from "lucide-react";
 import FileUploader from "./FileUploader";
 import { Motion } from "@/components/ui/motion";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -77,18 +77,12 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
           // Process the image in the background
           const result = await processImageFile(imageFile, analysisType);
           
-          // Combine the extracted text/analysis with the user's message
+          // Don't add the raw OCR text to the message
           let finalMessage = trimmedMessage;
           
           if (result) {
-            const prefix = analysisType === 'extractText' 
-              ? (language === 'ar' ? "النص المستخرج: " : "Extracted text: ")
-              : (language === 'ar' ? "تحليل الصورة: " : "Image analysis: ");
-            
-            finalMessage = trimmedMessage
-              ? `${trimmedMessage}\n\n${prefix}${result}`
-              : `${prefix}${result}`;
-            
+            // Just use the user's original message, don't append raw OCR text
+            // The AI will handle the extracted text in the background
             toast.success(
               language === 'ar'
                 ? `تم ${analysisType === 'extractText' ? 'استخراج النص' : 'تحليل الصورة'} بنجاح`
@@ -310,10 +304,7 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
               title={language === 'ar' ? "إرسال" : "Send"}
             >
               {isProcessingImage ? (
-                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+                <LoaderCircle className="h-4 w-4 animate-spin" />
               ) : (
                 <Send className="h-4 w-4" />
               )}
