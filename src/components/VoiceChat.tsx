@@ -12,7 +12,7 @@ import AssistantAvatar from './VoiceCall/AssistantAvatar';
 import CallControls from './VoiceCall/CallControls';
 import MusicRecognition from './VoiceCall/MusicRecognition';
 import { RecognizedTrack, recognizeMusic, prepareAudioForRecognition } from '@/utils/musicRecognition';
-import { playNotificationSound } from '@/utils/audioUtils';
+import { playNotificationSound, playAudioBuffer } from '@/utils/audioUtils';
 
 interface VoiceChatProps {
   onSendMessage: (text: string) => void;
@@ -31,6 +31,7 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
   const [volume, setVolume] = useState(1.0);
   const [transcriptHistory, setTranscriptHistory] = useState<Array<{role: 'user' | 'assistant', text: string}>>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [currentTranscript, setCurrentTranscript] = useState('');
   
   // Store audio data for music recognition
   const audioDataRef = useRef<Float32Array | null>(null);
@@ -56,6 +57,7 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
     onTranscript: (text) => {
       // Update UI immediately with real-time transcription
       console.log("Transcript received:", text);
+      setCurrentTranscript(text);
     }
   });
   
@@ -81,7 +83,20 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
         
         // Simulate AI speaking during welcome
         setIsSpeaking(true);
-        setTimeout(() => setIsSpeaking(false), 3000);
+        
+        // Simulate actual speech
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(welcomeMessage);
+          utterance.lang = language === 'ar' ? 'ar-SA' : 'en-US';
+          utterance.volume = volume;
+          utterance.onend = () => {
+            setIsSpeaking(false);
+          };
+          window.speechSynthesis.speak(utterance);
+        } else {
+          // Fallback if speech synthesis not available
+          setTimeout(() => setIsSpeaking(false), 3000);
+        }
       }
     }, 1500);
     
@@ -124,39 +139,52 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
     }
   }, [volume]);
   
+  // Update current transcript when main transcript changes
+  useEffect(() => {
+    setCurrentTranscript(transcript);
+  }, [transcript]);
+  
   const toggleListening = () => {
     if (isListening) {
       stopListening();
+      
+      // If there's a valid transcript, submit it
+      if (currentTranscript.trim()) {
+        handleSubmit();
+      }
     } else {
       setIsMusicMode(false);
       setRecognizedTrack(null);
+      setCurrentTranscript('');
+      resetTranscript();
       startListening();
     }
   };
   
   const handleSubmit = async () => {
-    if (transcript.trim()) {
+    if (currentTranscript.trim()) {
       // Play sending sound
       await playNotificationSound('sent');
       
       // Add user transcript to history
       setTranscriptHistory(prev => [...prev, {
         role: 'user',
-        text: transcript.trim()
+        text: currentTranscript.trim()
       }]);
       
       // Send message
-      onSendMessage(transcript.trim());
+      onSendMessage(currentTranscript.trim());
       
       // Reset transcript and continue listening
       resetTranscript();
+      setCurrentTranscript('');
       
       // Simulate AI thinking time
       setTimeout(() => {
         setIsSpeaking(true);
         
         // Simulate AI response time (1.5-3 seconds based on message length)
-        const responseTime = Math.min(1500 + transcript.length * 20, 3000);
+        const responseTime = Math.min(1500 + currentTranscript.length * 10, 3000);
         
         setTimeout(() => {
           // Generate simulated response
@@ -176,23 +204,40 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
             text: aiResponse
           }]);
           
-          // Simulate speech ending
-          setTimeout(() => setIsSpeaking(false), 2000);
-          
+          // Speak response using speech synthesis
+          if ('speechSynthesis' in window) {
+            try {
+              const utterance = new SpeechSynthesisUtterance(aiResponse);
+              utterance.lang = language === 'ar' ? 'ar-SA' : 'en-US';
+              utterance.volume = volume;
+              
+              utterance.onend = () => {
+                setIsSpeaking(false);
+                
+                // Resume listening for user input
+                if (callStatus === 'active' && isSupported) {
+                  startListening();
+                }
+              };
+              
+              window.speechSynthesis.speak(utterance);
+            } catch (err) {
+              console.error("Speech synthesis error:", err);
+              setIsSpeaking(false);
+            }
+          } else {
+            // Fallback if speech synthesis not available
+            setTimeout(() => {
+              setIsSpeaking(false);
+              
+              // Resume listening
+              if (callStatus === 'active' && isSupported) {
+                startListening();
+              }
+            }, 2000);
+          }
         }, responseTime);
       }, 500);
-      
-      // Speak response
-      if (window.speechSynthesis && 'speechSynthesis' in window) {
-        try {
-          const utterance = new SpeechSynthesisUtterance(transcript.trim());
-          utterance.lang = language === 'ar' ? 'ar-SA' : 'en-US';
-          utterance.volume = volume;
-          window.speechSynthesis.speak(utterance);
-        } catch (err) {
-          console.error("Speech synthesis error:", err);
-        }
-      }
     }
   };
   
@@ -367,9 +412,9 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
           )}>
             {isMusicMode ? 
               (language === 'ar' ? 'وضع التعرف على الموسيقى نشط' : 'Music recognition mode active') :
-              transcript || (
+              currentTranscript || (
                 isListening ? 
-                  (language === 'ar' ? 'أنا أستمع...' : 'I\'m listening...') : 
+                  (language === 'ar' ? 'أنا أستمع... انطق الآن' : 'I\'m listening... speak now') : 
                   (language === 'ar' ? 'اضغط على الميكروفون وابدأ الحديث' : 'Tap mic to speak')
               )
             }
@@ -423,7 +468,7 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
           
           <CallControls
             isListening={isListening}
-            hasTranscript={!!transcript.trim()}
+            hasTranscript={!!currentTranscript.trim()}
             callStatus={callStatus}
             onToggleMic={toggleListening}
             onSendMessage={handleSubmit}

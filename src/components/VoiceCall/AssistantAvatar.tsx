@@ -21,13 +21,13 @@ const AssistantAvatar = ({ isSpeaking, mood, status }: AssistantAvatarProps) => 
     let blinkInterval: number;
     
     if (isSpeaking) {
-      // Create a more natural speaking pattern with variable mouth shapes
+      // More dynamic speaking pattern with variable mouth shapes
       mouthInterval = window.setInterval(() => {
         setMouthOpen(prev => !prev);
-        // Randomize mouth shape for more natural animation
-        setMouthWidth(8 + Math.random() * 6);
-        setMouthHeight(2 + Math.random() * 5);
-      }, 120);
+        // Create more natural animation with variable mouth shapes
+        setMouthWidth(8 + Math.random() * 8); // More variation
+        setMouthHeight(2 + Math.random() * 6); // Increased height variation
+      }, 100); // Slightly faster for more responsive animation
       
       // Add occasional blinking during speech
       blinkInterval = window.setInterval(() => {

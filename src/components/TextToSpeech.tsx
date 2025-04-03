@@ -80,7 +80,48 @@ const TextToSpeech = ({ text, size = "sm", variant = "ghost", autoplay = false }
   useEffect(() => {
     // Set language when it changes
     if (utteranceRef.current) {
-      utteranceRef.current.lang = language === 'ar' ? 'ar-EG' : 'en-US';
+      // Map language codes to appropriate speech synthesis language codes
+      let speechLang: string;
+      
+      // Handle common language codes
+      switch (language) {
+        case 'ar':
+          speechLang = 'ar-SA';
+          break;
+        case 'en':
+          speechLang = 'en-US';
+          break;
+        case 'fr':
+          speechLang = 'fr-FR';
+          break;
+        case 'es':
+          speechLang = 'es-ES';
+          break;
+        case 'de':
+          speechLang = 'de-DE';
+          break;
+        case 'ja':
+          speechLang = 'ja-JP';
+          break;
+        case 'zh':
+          speechLang = 'zh-CN';
+          break;
+        default:
+          // If we don't recognize the language code, try to use it directly
+          speechLang = language || 'en-US';
+          break;
+      }
+      
+      utteranceRef.current.lang = speechLang;
+      console.log("Text-to-speech language set to:", speechLang);
+      
+      // Try to find a voice for this language again
+      const voices = window.speechSynthesis.getVoices();
+      const preferredVoice = voices.find(voice => voice.lang.includes(language));
+      if (preferredVoice) {
+        utteranceRef.current.voice = preferredVoice;
+        setCurrentVoice(preferredVoice);
+      }
     }
   }, [language]);
   

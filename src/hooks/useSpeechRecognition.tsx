@@ -45,6 +45,7 @@ const useSpeechRecognition = ({
   const audioProcessorRef = useRef<ScriptProcessorNode | null>(null);
   const audioSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
+  const finalTranscriptRef = useRef<string>('');
 
   // Initialize speech recognition
   useEffect(() => {
@@ -56,28 +57,37 @@ const useSpeechRecognition = ({
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
       
+      // Configure recognition parameters
       recognitionRef.current.continuous = true;
       recognitionRef.current.interimResults = true;
       
-      recognitionRef.current.lang = language === 'ar' ? 'ar-SA' : 'en-US';
+      // Set language dynamically - default to user preference or browser default
+      const userLang = language || navigator.language || 'en-US';
+      recognitionRef.current.lang = userLang;
+      
+      console.log("Speech recognition initialized with language:", userLang);
       
       recognitionRef.current.onresult = (event: any) => {
         let interimTranscript = '';
-        let finalTranscript = '';
+        let finalTranscript = finalTranscriptRef.current;
         
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            finalTranscript += transcript;
+            finalTranscript += transcript + ' ';
+            finalTranscriptRef.current = finalTranscript;
           } else {
             interimTranscript += transcript;
           }
         }
         
-        const newTranscript = finalTranscript || interimTranscript;
-        console.log("Speech recognition result:", newTranscript);
-        setTranscript(newTranscript);
-        onTranscript?.(newTranscript);
+        const fullTranscript = finalTranscript + interimTranscript;
+        console.log("Speech recognition transcript:", fullTranscript);
+        setTranscript(fullTranscript);
+        
+        if (onTranscript) {
+          onTranscript(fullTranscript);
+        }
       };
       
       recognitionRef.current.onerror = (event: any) => {
@@ -111,6 +121,47 @@ const useSpeechRecognition = ({
     return () => {
       cleanupRecognition();
     };
+  }, [language]);
+  
+  // Update recognition language if language changes
+  useEffect(() => {
+    if (recognitionRef.current) {
+      // Map language codes to speech recognition language codes
+      let speechRecognitionLang: string;
+      
+      // Handle common language codes
+      switch (language) {
+        case 'ar':
+          speechRecognitionLang = 'ar-SA';
+          break;
+        case 'en':
+          speechRecognitionLang = 'en-US';
+          break;
+        case 'fr':
+          speechRecognitionLang = 'fr-FR';
+          break;
+        case 'es':
+          speechRecognitionLang = 'es-ES';
+          break;
+        case 'de':
+          speechRecognitionLang = 'de-DE';
+          break;
+        case 'ja':
+          speechRecognitionLang = 'ja-JP';
+          break;
+        case 'zh':
+          speechRecognitionLang = 'zh-CN';
+          break;
+        default:
+          // If we don't recognize the language code, try to use it directly
+          // or default to browser's language
+          speechRecognitionLang = language || navigator.language || 'en-US';
+          break;
+      }
+      
+      recognitionRef.current.lang = speechRecognitionLang;
+      console.log("Speech recognition language updated:", speechRecognitionLang);
+    }
   }, [language]);
   
   // Setup audio processing for music recognition if onAudioData is provided
@@ -167,13 +218,6 @@ const useSpeechRecognition = ({
     };
   }, [isListening, onAudioData]);
   
-  // Update recognition language if language changes
-  useEffect(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.lang = language === 'ar' ? 'ar-SA' : 'en-US';
-    }
-  }, [language]);
-  
   // Handle autostart
   useEffect(() => {
     if (autoStart && isSupported && !isListening) {
@@ -199,6 +243,8 @@ const useSpeechRecognition = ({
       console.log("Starting speech recognition");
       recognitionRef.current.start();
       setIsListening(true);
+      setTranscript(''); // Clear transcript when starting fresh
+      finalTranscriptRef.current = ''; // Reset final transcript reference
     } catch (error: any) {
       console.error('Error starting speech recognition', error);
       setError(error.message);
@@ -222,6 +268,7 @@ const useSpeechRecognition = ({
   const resetTranscript = () => {
     console.log("Resetting transcript");
     setTranscript('');
+    finalTranscriptRef.current = '';
   };
   
   const cleanupRecognition = () => {

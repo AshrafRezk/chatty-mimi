@@ -53,9 +53,9 @@ const writeString = (view: DataView, offset: number, string: string) => {
 };
 
 // Play audio from Float32Array data
-export const playAudioBuffer = async (audioData: Float32Array) => {
+export const playAudioBuffer = async (audioData: Float32Array, sampleRate = 44100) => {
   try {
-    const audioContext = new AudioContext();
+    const audioContext = new AudioContext({ sampleRate });
     const audioBuffer = audioContext.createBuffer(1, audioData.length, audioContext.sampleRate);
     
     // Fill the buffer with our audio data
