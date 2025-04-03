@@ -15,7 +15,7 @@ import { Motion } from "@/components/ui/motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import ConversationHistory from "@/components/ConversationHistory";
-import { Plus } from "lucide-react";
+import { Plus, History } from "lucide-react";
 
 const Chat = () => {
   const { state, createNewConversation } = useChat();
@@ -101,16 +101,16 @@ const Chat = () => {
         >
           <ComplianceBanner />
           
-          <div className="my-2 flex justify-center space-x-2">
+          <div className="my-3 flex justify-center space-x-3">
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
-              className="rounded-full bg-white/90 border border-gray-200 shadow-sm flex items-center"
+              className="rounded-full bg-mimi-primary text-white shadow-md hover:bg-mimi-secondary flex items-center transition-all gap-2 ios-button active:scale-95 px-6 py-4"
               onClick={handleNewChat}
               title={language === 'ar' ? "محادثة جديدة" : "New Chat"}
             >
-              <Plus className="h-4 w-4 mr-1" />
-              <span className="sm:inline hidden">
+              <Plus className="h-5 w-5" />
+              <span className="font-medium">
                 {language === 'ar' ? "محادثة جديدة" : "New Chat"}
               </span>
             </Button>
