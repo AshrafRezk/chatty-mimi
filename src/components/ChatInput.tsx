@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useChat } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, Send, Paperclip, Camera, LoaderCircle, X } from "lucide-react";
+import { Mic, Send, Paperclip, Camera, LoaderCircle, X, Trash2 } from "lucide-react";
 import FileUploader from "./FileUploader";
 import { Motion } from "@/components/ui/motion";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -39,6 +39,9 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
     
     if (messageSentSound.current) messageSentSound.current.volume = 0.3;
     if (messageReceivedSound.current) messageReceivedSound.current.volume = 0.3;
+    
+    messageSentSound.current?.load();
+    messageReceivedSound.current?.load();
     
     return () => {
       messageSentSound.current = null;
@@ -151,11 +154,14 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
     setAnalysisType(type);
     setShowFileUploader(false);
     
-    const successMessage = language === 'ar' 
-      ? "تم تحديد الصورة بنجاح" 
-      : "Image selected successfully";
-    
-    toast.success(successMessage);
+    // Add a small delay to prevent black screen issue
+    setTimeout(() => {
+      const successMessage = language === 'ar' 
+        ? "تم تحديد الصورة بنجاح" 
+        : "Image selected successfully";
+      
+      toast.success(successMessage);
+    }, 100);
   };
   
   const handleMicClick = () => {
@@ -260,6 +266,10 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
                 src={imageSrc} 
                 alt="Selected file preview" 
                 className="w-full h-full object-cover"
+                onError={() => {
+                  console.error("Image failed to load");
+                  toast.error(language === 'ar' ? "فشل تحميل الصورة" : "Failed to load image");
+                }}
               />
             </div>
           </div>
@@ -306,23 +316,6 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
             >
               <Paperclip className="h-4 w-4" />
               <span className="sr-only">Attach file</span>
-            </Button>
-            <Button 
-              type="button" 
-              variant="ghost" 
-              size="icon" 
-              className={cn(
-                "h-8 w-8 rounded-full",
-                isRecording 
-                  ? "bg-red-500 text-white animate-pulse" 
-                  : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-              )}
-              onClick={handleMicClick}
-              title={language === 'ar' ? "إدخال صوتي" : "Voice input"}
-              disabled={isProcessingImage}
-            >
-              <Mic className="h-4 w-4" />
-              <span className="sr-only">Voice input</span>
             </Button>
             <Button 
               type="submit" 

@@ -16,6 +16,7 @@ interface TextToSpeechProps {
 const TextToSpeech = ({ text, size = "sm", variant = "ghost", autoplay = false }: TextToSpeechProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
+  const [currentVoice, setCurrentVoice] = useState<SpeechSynthesisVoice | null>(null);
   const { state } = useChat();
   const { language, isVoiceMode } = state;
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
@@ -43,6 +44,7 @@ const TextToSpeech = ({ text, size = "sm", variant = "ghost", autoplay = false }
         
         if (preferredVoice) {
           utteranceRef.current!.voice = preferredVoice;
+          setCurrentVoice(preferredVoice);
         } else {
           // If no matching voice found, use default voice
           console.log('No voice found for language:', langCode);
@@ -87,7 +89,7 @@ const TextToSpeech = ({ text, size = "sm", variant = "ghost", autoplay = false }
     if (autoplay && isVoiceMode && text && isSpeechSupported && !isPlaying) {
       speak();
     }
-  }, [text, isVoiceMode, autoplay]);
+  }, [text, isVoiceMode, autoplay, isPlaying]);
   
   useEffect(() => {
     // Clean up any speech when component unmounts
@@ -116,6 +118,7 @@ const TextToSpeech = ({ text, size = "sm", variant = "ghost", autoplay = false }
     utteranceRef.current.rate = 1.0;
     
     // Start speaking
+    window.speechSynthesis.cancel(); // Cancel any ongoing speech
     window.speechSynthesis.speak(utteranceRef.current);
   };
   

@@ -124,6 +124,12 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
       
       // Reset transcript and continue listening
       resetTranscript();
+      
+      // Simulate AI thinking time
+      setTimeout(() => {
+        setIsSpeaking(true);
+        setTimeout(() => setIsSpeaking(false), 2000);
+      }, 500);
     }
   };
   

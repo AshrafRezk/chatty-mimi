@@ -12,17 +12,27 @@ interface AssistantAvatarProps {
 
 const AssistantAvatar = ({ isSpeaking, mood, status }: AssistantAvatarProps) => {
   const [mouthOpen, setMouthOpen] = useState(false);
+  const [mouthWidth, setMouthWidth] = useState(10);
+  const [mouthHeight, setMouthHeight] = useState(1);
   
   useEffect(() => {
-    const id = setInterval(() => {
-      if (isSpeaking) {
-        setMouthOpen(prev => !prev);
-      } else {
-        setMouthOpen(false);
-      }
-    }, 150);
+    let id: number;
     
-    return () => clearInterval(id);
+    if (isSpeaking) {
+      // Create a more natural speaking pattern with variable mouth shapes
+      id = window.setInterval(() => {
+        setMouthOpen(prev => !prev);
+        // Randomize mouth shape for more natural animation
+        setMouthWidth(8 + Math.random() * 4);
+        setMouthHeight(1 + Math.random() * 4);
+      }, 120);
+    } else {
+      setMouthOpen(false);
+      setMouthWidth(10);
+      setMouthHeight(1);
+    }
+    
+    return () => window.clearInterval(id);
   }, [isSpeaking]);
   
   const getBorderColor = () => {
@@ -49,12 +59,41 @@ const AssistantAvatar = ({ isSpeaking, mood, status }: AssistantAvatarProps) => 
         </AvatarFallback>
       </Avatar>
       
-      {/* Simple mouth animation */}
-      <div className={cn(
-        "absolute bottom-8 left-1/2 transform -translate-x-1/2 w-10 h-2 rounded-full transition-all duration-150",
-        mood === 'deep' || mood === 'focus' ? "bg-white/70" : "bg-gray-800/70",
-        mouthOpen ? "h-4 rounded-full" : "h-1"
-      )}/>
+      {/* Face features */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        {/* Eyes */}
+        <div className="flex justify-between w-16 mt-2">
+          <div className={cn(
+            "w-4 h-2 rounded-full",
+            mood === 'deep' || mood === 'focus' ? "bg-white" : "bg-gray-800",
+            isSpeaking && "animate-blink"
+          )}/>
+          <div className={cn(
+            "w-4 h-2 rounded-full",
+            mood === 'deep' || mood === 'focus' ? "bg-white" : "bg-gray-800",
+            isSpeaking && "animate-blink"
+          )}/>
+        </div>
+        
+        {/* Animated mouth */}
+        <div 
+          className={cn(
+            "rounded-full transition-all duration-100",
+            mood === 'deep' || mood === 'focus' ? "bg-white/90" : "bg-gray-800/90",
+            "mt-8"
+          )}
+          style={{
+            width: `${mouthWidth}px`,
+            height: `${mouthOpen ? mouthHeight : 1}px`,
+            borderRadius: mouthOpen ? '30%' : '50%'
+          }}
+        />
+      </div>
+      
+      {/* Animation overlay effect */}
+      {isSpeaking && (
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-mimi-primary/10 animate-pulse-slow" />
+      )}
     </div>
   );
 };

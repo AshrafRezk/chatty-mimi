@@ -130,8 +130,11 @@ export const playNotificationSound = async (soundType: 'sent' | 'received') => {
       : '/sounds/message-received.mp3';
     
     const audio = new Audio(soundUrl);
+    audio.volume = 0.3;
     await audio.play();
+    return true;
   } catch (error) {
     console.error('Error playing notification sound:', error);
+    return false;
   }
 };
