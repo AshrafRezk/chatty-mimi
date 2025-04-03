@@ -5,10 +5,14 @@ import { PhoneOff } from 'lucide-react';
 import { useChat } from '@/context/ChatContext';
 import { cn } from '@/lib/utils';
 import { Motion } from './ui/motion';
+import { toast } from 'sonner';
 import useSpeechRecognition from '@/hooks/useSpeechRecognition';
 import CallTimer from './VoiceCall/CallTimer';
 import AssistantAvatar from './VoiceCall/AssistantAvatar';
 import CallControls from './VoiceCall/CallControls';
+import MusicRecognition from './VoiceCall/MusicRecognition';
+import { RecognizedTrack, recognizeMusic, prepareAudioForRecognition } from '@/utils/musicRecognition';
+import { playNotificationSound } from '@/utils/audioUtils';
 
 interface VoiceChatProps {
   onSendMessage: (text: string) => void;
@@ -21,6 +25,13 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
   
   const [callStatus, setCallStatus] = useState<'connecting' | 'active' | 'ended'>('connecting');
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isMusicMode, setIsMusicMode] = useState(false);
+  const [isRecognizingMusic, setIsRecognizingMusic] = useState(false);
+  const [recognizedTrack, setRecognizedTrack] = useState<RecognizedTrack | null>(null);
+  const [volume, setVolume] = useState(1.0);
+  
+  // Store audio data for music recognition
+  const audioDataRef = useRef<Float32Array | null>(null);
   
   // Use the custom speech recognition hook
   const {
@@ -29,10 +40,17 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
     startListening,
     stopListening,
     resetTranscript,
-    isSupported
+    isSupported,
+    audioBuffer,
+    error
   } = useSpeechRecognition({ 
     language,
-    autoStart: false
+    autoStart: false,
+    onAudioData: (data) => {
+      if (isMusicMode) {
+        audioDataRef.current = data;
+      }
+    }
   });
   
   // Effect for call connection simulation
@@ -43,6 +61,7 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
       // Auto start listening
       if (isSupported) {
         startListening();
+        playNotificationSound('received');
       }
     }, 1500);
     
@@ -62,19 +81,49 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
     return () => clearInterval(checkSpeaking);
   }, []);
   
+  // Handle errors
+  useEffect(() => {
+    if (error && error !== 'no-speech') {
+      toast.error(`Speech recognition error: ${error}`);
+    }
+  }, [error]);
+  
+  // Adjust speech synthesis volume
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      // Monitor for new utterances and set their volume
+      const originalSpeak = window.speechSynthesis.speak;
+      window.speechSynthesis.speak = function(utterance) {
+        utterance.volume = volume;
+        return originalSpeak.call(window.speechSynthesis, utterance);
+      };
+      
+      return () => {
+        window.speechSynthesis.speak = originalSpeak;
+      };
+    }
+  }, [volume]);
+  
   const toggleListening = () => {
     if (isListening) {
       stopListening();
     } else {
+      setIsMusicMode(false);
+      setRecognizedTrack(null);
       startListening();
     }
   };
   
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (transcript.trim()) {
+      // Play sending sound
+      await playNotificationSound('sent');
+      
+      // Send message
       onSendMessage(transcript.trim());
+      
+      // Reset transcript and continue listening
       resetTranscript();
-      stopListening();
     }
   };
   
@@ -82,10 +131,85 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
     setCallStatus('ended');
     stopListening();
     
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    
     // Slight delay before closing modal
     setTimeout(() => {
       onClose();
     }, 500);
+  };
+  
+  const toggleMusicMode = () => {
+    if (isMusicMode) {
+      setIsMusicMode(false);
+      setRecognizedTrack(null);
+    } else {
+      setIsMusicMode(true);
+      toast.info(
+        language === 'ar' 
+          ? 'وضع التعرف على الموسيقى. اضغط على زر التعرف عندما تسمع أغنية.' 
+          : 'Music recognition mode. Press identify when you hear a song.'
+      );
+    }
+  };
+  
+  const handleRecognizeMusic = async () => {
+    if (!audioDataRef.current || isRecognizingMusic) return;
+    
+    setIsRecognizingMusic(true);
+    
+    try {
+      // Convert audio data to base64 for API processing
+      const audioBase64 = prepareAudioForRecognition(audioDataRef.current);
+      
+      // Send to recognition service
+      const track = await recognizeMusic(audioBase64);
+      
+      if (track) {
+        setRecognizedTrack(track);
+        toast.success(
+          language === 'ar'
+            ? `تم التعرف على: ${track.title} لـ ${track.artist}`
+            : `Identified: ${track.title} by ${track.artist}`
+        );
+        
+        // Send the recognized track info to chat
+        const message = language === 'ar'
+          ? `لقد تعرفت على أغنية "${track.title}" للفنان ${track.artist} من ألبوم ${track.album || 'غير معروف'}.`
+          : `I've identified the song "${track.title}" by ${track.artist} from the album ${track.album || 'unknown'}.`;
+        
+        onSendMessage(message);
+      } else {
+        toast.error(
+          language === 'ar'
+            ? 'لم أستطع التعرف على الموسيقى. حاول مرة أخرى.'
+            : 'Could not identify the music. Try again.'
+        );
+      }
+    } catch (error) {
+      console.error('Music recognition error:', error);
+      toast.error(
+        language === 'ar'
+          ? 'حدث خطأ أثناء التعرف على الموسيقى'
+          : 'Error during music recognition'
+      );
+    } finally {
+      setIsRecognizingMusic(false);
+    }
+  };
+  
+  const adjustVolume = () => {
+    // Cycle through volume levels: 1.0 -> 0.7 -> 0.4 -> 0.1 -> 1.0
+    const newVolume = volume <= 0.1 ? 1.0 : volume - 0.3;
+    setVolume(parseFloat(newVolume.toFixed(1)));
+    
+    toast.info(
+      language === 'ar'
+        ? `مستوى الصوت: ${Math.round(newVolume * 100)}%`
+        : `Volume: ${Math.round(newVolume * 100)}%`
+    );
   };
   
   return (
@@ -166,12 +290,24 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
             "flex items-center justify-center text-center",
             callStatus !== 'active' && "opacity-60"
           )}>
-            {transcript || (
-              isListening ? 
-                (language === 'ar' ? 'أنا أستمع...' : 'I\'m listening...') : 
-                (language === 'ar' ? 'اضغط على الميكروفون وابدأ الحديث' : 'Tap mic to speak')
-            )}
+            {isMusicMode ? 
+              (language === 'ar' ? 'وضع التعرف على الموسيقى نشط' : 'Music recognition mode active') :
+              transcript || (
+                isListening ? 
+                  (language === 'ar' ? 'أنا أستمع...' : 'I\'m listening...') : 
+                  (language === 'ar' ? 'اضغط على الميكروفون وابدأ الحديث' : 'Tap mic to speak')
+              )
+            }
           </div>
+          
+          {isMusicMode && (
+            <MusicRecognition 
+              onRecognizeMusic={handleRecognizeMusic}
+              isRecognizing={isRecognizingMusic}
+              recognizedTrack={recognizedTrack}
+              disabled={callStatus !== 'active'}
+            />
+          )}
           
           <CallControls
             isListening={isListening}
@@ -179,7 +315,16 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
             callStatus={callStatus}
             onToggleMic={toggleListening}
             onSendMessage={handleSubmit}
+            onToggleMusic={toggleMusicMode}
+            isMusicMode={isMusicMode}
+            onAdjustVolume={adjustVolume}
           />
+          
+          {volume < 1.0 && (
+            <div className="mt-3 text-xs text-gray-500">
+              {language === 'ar' ? `مستوى الصوت: ${Math.round(volume * 100)}%` : `Volume: ${Math.round(volume * 100)}%`}
+            </div>
+          )}
         </div>
       </Motion.div>
     </Motion.div>
