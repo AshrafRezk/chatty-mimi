@@ -7,6 +7,8 @@ declare global {
   interface Window {
     SpeechRecognition: any;
     webkitSpeechRecognition: any;
+    mozSpeechRecognition: any;
+    msSpeechRecognition: any;
   }
 }
 
@@ -51,6 +53,7 @@ const useSpeechRecognition = ({
   const finalTranscriptRef = useRef<string>('');
   const silenceTimeoutRef = useRef<number | null>(null);
   const isMountedRef = useRef(true);
+  const recognitionRestartAttempts = useRef(0);
 
   // Get speech recognition language code
   const getSpeechLanguageCode = useCallback((lang: string): string => {
@@ -58,7 +61,18 @@ const useSpeechRecognition = ({
     switch (lang) {
       case 'ar': return 'ar-SA';
       case 'en': return 'en-US';
-      default: return lang || navigator.language || 'en-US';
+      case 'fr': return 'fr-FR';
+      case 'es': return 'es-ES';
+      case 'de': return 'de-DE';
+      case 'it': return 'it-IT';
+      case 'pt': return 'pt-PT';
+      case 'ru': return 'ru-RU';
+      case 'zh': return 'zh-CN';
+      case 'ja': return 'ja-JP';
+      case 'ko': return 'ko-KR';
+      case 'tr': return 'tr-TR';
+      case 'no': return 'no-NO';
+      default: return navigator.language || 'en-US';
     }
   }, []);
 
@@ -75,22 +89,38 @@ const useSpeechRecognition = ({
 
     // Clean up audio processing
     if (audioSourceRef.current) {
-      audioSourceRef.current.disconnect();
+      try {
+        audioSourceRef.current.disconnect();
+      } catch (e) {
+        console.warn('Error disconnecting audio source:', e);
+      }
       audioSourceRef.current = null;
     }
     
     if (audioProcessorRef.current) {
-      audioProcessorRef.current.disconnect();
+      try {
+        audioProcessorRef.current.disconnect();
+      } catch (e) {
+        console.warn('Error disconnecting audio processor:', e);
+      }
       audioProcessorRef.current = null;
     }
     
     if (audioStreamRef.current) {
-      audioStreamRef.current.getTracks().forEach(track => track.stop());
+      try {
+        audioStreamRef.current.getTracks().forEach(track => track.stop());
+      } catch (e) {
+        console.warn('Error stopping audio tracks:', e);
+      }
       audioStreamRef.current = null;
     }
     
-    if (audioContextRef.current) {
-      audioContextRef.current.close().catch(console.error);
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      try {
+        audioContextRef.current.close().catch(console.error);
+      } catch (e) {
+        console.warn('Error closing audio context:', e);
+      }
       audioContextRef.current = null;
     }
 
@@ -99,16 +129,24 @@ const useSpeechRecognition = ({
       clearTimeout(silenceTimeoutRef.current);
       silenceTimeoutRef.current = null;
     }
+    
+    // Reset restart attempts
+    recognitionRestartAttempts.current = 0;
   }, []);
 
   // Initialize speech recognition
   useEffect(() => {
-    // Check if browser supports speech recognition
-    const supported = 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
+    // Check which speech recognition API is supported
+    const SpeechRecognition = 
+      window.SpeechRecognition || 
+      window.webkitSpeechRecognition || 
+      window.mozSpeechRecognition || 
+      window.msSpeechRecognition;
+      
+    const supported = !!SpeechRecognition;
     setIsSupported(supported);
     
     if (supported) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
       
       // Configure recognition parameters
@@ -159,11 +197,21 @@ const useSpeechRecognition = ({
       recognitionRef.current.onerror = (event: any) => {
         if (!isMountedRef.current) return;
         console.error('Speech recognition error', event.error);
-        setError(event.error);
         
-        // Only show toast for errors other than "no-speech"
-        if (event.error !== 'no-speech') {
+        // Handle specific error types
+        if (event.error === 'not-allowed') {
+          setError('microphone-permission');
+          toast.error('Microphone permission denied. Please check browser settings.');
+        } else if (event.error === 'network') {
+          setError('network');
+          toast.error('Network error. Please check your connection.');
+        } else if (event.error !== 'no-speech') {
+          setError(event.error);
           toast.error('Speech recognition error. Please try again.');
+        }
+        
+        // Only stop listening on critical errors
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
           setIsListening(false);
         }
       };
@@ -171,18 +219,37 @@ const useSpeechRecognition = ({
       recognitionRef.current.onend = () => {
         if (!isMountedRef.current) return;
         console.log("Speech recognition ended");
+        
         // Only restart if we're not actively stopping it
-        if (isListening) {
+        if (isListening && recognitionRestartAttempts.current < 5) {
           try {
-            console.log("Restarting speech recognition");
-            recognitionRef.current?.start();
+            console.log("Restarting speech recognition, attempt:", recognitionRestartAttempts.current + 1);
+            recognitionRestartAttempts.current += 1;
+            
+            // Add a small delay before restarting to avoid rapid restarts
+            setTimeout(() => {
+              if (isMountedRef.current && isListening) {
+                try {
+                  recognitionRef.current?.start();
+                } catch (e) {
+                  console.warn('Could not restart recognition', e);
+                  setIsListening(false);
+                }
+              }
+            }, 300);
           } catch (e) {
-            console.warn('Could not restart recognition', e);
+            console.warn('Could not schedule recognition restart', e);
+            setIsListening(false);
           }
+        } else if (recognitionRestartAttempts.current >= 5) {
+          console.warn('Too many restart attempts, stopping recognition');
+          setIsListening(false);
+          setError('too-many-restarts');
+          toast.error('Speech recognition failed after multiple attempts');
         }
       };
     } else {
-      setError('Speech recognition not supported');
+      setError('not-supported');
       toast.error('Speech recognition is not supported by your browser');
     }
     
@@ -218,13 +285,20 @@ const useSpeechRecognition = ({
           }
         });
         
-        // Create audio context
+        // Create audio context with fallbacks
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioContext) {
+          console.error("AudioContext not supported");
+          return;
+        }
+        
         audioContextRef.current = new AudioContext();
         
         // Create source node
         audioSourceRef.current = audioContextRef.current.createMediaStreamSource(audioStreamRef.current);
         
-        // Create processor node - use at least 4096 buffer size to prevent audio glitches
+        // Use ScriptProcessor for broader compatibility but prepare for worklet transition
+        // ScriptProcessor is deprecated but still has wider browser support
         audioProcessorRef.current = audioContextRef.current.createScriptProcessor(4096, 1, 1);
         
         // Process audio data
@@ -242,9 +316,19 @@ const useSpeechRecognition = ({
         audioProcessorRef.current.connect(audioContextRef.current.destination);
         
         console.log("Audio processing setup complete");
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error setting up audio processing:', error);
-        toast.error('Could not access microphone for audio processing');
+        
+        if (error.name === 'NotAllowedError') {
+          toast.error('Microphone access denied. Please check your browser settings.');
+          setError('microphone-permission');
+        } else if (error.name === 'NotFoundError') {
+          toast.error('No microphone detected. Please check your device.');
+          setError('no-microphone');
+        } else {
+          toast.error('Could not access microphone for audio processing');
+          setError('audio-setup-failed');
+        }
       }
     };
     
@@ -253,22 +337,30 @@ const useSpeechRecognition = ({
     return () => {
       // Clean up audio processing resources
       if (audioSourceRef.current) {
-        audioSourceRef.current.disconnect();
+        try {
+          audioSourceRef.current.disconnect();
+        } catch (e) {}
         audioSourceRef.current = null;
       }
       
       if (audioProcessorRef.current) {
-        audioProcessorRef.current.disconnect();
+        try {
+          audioProcessorRef.current.disconnect();
+        } catch (e) {}
         audioProcessorRef.current = null;
       }
       
       if (audioStreamRef.current) {
-        audioStreamRef.current.getTracks().forEach(track => track.stop());
+        try {
+          audioStreamRef.current.getTracks().forEach(track => track.stop());
+        } catch (e) {}
         audioStreamRef.current = null;
       }
       
       if (audioContextRef.current) {
-        audioContextRef.current.close().catch(console.error);
+        try {
+          audioContextRef.current.close().catch(console.error);
+        } catch (e) {}
         audioContextRef.current = null;
       }
     };
@@ -294,6 +386,7 @@ const useSpeechRecognition = ({
     }
     
     setError(null);
+    recognitionRestartAttempts.current = 0;
     
     try {
       console.log("Starting speech recognition");
@@ -320,11 +413,13 @@ const useSpeechRecognition = ({
           console.error("Microphone permission denied:", err);
           toast.error(language === 'ar' ? 'تم رفض إذن الميكروفون' : 'Microphone permission denied');
           setIsListening(false);
+          setError('microphone-permission');
         });
     } catch (error: any) {
       console.error('Error starting speech recognition', error);
-      setError(error.message);
+      setError(error.message || 'start-failed');
       toast.error('Error starting speech recognition');
+      setIsListening(false);
     }
   }, [isSupported, language, transcript]);
   

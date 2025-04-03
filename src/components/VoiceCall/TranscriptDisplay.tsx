@@ -2,6 +2,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Mood } from '@/types';
+import { AlertTriangle } from 'lucide-react';
 
 interface TranscriptDisplayProps {
   isListening: boolean;
@@ -10,6 +11,7 @@ interface TranscriptDisplayProps {
   mood: Mood;
   language: string;
   isProcessing?: boolean;
+  error?: string | null;
 }
 
 const TranscriptDisplay = ({ 
@@ -18,7 +20,8 @@ const TranscriptDisplay = ({
   transcript, 
   mood, 
   language, 
-  isProcessing = false 
+  isProcessing = false,
+  error = null
 }: TranscriptDisplayProps) => {
   return (
     <div className={cn(
@@ -28,7 +31,7 @@ const TranscriptDisplay = ({
       "flex flex-col items-center justify-center text-center"
     )}>
       {/* Show explicit transcript label when user is speaking */}
-      {isListening && !isMusicMode && (
+      {isListening && !isMusicMode && !error && (
         <div className={cn(
           "text-xs font-medium mb-1",
           mood === 'deep' || mood === 'focus' ? "text-gray-400" : "text-gray-500"
@@ -37,27 +40,41 @@ const TranscriptDisplay = ({
         </div>
       )}
       
+      {/* Error state */}
+      {error && (
+        <div className="flex items-center justify-center text-red-500 mb-2">
+          <AlertTriangle className="w-4 h-4 mr-2" />
+          <span className="text-sm font-medium">
+            {language === 'ar' ? 'خطأ في التعرف على الصوت' : 'Speech recognition error'}
+          </span>
+        </div>
+      )}
+      
       {/* The actual transcript content */}
       <div className={cn("w-full", isListening && transcript ? "font-medium" : "")}>
-        {isMusicMode ? 
-          (language === 'ar' ? 'وضع التعرف على الموسيقى نشط' : 'Music recognition mode active') :
-          transcript || (
-            isListening ? 
-              (language === 'ar' ? 'أنا أستمع... انطق الآن' : 'I\'m listening... speak now') : 
-              (language === 'ar' ? 'اضغط على الميكروفون وابدأ الحديث' : 'Tap mic to speak')
-          )
+        {error ? 
+          (language === 'ar' ? 
+            'يرجى السماح بإذن الميكروفون أو تجربة متصفح آخر' : 
+            'Please allow microphone permission or try another browser') :
+          isMusicMode ? 
+            (language === 'ar' ? 'وضع التعرف على الموسيقى نشط' : 'Music recognition mode active') :
+            transcript || (
+              isListening ? 
+                (language === 'ar' ? 'أنا أستمع... انطق الآن' : 'I\'m listening... speak now') : 
+                (language === 'ar' ? 'اضغط على الميكروفون وابدأ الحديث' : 'Tap mic to speak')
+            )
         }
       </div>
       
       {/* Processing indicator */}
-      {isProcessing && !isMusicMode && (
+      {isProcessing && !isMusicMode && !error && (
         <div className="mt-2 text-xs text-mimi-primary font-medium">
           {language === 'ar' ? 'جاري المعالجة...' : 'Processing...'}
         </div>
       )}
       
       {/* Visual indicator for listening state */}
-      {isListening && !isMusicMode && (
+      {isListening && !isMusicMode && !error && (
         <div className="flex space-x-1 mt-2">
           <div className={cn(
             "w-2 h-2 bg-mimi-primary rounded-full animate-pulse",
