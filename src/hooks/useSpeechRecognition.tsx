@@ -46,6 +46,8 @@ const useSpeechRecognition = ({
   const audioSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
   const finalTranscriptRef = useRef<string>('');
+  const silenceTimeoutRef = useRef<number | null>(null);
+  const isMountedRef = useRef(true);
 
   // Initialize speech recognition
   useEffect(() => {
@@ -68,6 +70,8 @@ const useSpeechRecognition = ({
       console.log("Speech recognition initialized with language:", userLang);
       
       recognitionRef.current.onresult = (event: any) => {
+        if (!isMountedRef.current) return;
+        
         let interimTranscript = '';
         let finalTranscript = finalTranscriptRef.current;
         
@@ -88,9 +92,21 @@ const useSpeechRecognition = ({
         if (onTranscript) {
           onTranscript(fullTranscript);
         }
+        
+        // Reset silence timeout when voice is detected
+        if (silenceTimeoutRef.current) {
+          clearTimeout(silenceTimeoutRef.current);
+        }
+        
+        // Set a new silence timeout
+        silenceTimeoutRef.current = window.setTimeout(() => {
+          console.log("Silence detected - 2 seconds of no speech");
+          // This could trigger the submission if needed
+        }, 2000);
       };
       
       recognitionRef.current.onerror = (event: any) => {
+        if (!isMountedRef.current) return;
         console.error('Speech recognition error', event.error);
         setError(event.error);
         
@@ -102,6 +118,7 @@ const useSpeechRecognition = ({
       };
       
       recognitionRef.current.onend = () => {
+        if (!isMountedRef.current) return;
         console.log("Speech recognition ended");
         // Only restart if we're not actively stopping it
         if (isListening) {
@@ -119,7 +136,11 @@ const useSpeechRecognition = ({
     }
     
     return () => {
+      isMountedRef.current = false;
       cleanupRecognition();
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+      }
     };
   }, [language]);
   
@@ -146,11 +167,29 @@ const useSpeechRecognition = ({
         case 'de':
           speechRecognitionLang = 'de-DE';
           break;
+        case 'it':
+          speechRecognitionLang = 'it-IT';
+          break;
+        case 'pt':
+          speechRecognitionLang = 'pt-BR';
+          break;
+        case 'ru':
+          speechRecognitionLang = 'ru-RU';
+          break;
         case 'ja':
           speechRecognitionLang = 'ja-JP';
           break;
         case 'zh':
           speechRecognitionLang = 'zh-CN';
+          break;
+        case 'ko':
+          speechRecognitionLang = 'ko-KR';
+          break;
+        case 'tr':
+          speechRecognitionLang = 'tr-TR';
+          break;
+        case 'no':
+          speechRecognitionLang = 'nb-NO';
           break;
         default:
           // If we don't recognize the language code, try to use it directly
@@ -191,6 +230,7 @@ const useSpeechRecognition = ({
         
         // Process audio data
         audioProcessorRef.current.onaudioprocess = (e) => {
+          if (!isMountedRef.current) return;
           const inputData = e.inputBuffer.getChannelData(0);
           setAudioBuffer(new Float32Array(inputData));
           
@@ -243,8 +283,30 @@ const useSpeechRecognition = ({
       console.log("Starting speech recognition");
       recognitionRef.current.start();
       setIsListening(true);
-      setTranscript(''); // Clear transcript when starting fresh
-      finalTranscriptRef.current = ''; // Reset final transcript reference
+      
+      // Don't clear transcript when restarting after a pause
+      if (!transcript) {
+        setTranscript(''); // Clear transcript when starting fresh
+        finalTranscriptRef.current = ''; // Reset final transcript reference
+      }
+      
+      // Request microphone access explicitly to ensure permissions
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          // Just to ensure permission - we don't need to use this stream directly
+          // as the SpeechRecognition API handles its own microphone access
+          console.log("Microphone permission granted");
+          
+          // Add a visual toast to show listening has started
+          toast.success(language === 'ar' ? 'بدأ الاستماع' : 'Listening started', {
+            duration: 2000,
+          });
+        })
+        .catch(err => {
+          console.error("Microphone permission denied:", err);
+          toast.error(language === 'ar' ? 'تم رفض إذن الميكروفون' : 'Microphone permission denied');
+          setIsListening(false);
+        });
     } catch (error: any) {
       console.error('Error starting speech recognition', error);
       setError(error.message);
@@ -260,6 +322,11 @@ const useSpeechRecognition = ({
       recognitionRef.current.stop();
       setIsListening(false);
       cleanupAudioProcessing();
+      
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
     } catch (error) {
       console.error('Error stopping speech recognition', error);
     }

@@ -1,10 +1,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Button } from "./ui/button";
-import { Play, Square, Volume2 } from "lucide-react";
+import { Volume2, Square } from "lucide-react";
 import { useChat } from "@/context/ChatContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { Language } from "@/types";
 
 interface TextToSpeechProps {
   text: string;
@@ -37,7 +38,7 @@ const TextToSpeech = ({ text, size = "sm", variant = "ghost", autoplay = false }
       // Set appropriate voice based on language
       const setVoices = () => {
         const voices = window.speechSynthesis.getVoices();
-        const langCode = language === 'ar' ? 'ar' : 'en';
+        const langCode = getSpeechLanguageCode(language);
         
         // Try to find a voice that matches the language
         const preferredVoice = voices.find(voice => voice.lang.includes(langCode));
@@ -77,41 +78,31 @@ const TextToSpeech = ({ text, size = "sm", variant = "ghost", autoplay = false }
     };
   }, []);
   
+  // Helper function to get the speech language code
+  const getSpeechLanguageCode = (lang: Language): string => {
+    // Map language codes to appropriate speech synthesis language codes
+    switch (lang) {
+      case 'ar': return 'ar-SA';
+      case 'en': return 'en-US';
+      case 'fr': return 'fr-FR';
+      case 'es': return 'es-ES';
+      case 'de': return 'de-DE';
+      case 'it': return 'it-IT';
+      case 'pt': return 'pt-BR';
+      case 'ru': return 'ru-RU';
+      case 'ja': return 'ja-JP';
+      case 'zh': return 'zh-CN';
+      case 'ko': return 'ko-KR';
+      case 'tr': return 'tr-TR';
+      case 'no': return 'nb-NO';
+      default: return 'en-US';
+    }
+  };
+  
   useEffect(() => {
     // Set language when it changes
     if (utteranceRef.current) {
-      // Map language codes to appropriate speech synthesis language codes
-      let speechLang: string;
-      
-      // Handle common language codes
-      switch (language) {
-        case 'ar':
-          speechLang = 'ar-SA';
-          break;
-        case 'en':
-          speechLang = 'en-US';
-          break;
-        case 'fr':
-          speechLang = 'fr-FR';
-          break;
-        case 'es':
-          speechLang = 'es-ES';
-          break;
-        case 'de':
-          speechLang = 'de-DE';
-          break;
-        case 'ja':
-          speechLang = 'ja-JP';
-          break;
-        case 'zh':
-          speechLang = 'zh-CN';
-          break;
-        default:
-          // If we don't recognize the language code, try to use it directly
-          speechLang = language || 'en-US';
-          break;
-      }
-      
+      const speechLang = getSpeechLanguageCode(language);
       utteranceRef.current.lang = speechLang;
       console.log("Text-to-speech language set to:", speechLang);
       
