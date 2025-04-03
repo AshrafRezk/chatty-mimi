@@ -4,7 +4,12 @@ import { useChat } from "@/context/ChatContext";
 import { useState, useEffect } from "react";
 import { Activity, BarChart, PieChart, LineChart, FileText, Camera, LoaderCircle } from "lucide-react";
 
-const ThinkingAnimation = () => {
+interface ThinkingAnimationProps {
+  processingImage?: boolean;
+  processingType?: "extractText" | "analyzeImage";
+}
+
+const ThinkingAnimation = ({ processingImage = false, processingType }: ThinkingAnimationProps) => {
   const { theme } = useTheme();
   const { state } = useChat();
   const { language } = state;
@@ -15,6 +20,8 @@ const ThinkingAnimation = () => {
   
   // Array of reasoning steps to show the user how Mimi is processing their request
   const reasoningSteps = language === 'ar' ? [
+    processingImage && processingType === "extractText" ? "معالجة النص في الصورة..." : 
+    processingImage && processingType === "analyzeImage" ? "تحليل محتوى الصورة..." : 
     "معالجة المرفقات...",
     "تحليل السؤال...",
     "البحث عن المعلومات ذات الصلة...",
@@ -22,6 +29,8 @@ const ThinkingAnimation = () => {
     "تنظيم الإجابة...",
     "تحسين وتدقيق الإجابة..."
   ] : [
+    processingImage && processingType === "extractText" ? "Processing text in image..." : 
+    processingImage && processingType === "analyzeImage" ? "Analyzing image content..." : 
     "Processing attachments...",
     "Analyzing question...",
     "Retrieving relevant information...",
@@ -30,8 +39,25 @@ const ThinkingAnimation = () => {
     "Refining and optimizing answer..."
   ];
   
-  const thinkingText = language === 'ar' ? "جاري التحليل..." : "Processing...";
-  const searchingText = language === 'ar' ? "استخدام محركات متعددة وإنشاء إجابة مخصصة" : "Using multiple engines and creating personalized response";
+  const thinkingText = language === 'ar' 
+    ? processingImage 
+      ? processingType === "extractText" 
+        ? "جاري استخراج النص..." 
+        : "جاري تحليل الصورة..."
+      : "جاري التحليل..." 
+    : processingImage 
+      ? processingType === "extractText" 
+        ? "Extracting text..." 
+        : "Analyzing image..."
+      : "Processing...";
+  
+  const searchingText = processingImage 
+    ? language === 'ar'
+      ? "تحليل المحتوى وإعداد الإجابة"
+      : "Analyzing content and preparing response"
+    : language === 'ar' 
+      ? "استخدام محركات متعددة وإنشاء إجابة مخصصة" 
+      : "Using multiple engines and creating personalized response";
   
   // Progress through reasoning steps to demonstrate thought process
   useEffect(() => {
@@ -46,6 +72,14 @@ const ThinkingAnimation = () => {
   }, [reasoningSteps.length]);
   
   const renderStageIcon = () => {
+    if (processingImage) {
+      if (processingType === "extractText") {
+        return <FileText className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
+      } else if (processingType === "analyzeImage") {
+        return <Camera className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
+      }
+    }
+    
     switch (reasoningStage) {
       case 0:
         return <LoaderCircle className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-spin`} />;
@@ -78,10 +112,18 @@ const ThinkingAnimation = () => {
           <div className="w-full h-full rounded-full animate-ping opacity-30 bg-mimi-primary"></div>
         </div>
         <div className="absolute inset-0 flex items-center justify-center">
-          <svg className="w-6 h-6 text-mimi-primary animate-bounce-soft" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2"/>
-            <path d="M12 8V16M8 12H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          {processingImage ? (
+            processingType === "extractText" ? (
+              <FileText className="w-6 h-6 text-mimi-primary animate-bounce-soft" />
+            ) : (
+              <Camera className="w-6 h-6 text-mimi-primary animate-bounce-soft" />
+            )
+          ) : (
+            <svg className="w-6 h-6 text-mimi-primary animate-bounce-soft" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2"/>
+              <path d="M12 8V16M8 12H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
         </div>
       </div>
       

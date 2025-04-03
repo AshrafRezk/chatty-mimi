@@ -36,6 +36,8 @@ const ChatInterface = () => {
   
   const [personaSelectorOpen, setPersonaSelectorOpen] = useState(false);
   const [showVoiceChat, setShowVoiceChat] = useState(false);
+  const [processingImage, setProcessingImage] = useState(false);
+  const [processingType, setProcessingType] = useState<"extractText" | "analyzeImage" | null>(null);
   const welcomeMessageSentRef = useRef(false);
   
   const messageSentSound = useRef<HTMLAudioElement | null>(null);
@@ -243,6 +245,13 @@ const ChatInterface = () => {
       
       if (imageFile && imageFile.type.startsWith('image/')) {
         try {
+          if (imageFile) {
+            setProcessingImage(true);
+            if (imageFile.name.toLowerCase().match(/\.(png|jpg|jpeg|gif|webp|bmp)$/)) {
+              setProcessingType(imageFile.name.toLowerCase().match(/\.(png|jpg|jpeg)$/) ? "extractText" : "analyzeImage");
+            }
+          }
+          
           const reader = new FileReader();
           imageBase64 = await new Promise((resolve, reject) => {
             reader.onload = () => resolve(reader.result as string);
@@ -251,6 +260,11 @@ const ChatInterface = () => {
           });
         } catch (error) {
           console.error("Error converting image to base64:", error);
+        } finally {
+          setTimeout(() => {
+            setProcessingImage(false);
+            setProcessingType(null);
+          }, 1000);
         }
       }
       
@@ -381,6 +395,8 @@ const ChatInterface = () => {
     } catch (error) {
       console.error("Error getting AI response:", error);
       setTyping(false);
+      setProcessingImage(false);
+      setProcessingType(null);
       
       addMessage({
         text: language === 'ar' 
@@ -452,7 +468,10 @@ const ChatInterface = () => {
             {isTyping && (
               <div className="flex mb-4 animate-fade-in">
                 <div className="chat-bubble-assistant">
-                  <ThinkingAnimation />
+                  <ThinkingAnimation 
+                    processingImage={processingImage}
+                    processingType={processingType || undefined}
+                  />
                 </div>
               </div>
             )}
@@ -511,7 +530,10 @@ const ChatInterface = () => {
           {isTyping && (
             <div className="flex mb-4 animate-fade-in">
               <div className="chat-bubble-assistant">
-                <ThinkingAnimation />
+                <ThinkingAnimation 
+                  processingImage={processingImage}
+                  processingType={processingType || undefined}
+                />
               </div>
             </div>
           )}
