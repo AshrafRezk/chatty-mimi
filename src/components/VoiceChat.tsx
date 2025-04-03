@@ -1,20 +1,14 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
-import { Mic, MicOff, Phone, PhoneOff, User, X } from 'lucide-react';
+import { PhoneOff } from 'lucide-react';
 import { useChat } from '@/context/ChatContext';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { cn } from '@/lib/utils';
 import { Motion } from './ui/motion';
-import { toast } from 'sonner';
-
-// Add global type definitions for SpeechRecognition
-declare global {
-  interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
-  }
-}
+import useSpeechRecognition from '@/hooks/useSpeechRecognition';
+import CallTimer from './VoiceCall/CallTimer';
+import AssistantAvatar from './VoiceCall/AssistantAvatar';
+import CallControls from './VoiceCall/CallControls';
 
 interface VoiceChatProps {
   onSendMessage: (text: string) => void;
@@ -25,126 +19,73 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
   const { state } = useChat();
   const { language, mood } = state;
   
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [isMouthMoving, setIsMouthMoving] = useState(false);
+  const [callStatus, setCallStatus] = useState<'connecting' | 'active' | 'ended'>('connecting');
+  const [isSpeaking, setIsSpeaking] = useState(false);
   
-  const recognitionRef = useRef<any | null>(null);
-  const synthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
+  // Use the custom speech recognition hook
+  const {
+    isListening,
+    transcript,
+    startListening,
+    stopListening,
+    resetTranscript,
+    isSupported
+  } = useSpeechRecognition({ 
+    language,
+    autoStart: false
+  });
   
-  // Initialize speech recognition
+  // Effect for call connection simulation
   useEffect(() => {
-    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      
-      recognitionRef.current.continuous = true;
-      recognitionRef.current.interimResults = true;
-      
-      recognitionRef.current.lang = language === 'ar' ? 'ar-SA' : 'en-US';
-      
-      recognitionRef.current.onresult = (event: any) => {
-        let interimTranscript = '';
-        let finalTranscript = '';
-        
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            finalTranscript += transcript;
-          } else {
-            interimTranscript += transcript;
-          }
-        }
-        
-        setTranscript(finalTranscript || interimTranscript);
-      };
-      
-      recognitionRef.current.onerror = (event: any) => {
-        console.error('Speech recognition error', event.error);
-        setIsListening(false);
-        toast.error('Speech recognition error. Please try again.');
-      };
-      
-      recognitionRef.current.onend = () => {
-        // Only reset if we're not actively stopping it
-        if (isListening) {
-          recognitionRef.current?.start();
-        }
-      };
-    } else {
-      toast.error('Speech recognition is not supported by your browser');
-    }
+    // Simulate connecting and then active call
+    const connectionTimer = setTimeout(() => {
+      setCallStatus('active');
+      // Auto start listening
+      if (isSupported) {
+        startListening();
+      }
+    }, 1500);
     
     return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.onresult = null;
-        recognitionRef.current.onend = null;
-        recognitionRef.current.onerror = null;
-        if (isListening) {
-          recognitionRef.current.stop();
-        }
-      }
+      clearTimeout(connectionTimer);
     };
-  }, [language, isListening]);
+  }, [isSupported, startListening]);
   
-  // Effect for handling animation when AI is speaking
+  // Check if speech synthesis is speaking
   useEffect(() => {
-    const id = setInterval(() => {
-      if (speechSynthesis.speaking) {
-        setIsMouthMoving(prev => !prev);
-      } else {
-        setIsMouthMoving(false);
+    const checkSpeaking = setInterval(() => {
+      if ('speechSynthesis' in window) {
+        setIsSpeaking(window.speechSynthesis.speaking);
       }
-    }, 150);
+    }, 100);
     
-    return () => clearInterval(id);
+    return () => clearInterval(checkSpeaking);
   }, []);
   
   const toggleListening = () => {
-    if (!recognitionRef.current) {
-      toast.error('Speech recognition is not supported');
-      return;
-    }
-    
     if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-      
-      // If there's transcript, send it as a message
-      if (transcript.trim()) {
-        onSendMessage(transcript.trim());
-        setTranscript('');
-      }
+      stopListening();
     } else {
-      try {
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (error) {
-        console.error('Error starting speech recognition', error);
-        toast.error('Error starting speech recognition');
-      }
+      startListening();
     }
   };
   
   const handleSubmit = () => {
     if (transcript.trim()) {
       onSendMessage(transcript.trim());
-      setTranscript('');
-      setIsListening(false);
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
+      resetTranscript();
+      stopListening();
     }
   };
   
-  const getBorderColor = () => {
-    switch(mood) {
-      case 'calm': return 'border-blue-300';
-      case 'friendly': return 'border-green-300';
-      case 'deep': return 'border-purple-300';
-      case 'focus': return 'border-orange-300';
-      default: return 'border-gray-300';
-    }
+  const handleEndCall = () => {
+    setCallStatus('ended');
+    stopListening();
+    
+    // Slight delay before closing modal
+    setTimeout(() => {
+      onClose();
+    }, 500);
   };
   
   return (
@@ -164,75 +105,81 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
         className={cn(
           "w-full max-w-md rounded-3xl shadow-lg overflow-hidden",
           mood === 'deep' || mood === 'focus' ? "bg-gray-900" : "bg-white",
-          getBorderColor(),
+          mood === 'calm' ? 'border-blue-300' :
+          mood === 'friendly' ? 'border-green-300' :
+          mood === 'deep' ? 'border-purple-300' :
+          mood === 'focus' ? 'border-orange-300' : 'border-gray-300',
           "border-4"
         )}
       >
-        <div className="p-6 flex flex-col items-center">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="absolute top-4 right-4 rounded-full" 
-            onClick={onClose}
-          >
-            <X />
-          </Button>
-          
-          <div className="flex flex-col items-center mb-6">
-            <div className={cn(
-              "relative rounded-full overflow-hidden w-32 h-32 mb-2",
-              getBorderColor(),
-              "border-2"
-            )}>
-              <Avatar className="w-full h-full">
-                <AvatarImage src="/placeholder.svg" alt="AI Assistant" />
-                <AvatarFallback>
-                  <User className="w-12 h-12" />
-                </AvatarFallback>
-              </Avatar>
-              
-              {/* Simple mouth animation */}
-              <div className={cn(
-                "absolute bottom-8 left-1/2 transform -translate-x-1/2 w-10 h-2 rounded-full transition-all duration-150",
-                mood === 'deep' || mood === 'focus' ? "bg-white/70" : "bg-gray-800/70",
-                isMouthMoving ? "h-4 rounded-full" : "h-1"
-              )}/>
-            </div>
+        <div className={cn(
+          "p-4",
+          mood === 'deep' || mood === 'focus' ? "bg-gray-800" : "bg-gray-50"
+        )}>
+          <div className="flex items-center justify-between mb-2">
+            <CallTimer 
+              status={callStatus} 
+              language={language} 
+              mood={mood} 
+            />
             
-            <h2 className={cn(
-              "text-xl font-medium",
-              mood === 'deep' || mood === 'focus' ? "text-white" : "text-gray-800"
-            )}>
-              {language === 'ar' ? 'مساعد صوتي' : 'Voice Assistant'}
-            </h2>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="rounded-full hover:bg-red-100" 
+              onClick={handleEndCall}
+            >
+              <PhoneOff className="text-red-500" />
+            </Button>
           </div>
+        </div>
+        
+        <div className="p-6 flex flex-col items-center">
+          <AssistantAvatar 
+            isSpeaking={isSpeaking}
+            mood={mood}
+            status={callStatus}
+          />
+          
+          <h2 className={cn(
+            "text-xl font-semibold mb-2",
+            mood === 'deep' || mood === 'focus' ? "text-white" : "text-gray-800"
+          )}>
+            {language === 'ar' ? 'مساعد ميمي' : 'Mimi Assistant'}
+          </h2>
+          
+          <p className={cn(
+            "text-sm mb-6",
+            mood === 'deep' || mood === 'focus' ? "text-gray-300" : "text-gray-500"
+          )}>
+            {callStatus === 'connecting' ? 
+              (language === 'ar' ? 'جارٍ الاتصال بالمساعد...' : 'Connecting to assistant...') :
+              callStatus === 'active' ? 
+                (language === 'ar' ? 'متصل الآن' : 'Call in progress') : 
+                (language === 'ar' ? 'انتهى الاتصال' : 'Call ended')
+            }
+          </p>
           
           <div className={cn(
-            "w-full p-4 mb-4 rounded-xl min-h-16 text-center",
-            mood === 'deep' || mood === 'focus' ? "bg-gray-800/50 text-white" : "bg-gray-100 text-gray-800"
+            "w-full p-4 mb-4 rounded-xl min-h-16",
+            mood === 'deep' || mood === 'focus' ? "bg-gray-800/50 text-white" : "bg-gray-100 text-gray-800",
+            "flex items-center justify-center text-center",
+            callStatus !== 'active' && "opacity-60"
           )}>
-            {transcript || (language === 'ar' ? 'اضغط على الميكروفون وابدأ الحديث...' : 'Tap the microphone and start speaking...')}
+            {transcript || (
+              isListening ? 
+                (language === 'ar' ? 'أنا أستمع...' : 'I\'m listening...') : 
+                (language === 'ar' ? 'اضغط على الميكروفون وابدأ الحديث' : 'Tap mic to speak')
+            )}
           </div>
           
-          <div className="flex gap-4">
-            <Button
-              onClick={toggleListening}
-              className={cn(
-                "rounded-full h-16 w-16 flex items-center justify-center transition-all",
-                isListening ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"
-              )}
-            >
-              {isListening ? <MicOff size={24} /> : <Mic size={24} />}
-            </Button>
-            
-            <Button
-              onClick={handleSubmit}
-              disabled={!transcript.trim()}
-              className="rounded-full h-16 w-16 flex items-center justify-center bg-green-500 hover:bg-green-600 disabled:bg-gray-300"
-            >
-              <Phone size={24} />
-            </Button>
-          </div>
+          <CallControls
+            isListening={isListening}
+            hasTranscript={!!transcript.trim()}
+            callStatus={callStatus}
+            onToggleMic={toggleListening}
+            onSendMessage={handleSubmit}
+          />
         </div>
       </Motion.div>
     </Motion.div>

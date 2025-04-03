@@ -15,10 +15,10 @@ import { Motion } from "@/components/ui/motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import ConversationHistory from "@/components/ConversationHistory";
-import { Plus, History } from "lucide-react";
+import { Plus, History, Phone } from "lucide-react";
 
 const Chat = () => {
-  const { state, createNewConversation } = useChat();
+  const { state, createNewConversation, setVoiceMode } = useChat();
   const { language, mood, isFreeLimit, isVoiceMode } = state;
   const { user, loading } = useAuth();
   const isMobile = useIsMobile();
@@ -69,6 +69,10 @@ const Chat = () => {
   const handleNewChat = async () => {
     await createNewConversation();
   };
+  
+  const handleStartVoiceChat = () => {
+    setVoiceMode(true);
+  };
 
   if (loading) {
     return (
@@ -112,6 +116,19 @@ const Chat = () => {
               <Plus className="h-5 w-5" />
               <span className="font-medium">
                 {language === 'ar' ? "محادثة جديدة" : "New Chat"}
+              </span>
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full bg-white text-mimi-primary border-mimi-primary shadow-md hover:bg-mimi-100 flex items-center transition-all gap-2 ios-button active:scale-95 px-6 py-4"
+              onClick={handleStartVoiceChat}
+              title={language === 'ar' ? "محادثة صوتية" : "Voice Call"}
+            >
+              <Phone className="h-5 w-5" />
+              <span className="font-medium">
+                {language === 'ar' ? "مكالمة صوتية" : "Voice Call"}
               </span>
             </Button>
             
