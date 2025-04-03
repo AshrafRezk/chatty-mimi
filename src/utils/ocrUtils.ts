@@ -97,25 +97,23 @@ const fileToBase64 = (file: File): Promise<string> => {
 };
 
 /**
- * Comprehensive analysis of an image file - combines OCR and visual analysis
+ * Processes an image file based on the selected analysis type
  * @param file The image file to process
- * @returns An object containing both text and visual analysis results
+ * @param analysisType The type of analysis to perform
+ * @returns The result of the analysis
  */
-export const smartSightAnalysis = async (file: File): Promise<{text: string, caption: string}> => {
-  // Process both OCR and image analysis in parallel
-  const [extractedText, imageCaption] = await Promise.all([
-    extractTextFromImage(file).catch(err => {
-      console.error("OCR failed:", err);
-      return "";
-    }),
-    analyzeImage(file).catch(err => {
-      console.error("Image analysis failed:", err);
-      return "";
-    })
-  ]);
+export const processImageFile = async (file: File, analysisType: "extractText" | "analyzeImage" | null): Promise<string> => {
+  if (!analysisType) return "";
   
-  return {
-    text: extractedText.trim(),
-    caption: imageCaption.trim()
-  };
+  try {
+    if (analysisType === "extractText") {
+      return await extractTextFromImage(file);
+    } else if (analysisType === "analyzeImage") {
+      return await analyzeImage(file);
+    }
+    return "";
+  } catch (error) {
+    console.error("Error processing image:", error);
+    throw error;
+  }
 };

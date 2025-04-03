@@ -10,6 +10,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useTheme } from "@/hooks/use-theme";
+import { processImageFile } from "@/utils/ocrUtils";
 
 interface ChatInputProps {
   onSendMessage: (message: string, imageFile?: File | null) => void;
@@ -20,6 +21,8 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
   const [showFileUploader, setShowFileUploader] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [analysisType, setAnalysisType] = useState<"extractText" | "analyzeImage" | null>(null);
   const { state } = useChat();
   const { language, mood } = state;
   const isMobile = useIsMobile();
@@ -53,31 +56,96 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
     ? "اكتب رسالتك هنا..." 
     : "Type your message here...";
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (message.trim() || imageFile) {
-      playMessageSentSound();
-      onSendMessage(message.trim(), imageFile);
-      setMessage("");
-      setImageFile(null);
+    if (isProcessingImage) return;
+    
+    const trimmedMessage = message.trim();
+    
+    if (trimmedMessage || imageFile) {
+      if (imageFile && analysisType) {
+        setIsProcessingImage(true);
+        
+        try {
+          const processingMessage = language === 'ar' 
+            ? `جاري ${analysisType === 'extractText' ? 'استخراج النص' : 'تحليل الصورة'}...` 
+            : `${analysisType === 'extractText' ? 'Extracting text' : 'Analyzing image'}...`;
+          
+          toast.info(processingMessage);
+          
+          // Process the image in the background
+          const result = await processImageFile(imageFile, analysisType);
+          
+          // Combine the extracted text/analysis with the user's message
+          let finalMessage = trimmedMessage;
+          
+          if (result) {
+            const prefix = analysisType === 'extractText' 
+              ? (language === 'ar' ? "النص المستخرج: " : "Extracted text: ")
+              : (language === 'ar' ? "تحليل الصورة: " : "Image analysis: ");
+            
+            finalMessage = trimmedMessage
+              ? `${trimmedMessage}\n\n${prefix}${result}`
+              : `${prefix}${result}`;
+            
+            toast.success(
+              language === 'ar'
+                ? `تم ${analysisType === 'extractText' ? 'استخراج النص' : 'تحليل الصورة'} بنجاح`
+                : `${analysisType === 'extractText' ? 'Text extraction' : 'Image analysis'} completed successfully`
+            );
+          } else {
+            toast.warning(
+              language === 'ar'
+                ? `لم يتم العثور على ${analysisType === 'extractText' ? 'نص' : 'محتوى قابل للتحليل'}`
+                : `No ${analysisType === 'extractText' ? 'text' : 'analyzable content'} found`
+            );
+          }
+          
+          playMessageSentSound();
+          onSendMessage(finalMessage, imageFile);
+          setMessage("");
+          setImageFile(null);
+          setAnalysisType(null);
+          
+        } catch (error) {
+          console.error("Error processing image:", error);
+          toast.error(
+            language === 'ar'
+              ? `حدث خطأ أثناء ${analysisType === 'extractText' ? 'استخراج النص' : 'تحليل الصورة'}`
+              : `Error ${analysisType === 'extractText' ? 'extracting text' : 'analyzing image'}`
+          );
+          
+          // Still send the message with the image if processing fails
+          playMessageSentSound();
+          onSendMessage(trimmedMessage, imageFile);
+          setMessage("");
+          setImageFile(null);
+          setAnalysisType(null);
+        } finally {
+          setIsProcessingImage(false);
+        }
+      } else {
+        // Just send the message with the image without processing
+        playMessageSentSound();
+        onSendMessage(trimmedMessage, imageFile);
+        setMessage("");
+        setImageFile(null);
+        setAnalysisType(null);
+      }
     }
   };
 
-  const handleTextExtracted = (extractedText: string) => {
-    const updatedMessage = message.trim() 
-      ? `${message}\n\n${extractedText}`
-      : extractedText;
-    
-    setMessage(updatedMessage);
-    setShowFileUploader(false);
-    toast.success(language === 'ar' ? "تم تحليل المحتوى بنجاح" : "Content analyzed successfully");
-  };
-  
-  const handleImageSelected = (file: File) => {
+  const handleImageSelected = (file: File, type: "extractText" | "analyzeImage" | null) => {
     setImageFile(file);
+    setAnalysisType(type);
     setShowFileUploader(false);
-    toast.success(language === 'ar' ? "تم تحديد الصورة بنجاح" : "Image selected successfully");
+    
+    const successMessage = language === 'ar' 
+      ? "تم تحديد الصورة بنجاح" 
+      : "Image selected successfully";
+    
+    toast.success(successMessage);
   };
   
   const handleMicClick = () => {
@@ -135,7 +203,6 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
               </Button>
             </div>
             <FileUploader 
-              onTextExtracted={handleTextExtracted} 
               onImageSelected={handleImageSelected}
             />
           </div>
@@ -147,12 +214,22 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
               <div className="flex items-center">
                 <Camera className="h-4 w-4 mr-2 text-muted-foreground" />
                 <span className="text-sm truncate">{imageFile.name}</span>
+                {analysisType && (
+                  <span className="ml-2 text-xs bg-mimi-primary/10 text-mimi-primary px-2 py-0.5 rounded-full">
+                    {analysisType === 'extractText' 
+                      ? (language === 'ar' ? 'استخراج النص' : 'Extract Text') 
+                      : (language === 'ar' ? 'تحليل الصورة' : 'Analyze Image')}
+                  </span>
+                )}
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-6 w-6 p-0"
-                onClick={() => setImageFile(null)}
+                onClick={() => {
+                  setImageFile(null);
+                  setAnalysisType(null);
+                }}
               >
                 <span className="sr-only">Remove</span>
                 ✕
@@ -180,13 +257,11 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 if (message.trim() || imageFile) {
-                  playMessageSentSound();
-                  onSendMessage(message.trim(), imageFile);
-                  setMessage("");
-                  setImageFile(null);
+                  handleSubmit(e);
                 }
               }
             }}
+            disabled={isProcessingImage}
           />
           <div className={cn(
             "absolute bottom-2.5", 
@@ -200,6 +275,7 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
               className="h-8 w-8 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
               onClick={() => setShowFileUploader(prev => !prev)}
               title={language === 'ar' ? "إرفاق ملف" : "Attach file"}
+              disabled={isProcessingImage}
             >
               <Paperclip className="h-4 w-4" />
               <span className="sr-only">Attach file</span>
@@ -216,6 +292,7 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
               )}
               onClick={handleMicClick}
               title={language === 'ar' ? "إدخال صوتي" : "Voice input"}
+              disabled={isProcessingImage}
             >
               <Mic className="h-4 w-4" />
               <span className="sr-only">Voice input</span>
@@ -226,12 +303,20 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
               size="icon" 
               className={cn(
                 "h-9 w-9",
-                getButtonStyle()
+                getButtonStyle(),
+                isProcessingImage && "opacity-70 cursor-not-allowed"
               )}
-              disabled={!message.trim() && !imageFile}
+              disabled={(!message.trim() && !imageFile) || isProcessingImage}
               title={language === 'ar' ? "إرسال" : "Send"}
             >
-              <Send className="h-4 w-4" />
+              {isProcessingImage ? (
+                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
               <span className="sr-only">Send</span>
             </Button>
           </div>

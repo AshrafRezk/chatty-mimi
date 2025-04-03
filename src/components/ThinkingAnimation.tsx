@@ -2,7 +2,7 @@
 import { useTheme } from "@/hooks/use-theme";
 import { useChat } from "@/context/ChatContext";
 import { useState, useEffect } from "react";
-import { Activity, BarChart, PieChart, LineChart } from "lucide-react";
+import { Activity, BarChart, PieChart, LineChart, FileText, Camera } from "lucide-react";
 
 const ThinkingAnimation = () => {
   const { theme } = useTheme();
@@ -15,12 +15,14 @@ const ThinkingAnimation = () => {
   
   // Array of reasoning steps to show the user how Mimi is processing their request
   const reasoningSteps = language === 'ar' ? [
+    "تحليل الملفات المرفقة...",
     "تحليل السؤال...",
     "البحث عن المعلومات ذات الصلة...",
     "تقييم مصادر المعلومات...",
     "تنظيم الإجابة...",
     "تحسين وتدقيق الإجابة..."
   ] : [
+    "Processing attachments...",
     "Analyzing question...",
     "Retrieving relevant information...",
     "Evaluating sources...",
@@ -46,12 +48,16 @@ const ThinkingAnimation = () => {
   const renderStageIcon = () => {
     switch (reasoningStage) {
       case 0:
-        return <Activity className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
+        return reasoningStage === 0 ? 
+          <FileText className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} /> :
+          <Activity className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
       case 1:
-        return <BarChart className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
+        return <Camera className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
       case 2:
-        return <PieChart className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
+        return <BarChart className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
       case 3:
+        return <PieChart className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
+      case 4:
         return <LineChart className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
       default:
         return <Activity className={`w-5 h-5 ${isDark ? 'text-mimi-primary' : 'text-mimi-primary/80'} animate-pulse`} />;
