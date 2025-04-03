@@ -1,8 +1,9 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useChat } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, Send, Paperclip, Camera, Sparkles } from "lucide-react";
+import { Mic, Send, Paperclip, Camera } from "lucide-react";
 import FileUploader from "./FileUploader";
 import { Motion } from "@/components/ui/motion";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -198,21 +199,10 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
               size="icon" 
               className="h-8 w-8 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
               onClick={() => setShowFileUploader(prev => !prev)}
-              title={language === 'ar' ? "تحليل ذكي" : "SmartSight"}
+              title={language === 'ar' ? "إرفاق ملف" : "Attach file"}
             >
-              <Sparkles className="h-4 w-4" />
-              <span className="sr-only">SmartSight</span>
-            </Button>
-            <Button 
-              type="button" 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-              onClick={() => setShowFileUploader(prev => !prev)}
-              title={language === 'ar' ? "التقاط صورة" : "Take photo"}
-            >
-              <Camera className="h-4 w-4" />
-              <span className="sr-only">Take photo</span>
+              <Paperclip className="h-4 w-4" />
+              <span className="sr-only">Attach file</span>
             </Button>
             <Button 
               type="button" 
