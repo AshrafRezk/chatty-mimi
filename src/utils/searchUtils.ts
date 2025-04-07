@@ -1,4 +1,3 @@
-
 import { Reference } from "@/types";
 
 const SERPER_API_KEY = "67c4ff204c52710b94f650c6f2bb85904c4b113d"; // This is a sample key, replace with your own in production
@@ -80,4 +79,22 @@ export const calculateCertaintyScore = (references: Reference[]): number => {
   const randomVariance = Math.floor(Math.random() * 5);
   
   return Math.min(Math.round(baseScore + qualityBonus + randomVariance), 98);
+};
+
+/**
+ * Process search results and return them in reference format
+ * @param data The search results data
+ * @returns Array of reference objects
+ */
+export const processSearchResults = (data: any): Reference[] => {
+  if (!data || !data.organic) {
+    return [];
+  }
+  
+  return data.organic.map((item: any) => ({
+    title: item.title,
+    link: item.url, // Changed url to link to match the Reference type
+    url: item.url,  // Keep url for backward compatibility
+    snippet: item.snippet
+  }));
 };

@@ -9,9 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, LogIn } from "lucide-react";
 import { Motion } from "@/components/ui/motion";
 import SEOHead from "@/components/SEOHead";
+import { Separator } from "@/components/ui/separator";
+import SSOButtons from "@/components/SSOButtons";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -68,6 +70,10 @@ const Auth = () => {
     signUpDescription: {
       en: "Enter your information to create an account",
       ar: "أدخل معلوماتك لإنشاء حساب"
+    },
+    or: {
+      en: "or continue with",
+      ar: "أو استمر مع"
     }
   };
 
@@ -101,7 +107,7 @@ const Auth = () => {
             to="/" 
             className="mb-6 text-center block text-xl font-bold text-mimi-primary"
           >
-            Mimi
+            M.I.M.I
           </Link>
           
           <Tabs defaultValue="signin" className="w-full">
@@ -140,9 +146,7 @@ const Auth = () => {
                         required
                       />
                     </div>
-                  </CardContent>
-                  
-                  <CardFooter className="flex flex-col items-center gap-4">
+                    
                     <Button 
                       type="submit" 
                       className="w-full" 
@@ -155,6 +159,21 @@ const Auth = () => {
                       )}
                     </Button>
                     
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">
+                          {texts.or[language]}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <SSOButtons />
+                  </CardContent>
+                  
+                  <CardFooter className="flex flex-col items-center gap-4">
                     <Link to="/" className="text-sm text-gray-500 hover:text-gray-700">
                       {texts.backToHome[language]}
                     </Link>
@@ -193,9 +212,7 @@ const Auth = () => {
                         required
                       />
                     </div>
-                  </CardContent>
-                  
-                  <CardFooter className="flex flex-col items-center gap-4">
+                    
                     <Button 
                       type="submit" 
                       className="w-full" 
@@ -208,6 +225,21 @@ const Auth = () => {
                       )}
                     </Button>
                     
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">
+                          {texts.or[language]}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <SSOButtons isSignUp={true} />
+                  </CardContent>
+                  
+                  <CardFooter className="flex flex-col items-center gap-4">
                     <Link to="/" className="text-sm text-gray-500 hover:text-gray-700">
                       {texts.backToHome[language]}
                     </Link>

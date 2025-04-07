@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Session, User } from '@supabase/supabase-js';
+import { Session, User, Provider } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from 'react-router-dom';
@@ -10,6 +10,7 @@ interface AuthContextType {
   user: User | null;
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithSSO: (provider: Provider) => Promise<void>;
   signOut: () => Promise<void>;
   loading: boolean;
   userProfile: any;
@@ -28,14 +29,20 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     // Set up the auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        
-        // Defer fetching user profile with setTimeout to avoid deadlocks
-        if (currentSession?.user) {
-          setTimeout(() => {
-            fetchUserProfile(currentSession.user.id);
-          }, 0);
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          setSession(currentSession);
+          setUser(currentSession?.user ?? null);
+          
+          // Defer fetching user profile with setTimeout to avoid deadlocks
+          if (currentSession?.user) {
+            setTimeout(() => {
+              fetchUserProfile(currentSession.user.id);
+            }, 0);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
+          setUserProfile(null);
         }
       }
     );
@@ -63,11 +70,11 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         .from('user_profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching user profile:', error);
-      } else {
+      } else if (data) {
         setUserProfile(data);
       }
     } catch (error) {
@@ -80,7 +87,10 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       setLoading(true);
       const { error } = await supabase.auth.signUp({ 
         email, 
-        password 
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth`
+        }
       });
       
       if (error) {
@@ -119,6 +129,26 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     }
   };
 
+  const signInWithSSO = async (provider: Provider) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth`
+        }
+      });
+      
+      if (error) {
+        toast.error(error.message);
+      }
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const signOut = async () => {
     try {
       setLoading(true);
@@ -139,6 +169,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         user,
         signUp,
         signIn,
+        signInWithSSO,
         signOut,
         loading,
         userProfile

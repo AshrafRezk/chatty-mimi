@@ -1,4 +1,3 @@
-
 import { Reference } from "@/types";
 
 // Default API keys for Google Search
@@ -206,4 +205,30 @@ export const combineLinksAndSearchResults = (links: Reference[], searchResults: 
   
   // Return as array
   return Array.from(uniqueReferences.values());
+};
+
+export const formatSearchResults = (result: any): Reference[] => {
+  if (!result || !result.organic) {
+    return [];
+  }
+  
+  return result.organic.map((item: any) => {
+    return {
+      title: item.title,
+      link: item.url, // Changed url to link to match the Reference type
+      url: item.url,  // Keep url for backward compatibility
+      snippet: item.snippet
+    };
+  });
+};
+
+export const processGoogleSearchResult = (data: any) => {
+  const references = data.organic.map((item: any) => ({
+    title: item.title,
+    link: item.link || item.url, // Ensure link is set correctly
+    url: item.url, // Keep for backward compatibility
+    snippet: item.snippet,
+  }));
+  
+  return references;
 };

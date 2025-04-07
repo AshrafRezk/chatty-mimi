@@ -16,10 +16,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Navbar = () => {
   const { state, setTheme } = useChat();
-  const { user, signOut } = useAuth();
+  const { user, userProfile, signOut } = useAuth();
   const location = useLocation();
   const { language } = state;
   const { theme } = useTheme();
@@ -33,10 +34,29 @@ const Navbar = () => {
     logout: language === 'ar' ? 'تسجيل الخروج' : 'Log Out',
     profile: language === 'ar' ? 'الملف الشخصي' : 'Profile',
     account: language === 'ar' ? 'الحساب' : 'Account',
+    settings: language === 'ar' ? 'الإعدادات' : 'Settings',
   };
 
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
+  };
+
+  // Get user initials for avatar fallback
+  const getUserInitials = () => {
+    if (!user) return "?";
+    
+    if (userProfile?.full_name) {
+      return userProfile.full_name
+        .split(' ')
+        .map((name: string) => name[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 2);
+    }
+    
+    return user.email 
+      ? user.email.substring(0, 2).toUpperCase() 
+      : "M";
   };
 
   return (
@@ -85,16 +105,25 @@ const Navbar = () => {
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="outline" 
-                  size="icon"
-                  className="rounded-md"
+                  size="sm"
+                  className="rounded-md flex items-center gap-2"
                 >
-                  <User className="h-5 w-5" />
-                  <span className="sr-only">{navTexts.account}</span>
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={user.user_metadata?.avatar_url} />
+                    <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                  </Avatar>
+                  <span className="hidden sm:inline">{userProfile?.full_name || user.email?.split('@')[0]}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>{navTexts.account}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="flex items-center cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>{navTexts.profile}</span>
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => signOut()}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>{navTexts.logout}</span>

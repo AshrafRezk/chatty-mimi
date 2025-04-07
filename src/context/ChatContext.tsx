@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useReducer, useEffect, useState } from 'react';
 import { AIConfig, ChatState, Language, Message, Persona, Theme, UserLocation } from '../types';
 import { detectUserLocation, getDefaultLanguageFromLocation } from '../utils/locationUtils';
@@ -21,6 +20,7 @@ const initialState: ChatState = {
     contextLength: 5,
     persona: 'general',
     webSearch: true,
+    useMultimodal: true
   },
   isVoiceMode: false,
   currentConversationId: null,
