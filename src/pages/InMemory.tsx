@@ -47,7 +47,7 @@ const InMemory = () => {
           transition={{ duration: 0.5 }}
         >
           <div className="container mx-auto max-w-3xl text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 gradient-text">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-mimi-primary to-mimi-sky">
               {texts.title[language]}
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-muted-foreground">

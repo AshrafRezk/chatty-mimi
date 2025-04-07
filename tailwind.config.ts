@@ -63,16 +63,16 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Mimi custom colors
+				// Mimi custom colors - updated to be more blue
 				mimi: {
-					primary: '#9B87F5',
-					secondary: '#7E69AB',
-					soft: '#E5DEFF',
-					sky: '#33C3F0',
-					light: '#D6BCFA',
-					dark: '#1A1F2C',
-					softblue: '#D3E4FD',
-					neutral: '#8E9196',
+					primary: '#33C3F0',     // Changed from purple (#9B87F5) to bright blue
+					secondary: '#0FA0CE',   // Changed from purple-ish (#7E69AB) to darker blue
+					soft: '#D3E4FD',        // Changed from light purple (#E5DEFF) to soft blue
+					sky: '#1EAEDB',         // Adjusted sky blue
+					light: '#B3E0FF',       // Changed from light purple (#D6BCFA) to light blue
+					dark: '#1A1F2C',        // Kept dark shade
+					softblue: '#D3E4FD',    // Already blue, kept as is
+					neutral: '#8E9196',     // Kept neutral grey
 				},
 			},
 			borderRadius: {
