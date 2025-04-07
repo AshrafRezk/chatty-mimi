@@ -97,19 +97,51 @@ const VoiceCallAvatar = ({ isSpeaking, mood, persona = 'general' }: VoiceCallAva
 
   return (
     <div className="relative mb-8 flex items-center space-x-4">
-      {/* Main Avatar */}
+      {/* Main Avatar with Animated Face */}
       <Motion.div
         animate={isSpeaking ? {
           scale: [1, 1.05, 1],
           transition: { repeat: Infinity, duration: 1.5 }
         } : {}}
         className={cn(
-          "h-32 w-32 rounded-md flex items-center justify-center shadow-lg border-2",
+          "h-32 w-32 rounded-md flex items-center justify-center shadow-lg border-2 relative",
           getBorderColor(),
           getBackgroundColor()
         )}
       >
-        <div className="flex items-center justify-center">
+        {/* Face Features */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          {/* Eyes */}
+          <div className="flex justify-between w-16 mt-4">
+            <Motion.div 
+              animate={isSpeaking ? {
+                scale: [1, 1.1, 1],
+                transition: { repeat: Infinity, duration: 2, repeatType: "reverse" }
+              } : {}}
+              className="w-6 h-3 bg-gray-800 rounded-full"
+            />
+            <Motion.div 
+              animate={isSpeaking ? {
+                scale: [1, 1.1, 1],
+                transition: { repeat: Infinity, duration: 2, repeatType: "reverse", delay: 0.3 }
+              } : {}}
+              className="w-6 h-3 bg-gray-800 rounded-full"
+            />
+          </div>
+          
+          {/* Mouth */}
+          <Motion.div 
+            animate={isSpeaking ? {
+              height: ["4px", "8px", "4px"],
+              width: ["14px", "16px", "14px"],
+              transition: { repeat: Infinity, duration: 0.5 }
+            } : {}}
+            className="w-14 h-1 bg-gray-800 rounded-full mt-8"
+          />
+        </div>
+
+        {/* Persona Logo on Shirt */}
+        <div className="absolute bottom-2 right-2 w-8 h-8 rounded-full flex items-center justify-center bg-white/80 shadow-sm">
           {getPersonaIcon()}
         </div>
       </Motion.div>

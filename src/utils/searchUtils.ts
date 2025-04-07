@@ -1,3 +1,4 @@
+
 import { Reference } from "@/types";
 
 const SERPER_API_KEY = "67c4ff204c52710b94f650c6f2bb85904c4b113d"; // This is a sample key, replace with your own in production
@@ -36,6 +37,7 @@ export const performWebSearch = async (query: string): Promise<Reference[]> => {
     const references: Reference[] = organicResults.map((result: any) => ({
       title: result.title || "Untitled Source",
       url: result.link || "#",
+      link: result.link || "#", // Added link property to match Reference type
       snippet: result.snippet || (result.description || "No description available")
     }));
     
@@ -46,6 +48,7 @@ export const performWebSearch = async (query: string): Promise<Reference[]> => {
         references.push({
           title: kg.title,
           url: kg.url || "#",
+          link: kg.url || "#", // Added link property to match Reference type
           snippet: kg.description
         });
       }
@@ -93,8 +96,8 @@ export const processSearchResults = (data: any): Reference[] => {
   
   return data.organic.map((item: any) => ({
     title: item.title,
-    link: item.url, // Changed url to link to match the Reference type
-    url: item.url,  // Keep url for backward compatibility
+    link: item.url, 
+    url: item.url,
     snippet: item.snippet
   }));
 };
