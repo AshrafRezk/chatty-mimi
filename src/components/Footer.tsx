@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useChat } from '@/context/ChatContext';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   const { state } = useChat();
@@ -10,8 +11,12 @@ const Footer = () => {
   
   const texts = {
     copyright: {
-      en: `© ${currentYear} Mimi AI. All rights reserved.`,
-      ar: `© ${currentYear} ميمي الذكاء الاصطناعي. جميع الحقوق محفوظة.`
+      en: `© ${currentYear} Mimi AI. All rights reserved. Developed by `,
+      ar: `© ${currentYear} ميمي الذكاء الاصطناعي. جميع الحقوق محفوظة. طُورت بواسطة `
+    },
+    cloudastick: {
+      en: 'Cloudastick Systems Salesforce Partner',
+      ar: 'كلاوداستيك سيستمز شريك سيلزفورس'
     },
     terms: {
       en: 'Terms',
@@ -34,6 +39,14 @@ const Footer = () => {
           <div className="mb-4 md:mb-0">
             <p className="text-sm text-muted-foreground">
               {texts.copyright[language]}
+              <a 
+                href="https://cloudastick.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-mimi-primary hover:underline"
+              >
+                {texts.cloudastick[language]}
+              </a>
             </p>
           </div>
           <div className={`flex ${language === 'ar' ? 'space-x-reverse' : ''} space-x-4`}>

@@ -12,6 +12,7 @@ import Pricing from './pages/Pricing';
 import NotFound from './pages/NotFound';
 import Index from './pages/Index';
 import Auth from './pages/Auth';
+import InMemory from './pages/InMemory';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from "@/components/ui/toaster";
 
@@ -33,6 +34,7 @@ const AnimatedRoutes = () => {
           <Route path="/chat" element={<Chat />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/in-memory" element={<InMemory />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AnimatePresence>

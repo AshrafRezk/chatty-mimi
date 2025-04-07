@@ -23,6 +23,14 @@ const Index = () => {
     getStarted: {
       en: "Get started now",
       ar: "ابدأ الآن"
+    },
+    inMemory: {
+      en: "In Memory of Michael Elia",
+      ar: "في ذكرى مايكل إيليا"
+    },
+    visitMemorial: {
+      en: "Visit our memorial page",
+      ar: "زيارة صفحة الذكرى"
     }
   };
 
@@ -56,7 +64,22 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Footer */}
+        {/* In Memory section */}
+        <section className="py-12 px-4 bg-mimi-soft/30 dark:bg-mimi-dark/30">
+          <div className="container mx-auto max-w-3xl text-center">
+            <h3 className="text-2xl font-medium mb-4">
+              {texts.inMemory[language]}
+            </h3>
+            <Link to="/in-memory">
+              <Button 
+                variant="outline" 
+                className="border-mimi-primary text-mimi-primary hover:bg-mimi-soft"
+              >
+                {texts.visitMemorial[language]}
+              </Button>
+            </Link>
+          </div>
+        </section>
       </main>
     </div>
   );
