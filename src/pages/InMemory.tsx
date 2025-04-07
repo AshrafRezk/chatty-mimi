@@ -20,8 +20,8 @@ const InMemory = () => {
       ar: "تكريم لشخص استثنائي"
     },
     description: {
-      en: "Michael Elia was a visionary leader, mentor, and innovator whose contributions have left an indelible mark on our organization and the technology community. His passion for excellence and commitment to pushing the boundaries of what's possible have inspired us to create Mimi AI as a testament to his forward-thinking approach.",
-      ar: "كان مايكل إيليا قائدًا ذو رؤية، ومرشدًا، ومبتكرًا تركت مساهماته علامة لا تمحى على منظمتنا ومجتمع التكنولوجيا. ألهمنا شغفه بالتميز والتزامه بدفع حدود ما هو ممكن لإنشاء ميمي الذكاء الاصطناعي كشهادة على نهجه المستقبلي."
+      en: "Michael Elia was a visionary leader, mentor, and innovator whose contributions have left an indelible mark on our organization and the technology community. His passion for excellence and commitment to pushing the boundaries of what's possible have inspired us to create M.I.M.I as a testament to his forward-thinking approach.",
+      ar: "كان مايكل إيليا قائدًا ذو رؤية، ومرشدًا، ومبتكرًا تركت مساهماته علامة لا تمحى على منظمتنا ومجتمع التكنولوجيا. ألهمنا شغفه بالتميز والتزامه بدفع حدود ما هو ممكن لإنشاء إم.آي.إم.آي كشهادة على نهجه المستقبلي."
     },
     legacy: {
       en: "Michael's legacy lives on through our work and the countless lives he touched. We strive every day to honor his memory by embodying the values he championed: innovation, integrity, and the relentless pursuit of creating technology that enhances human connection.",
@@ -35,7 +35,7 @@ const InMemory = () => {
       language === 'ar' ? 'rtl' : ''
     )}>
       <SEOHead 
-        title={`${texts.title[language]} | Mimi AI`}
+        title={`${texts.title[language]} | M.I.M.I`}
         description={texts.description[language]}
       />
       <Navbar />
@@ -55,7 +55,7 @@ const InMemory = () => {
             </p>
             
             <div className="mb-12 flex justify-center">
-              <div className="w-32 h-32 rounded-full bg-mimi-primary/10 flex items-center justify-center">
+              <div className="w-32 h-32 rounded-md bg-mimi-primary/10 flex items-center justify-center">
                 <span className="text-5xl">🕊️</span>
               </div>
             </div>

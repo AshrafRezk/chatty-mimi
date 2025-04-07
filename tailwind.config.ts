@@ -63,16 +63,18 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Mimi custom colors - updated to be more blue
+				// M.I.M.I custom colors - bold, masculine, and aggressive
 				mimi: {
-					primary: '#33C3F0',     // Changed from purple (#9B87F5) to bright blue
-					secondary: '#0FA0CE',   // Changed from purple-ish (#7E69AB) to darker blue
-					soft: '#D3E4FD',        // Changed from light purple (#E5DEFF) to soft blue
-					sky: '#1EAEDB',         // Adjusted sky blue
-					light: '#B3E0FF',       // Changed from light purple (#D6BCFA) to light blue
-					dark: '#1A1F2C',        // Kept dark shade
-					softblue: '#D3E4FD',    // Already blue, kept as is
-					neutral: '#8E9196',     // Kept neutral grey
+					primary: '#0052CC',     // Strong blue
+					secondary: '#003580',   // Darker blue
+					soft: '#B3D1FF',        // Soft blue
+					sky: '#0747A6',         // Deep blue
+					light: '#4C9AFF',       // Light blue
+					dark: '#172B4D',        // Dark blue-gray
+					softblue: '#DEEBFF',    // Very soft blue
+					neutral: '#5E6C84',     // Steel gray
+					aggro: '#FF5630',       // Aggressive orange-red for accents
+					alert: '#FFAB00',       // Alert yellow
 				},
 			},
 			borderRadius: {

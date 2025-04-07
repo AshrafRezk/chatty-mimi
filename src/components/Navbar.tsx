@@ -42,8 +42,8 @@ const Navbar = () => {
   return (
     <header className={`py-4 border-b ${language === 'ar' ? 'rtl' : ''}`}>
       <div className="container mx-auto px-4 flex items-center justify-between">
-        <Link to="/" className="text-2xl font-bold gradient-text">
-          Mimi
+        <Link to="/" className="text-2xl font-bold flex items-center">
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-mimi-primary to-mimi-secondary mr-1">M.I.M.I</span>
         </Link>
 
         <nav className="hidden md:flex items-center space-x-6">
@@ -86,7 +86,7 @@ const Navbar = () => {
                 <Button 
                   variant="outline" 
                   size="icon"
-                  className="rounded-full"
+                  className="rounded-md"
                 >
                   <User className="h-5 w-5" />
                   <span className="sr-only">{navTexts.account}</span>
@@ -103,7 +103,7 @@ const Navbar = () => {
             </DropdownMenu>
           ) : (
             <Link to="/auth">
-              <Button variant="outline" size="sm" className="rounded-full">
+              <Button variant="outline" size="sm" className="rounded-md">
                 <LogIn className="mr-2 h-4 w-4" />
                 <span>{navTexts.login}</span>
               </Button>

@@ -13,12 +13,12 @@ const Index = () => {
   
   const texts = {
     dailyThought: {
-      en: "Mimi's Thought of the Day",
-      ar: "فكرة ميمي لليوم"
+      en: "M.I.M.I's Command of the Day",
+      ar: "أمر اليوم من إم.آي.إم.آي"
     },
     quote: {
-      en: "The best way to predict the future is to create it.",
-      ar: "أفضل طريقة للتنبؤ بالمستقبل هي أن تصنعه."
+      en: "The future belongs to those who take decisive action.",
+      ar: "المستقبل ينتمي لأولئك الذين يتخذون إجراءات حاسمة."
     },
     getStarted: {
       en: "Get started now",
@@ -44,19 +44,19 @@ const Index = () => {
         <Hero />
         <Features />
         
-        {/* Daily thought section */}
-        <section className="py-16 px-4 text-center">
+        {/* Daily thought section with more masculine styling */}
+        <section className="py-16 px-4 text-center bg-mimi-softblue/30 dark:bg-mimi-dark/30">
           <div className="container mx-auto max-w-3xl">
-            <h3 className="text-xl text-muted-foreground mb-2">
+            <h3 className="text-xl text-mimi-secondary font-medium mb-2">
               {texts.dailyThought[language]}
             </h3>
-            <p className="text-2xl md:text-3xl font-medium italic mb-8">
+            <p className="text-2xl md:text-3xl font-bold mb-8">
               "{texts.quote[language]}"
             </p>
             <Link to="/chat">
               <Button 
                 size="lg"
-                className="bg-mimi-primary hover:bg-mimi-secondary"
+                className="bg-mimi-primary hover:bg-mimi-secondary text-white"
               >
                 {texts.getStarted[language]}
               </Button>
@@ -65,7 +65,7 @@ const Index = () => {
         </section>
         
         {/* In Memory section */}
-        <section className="py-12 px-4 bg-mimi-soft/30 dark:bg-mimi-dark/30">
+        <section className="py-12 px-4 bg-gradient-to-r from-mimi-primary/5 to-mimi-sky/5 dark:from-mimi-dark/50 dark:to-mimi-dark/30">
           <div className="container mx-auto max-w-3xl text-center">
             <h3 className="text-2xl font-medium mb-4">
               {texts.inMemory[language]}

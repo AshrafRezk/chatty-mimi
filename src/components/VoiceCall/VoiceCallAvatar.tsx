@@ -51,11 +51,11 @@ const VoiceCallAvatar = ({ isSpeaking, mood, persona = 'general' }: VoiceCallAva
       case 'diet_coach': return 'border-emerald-300';
       case 'real_estate': return 'border-cyan-300';
       default:
-        // Default to mood-based colors
-        return mood === 'calm' ? 'border-blue-300' :
-               mood === 'friendly' ? 'border-green-300' :
-               mood === 'deep' ? 'border-purple-300' :
-               mood === 'focus' ? 'border-orange-300' : 'border-gray-300';
+        // Default to mood-based colors with a more masculine palette
+        return mood === 'calm' ? 'border-mimi-primary' :
+               mood === 'friendly' ? 'border-green-600' :
+               mood === 'deep' ? 'border-mimi-dark' :
+               mood === 'focus' ? 'border-mimi-aggro' : 'border-gray-600';
     }
   };
 
@@ -71,11 +71,11 @@ const VoiceCallAvatar = ({ isSpeaking, mood, persona = 'general' }: VoiceCallAva
       case 'diet_coach': return 'bg-emerald-50';
       case 'real_estate': return 'bg-cyan-50';
       default:
-        // Default to mood-based colors
-        return mood === 'calm' ? 'bg-blue-50' :
-               mood === 'friendly' ? 'bg-green-50' :
-               mood === 'deep' ? 'bg-purple-900' :
-               mood === 'focus' ? 'bg-orange-900' : 'bg-gray-50';
+        // Default to mood-based colors with a more masculine palette
+        return mood === 'calm' ? 'bg-mimi-softblue' :
+               mood === 'friendly' ? 'bg-green-100' :
+               mood === 'deep' ? 'bg-mimi-dark' :
+               mood === 'focus' ? 'bg-mimi-aggro/10' : 'bg-gray-100';
     }
   };
 
@@ -87,7 +87,7 @@ const VoiceCallAvatar = ({ isSpeaking, mood, persona = 'general' }: VoiceCallAva
           transition: { repeat: Infinity, duration: 1.5 }
         } : {}}
         className={cn(
-          "h-32 w-32 rounded-full flex items-center justify-center shadow-lg border-4",
+          "h-32 w-32 rounded-md flex items-center justify-center shadow-lg border-2",
           getBorderColor(),
           getBackgroundColor()
         )}
@@ -108,7 +108,7 @@ const VoiceCallAvatar = ({ isSpeaking, mood, persona = 'general' }: VoiceCallAva
             }}
             transition={{ repeat: Infinity, duration: 1, delay: 0 }}
             className={cn(
-              "h-3 w-3 rounded-full",
+              "h-3 w-3 rounded-sm",
               mood === 'deep' || mood === 'focus' ? 'bg-white' : 'bg-mimi-primary'
             )}
           />
@@ -120,7 +120,7 @@ const VoiceCallAvatar = ({ isSpeaking, mood, persona = 'general' }: VoiceCallAva
             }}
             transition={{ repeat: Infinity, duration: 1, delay: 0.2 }}
             className={cn(
-              "h-3 w-3 rounded-full",
+              "h-3 w-3 rounded-sm",
               mood === 'deep' || mood === 'focus' ? 'bg-white' : 'bg-mimi-primary'
             )}
           />
@@ -132,7 +132,7 @@ const VoiceCallAvatar = ({ isSpeaking, mood, persona = 'general' }: VoiceCallAva
             }}
             transition={{ repeat: Infinity, duration: 1, delay: 0.4 }}
             className={cn(
-              "h-3 w-3 rounded-full",
+              "h-3 w-3 rounded-sm",
               mood === 'deep' || mood === 'focus' ? 'bg-white' : 'bg-mimi-primary'
             )}
           />

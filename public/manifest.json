@@ -1,15 +1,15 @@
 
 {
-  "name": "Mimi - Intelligent AI Assistant",
-  "short_name": "Mimi AI",
-  "theme_color": "#8B5CF6",
+  "name": "M.I.M.I - Modular Interactive Machine Intelligence",
+  "short_name": "M.I.M.I",
+  "theme_color": "#0052CC",
   "background_color": "#ffffff",
   "display": "standalone",
   "scope": "/",
   "start_url": "/chat",
   "orientation": "portrait",
   "categories": ["productivity", "utilities", "ai"],
-  "description": "Mimi is an intelligent AI assistant with multiple capabilities including web search, multilingual support, and specialized expertise.",
+  "description": "M.I.M.I is a powerful modular AI system with multiple capabilities including web search, multilingual support, and specialized expertise.",
   "prefer_related_applications": false,
   "icons": [
     {
@@ -70,9 +70,9 @@
   ],
   "shortcuts": [
     {
-      "name": "Start Chat",
+      "name": "Start Interaction",
       "short_name": "Chat",
-      "description": "Start a new chat with Mimi",
+      "description": "Start a new interaction with M.I.M.I",
       "url": "/chat",
       "icons": [{ "src": "icons/icon-96x96.png", "sizes": "96x96" }]
     }
