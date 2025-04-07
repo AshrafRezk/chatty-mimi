@@ -4,6 +4,7 @@ import { User } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { cn } from '@/lib/utils';
 import { Persona, Mood } from '@/types';
+import { Motion } from '../ui/motion';
 
 interface AssistantAvatarProps {
   isSpeaking: boolean;
@@ -17,6 +18,7 @@ const AssistantAvatar = ({ isSpeaking, mood, status, persona = 'general' }: Assi
   const [mouthWidth, setMouthWidth] = useState(10);
   const [mouthHeight, setMouthHeight] = useState(1);
   const [eyeState, setEyeState] = useState<'open' | 'half' | 'closed'>('open');
+  const [eyeDirection, setEyeDirection] = useState<'center' | 'left' | 'right' | 'up' | 'down'>('center');
   const [expressionType, setExpressionType] = useState<'neutral' | 'happy' | 'thinking' | 'surprised'>('neutral');
   
   // Set expression based on speaking status
@@ -31,17 +33,19 @@ const AssistantAvatar = ({ isSpeaking, mood, status, persona = 'general' }: Assi
     }
   }, [isSpeaking]);
   
+  // Enhanced eye and mouth animations
   useEffect(() => {
     let mouthInterval: number | undefined;
     let blinkInterval: number | undefined;
+    let gazeInterval: number | undefined;
     
     if (isSpeaking) {
       // More dynamic speaking pattern with variable mouth shapes
       mouthInterval = window.setInterval(() => {
         setMouthOpen(prev => !prev);
         // Create more natural animation with variable mouth shapes
-        setMouthWidth(8 + Math.random() * 8); // More variation
-        setMouthHeight(2 + Math.random() * 6); // Increased height variation
+        setMouthWidth(8 + Math.random() * 10); // More variation for male appearance
+        setMouthHeight(1 + Math.random() * 7); // Increased height variation
       }, 100); // Slightly faster for more responsive animation
       
       // Add occasional blinking during speech
@@ -50,6 +54,14 @@ const AssistantAvatar = ({ isSpeaking, mood, status, persona = 'general' }: Assi
         setTimeout(() => setEyeState('half'), 80);
         setTimeout(() => setEyeState('open'), 160);
       }, 3000);
+      
+      // Eye movement while speaking
+      gazeInterval = window.setInterval(() => {
+        const gazeDirections: ('center' | 'left' | 'right' | 'up' | 'down')[] = 
+          ['center', 'center', 'center', 'left', 'right', 'up', 'down']; // Weighted toward center
+        const randomDirection = gazeDirections[Math.floor(Math.random() * gazeDirections.length)];
+        setEyeDirection(randomDirection);
+      }, 2000);
     } else {
       setMouthOpen(false);
       setMouthWidth(10);
@@ -61,21 +73,29 @@ const AssistantAvatar = ({ isSpeaking, mood, status, persona = 'general' }: Assi
         setTimeout(() => setEyeState('half'), 60);
         setTimeout(() => setEyeState('open'), 120);
       }, 4000);
+      
+      // Occasional eye movement when not speaking
+      gazeInterval = window.setInterval(() => {
+        const gazeDirections: ('center' | 'left' | 'right')[] = ['center', 'center', 'center', 'left', 'right'];
+        const randomDirection = gazeDirections[Math.floor(Math.random() * gazeDirections.length)];
+        setEyeDirection(randomDirection as 'center' | 'left' | 'right' | 'up' | 'down');
+      }, 3000);
     }
     
     return () => {
       if (mouthInterval) window.clearInterval(mouthInterval);
       if (blinkInterval) window.clearInterval(blinkInterval);
+      if (gazeInterval) window.clearInterval(gazeInterval);
     };
   }, [isSpeaking]);
   
   const getBorderColor = () => {
     switch(mood) {
-      case 'calm': return 'border-blue-300';
-      case 'friendly': return 'border-green-300';
-      case 'deep': return 'border-purple-300';
-      case 'focus': return 'border-orange-300';
-      default: return 'border-gray-300';
+      case 'calm': return 'border-blue-400';
+      case 'friendly': return 'border-green-400';
+      case 'deep': return 'border-blue-600';
+      case 'focus': return 'border-blue-800';
+      default: return 'border-blue-500';
     }
   };
   
@@ -93,9 +113,19 @@ const AssistantAvatar = ({ isSpeaking, mood, status, persona = 'general' }: Assi
   const getEyeHeight = () => {
     switch(eyeState) {
       case 'closed': return 0.5;
-      case 'half': return 1;
-      case 'open': return 2.5;
-      default: return 2;
+      case 'half': return 2;
+      case 'open': return 4;
+      default: return 3;
+    }
+  };
+  
+  const getEyeTransform = () => {
+    switch(eyeDirection) {
+      case 'left': return 'translateX(-3px)';
+      case 'right': return 'translateX(3px)';
+      case 'up': return 'translateY(-2px)';
+      case 'down': return 'translateY(2px)';
+      default: return 'translate(0, 0)';
     }
   };
   
@@ -105,25 +135,29 @@ const AssistantAvatar = ({ isSpeaking, mood, status, persona = 'general' }: Assi
         return {
           shape: 'rounded-b-full',
           height: `${getEyeHeight() * 0.8}px`,
-          width: '10px'
+          width: '10px',
+          transform: getEyeTransform()
         };
       case 'thinking':
         return {
           shape: 'rounded-full',
           height: `${getEyeHeight() * 0.7}px`,
-          width: '8px'
+          width: '8px',
+          transform: getEyeTransform()
         };
       case 'surprised':
         return {
           shape: 'rounded-full',
           height: `${getEyeHeight() * 1.5}px`,
-          width: '12px'
+          width: '12px',
+          transform: getEyeTransform()
         };
       default:
         return {
           shape: 'rounded-full',
           height: `${getEyeHeight()}px`,
-          width: '10px'
+          width: '10px',
+          transform: getEyeTransform()
         };
     }
   };
@@ -153,8 +187,8 @@ const AssistantAvatar = ({ isSpeaking, mood, status, persona = 'general' }: Assi
         default:
           return {
             shape: 'rounded-full',
-            height: '1px',
-            width: '10px'
+            height: '2px',
+            width: '14px'
           };
       }
     }
@@ -185,27 +219,27 @@ const AssistantAvatar = ({ isSpeaking, mood, status, persona = 'general' }: Assi
   const getBackgroundGradient = () => {
     switch(persona) {
       case 'software':
-        return 'bg-gradient-to-b from-blue-100 to-blue-200';
+        return 'bg-gradient-to-b from-blue-100 to-blue-300';
       case 'medicine':
-        return 'bg-gradient-to-b from-green-100 to-green-200';
+        return 'bg-gradient-to-b from-blue-200 to-blue-400';
       case 'architecture':
-        return 'bg-gradient-to-b from-amber-100 to-amber-200';
+        return 'bg-gradient-to-b from-slate-100 to-slate-300';
       case 'finance':
-        return 'bg-gradient-to-b from-emerald-100 to-emerald-200';
+        return 'bg-gradient-to-b from-blue-700 to-blue-900';
       case 'diet_coach':
-        return 'bg-gradient-to-b from-lime-100 to-lime-200';
+        return 'bg-gradient-to-b from-teal-100 to-teal-300';
       case 'real_estate':
-        return 'bg-gradient-to-b from-purple-100 to-purple-200';
+        return 'bg-gradient-to-b from-indigo-100 to-indigo-300';
       case 'education':
-        return 'bg-gradient-to-b from-sky-100 to-sky-200';
+        return 'bg-gradient-to-b from-sky-100 to-sky-300';
       case 'legal':
-        return 'bg-gradient-to-b from-indigo-100 to-indigo-200';
+        return 'bg-gradient-to-b from-slate-200 to-slate-400';
       case 'christianity':
-        return 'bg-gradient-to-b from-yellow-100 to-yellow-200';
+        return 'bg-gradient-to-b from-blue-200 to-blue-400';
       case 'islam':
-        return 'bg-gradient-to-b from-teal-100 to-teal-200';
+        return 'bg-gradient-to-b from-teal-200 to-teal-400';
       default:
-        return 'bg-gradient-to-b from-mimi-100 to-mimi-200';
+        return 'bg-gradient-to-b from-blue-100 to-blue-300';
     }
   };
   
@@ -213,15 +247,20 @@ const AssistantAvatar = ({ isSpeaking, mood, status, persona = 'general' }: Assi
   const eyeExpression = getEyeExpression();
   
   return (
-    <div className={cn(
-      "relative rounded-full overflow-hidden w-32 h-32 mb-4",
-      getBorderColor(),
-      "border-4 shadow-lg",
-      status === 'ended' ? "opacity-60" : "opacity-100",
-      status === 'connecting' ? "animate-pulse" : ""
-    )}>
+    <Motion.div 
+      initial={{ scale: 0.9 }}
+      animate={{ scale: 1 }}
+      transition={{ duration: 0.3 }}
+      className={cn(
+        "relative rounded-full overflow-hidden w-32 h-32 mb-4",
+        getBorderColor(),
+        "border-4 shadow-lg",
+        status === 'ended' ? "opacity-60" : "opacity-100",
+        status === 'connecting' ? "animate-pulse" : ""
+      )}
+    >
       <Avatar className="w-full h-full">
-        <AvatarImage src={getAvatarImage()} alt="AI Assistant" />
+        <AvatarImage src={getAvatarImage()} alt="M.I.M.I Assistant" />
         <AvatarFallback className={getBackgroundGradient()}>
           {persona === 'software' ? (
             <div className="text-2xl">💻</div>
@@ -252,41 +291,78 @@ const AssistantAvatar = ({ isSpeaking, mood, status, persona = 'general' }: Assi
       {/* Loading animation */}
       {getLoadingAnimation()}
       
-      {/* Face features */}
+      {/* Face features with enhanced animations */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        {/* Eyes */}
-        <div className="flex justify-between w-16 mt-2">
-          <div className={cn(
-            eyeExpression.shape,
-            "transition-all duration-150",
-            mood === 'deep' || mood === 'focus' ? "bg-white" : "bg-gray-800"
-          )}
-          style={{
-            width: eyeExpression.width,
-            height: eyeExpression.height,
-            transform: isSpeaking ? 'scaleY(1.1)' : 'scaleY(1)'
-          }}
+        {/* Eyebrows - more pronounced for masculine look */}
+        <div className="flex justify-between w-16 mb-1">
+          <Motion.div 
+            animate={isSpeaking ? {
+              y: expressionType === 'surprised' ? -2 : expressionType === 'thinking' ? -1 : 0
+            } : {}}
+            className="w-10 h-1.5 bg-gray-800 rounded-full"
+            style={{ marginLeft: '-8px' }}
           />
-          <div className={cn(
-            eyeExpression.shape,
-            "transition-all duration-150",
-            mood === 'deep' || mood === 'focus' ? "bg-white" : "bg-gray-800"
-          )}
-          style={{
-            width: eyeExpression.width,
-            height: eyeExpression.height,
-            transform: isSpeaking ? 'scaleY(1.1)' : 'scaleY(1)'
-          }}
+          <Motion.div 
+            animate={isSpeaking ? {
+              y: expressionType === 'surprised' ? -2 : expressionType === 'thinking' ? 1 : 0
+            } : {}}
+            className="w-10 h-1.5 bg-gray-800 rounded-full"
+            style={{ marginRight: '-8px' }}
           />
         </div>
         
+        {/* Eyes - with movement */}
+        <div className="flex justify-between w-16 mt-1">
+          <Motion.div
+            animate={isSpeaking ? {
+              scale: eyeState === 'closed' ? 0.8 : 1
+            } : {}}
+            className="relative flex items-center justify-center w-8 h-8 bg-white rounded-full"
+          >
+            <div className={cn(
+              eyeExpression.shape,
+              "transition-all duration-150",
+              "bg-gray-800"
+            )}
+            style={{
+              width: eyeExpression.width,
+              height: eyeExpression.height,
+              transform: eyeExpression.transform
+            }}
+            />
+          </Motion.div>
+          
+          <Motion.div
+            animate={isSpeaking ? {
+              scale: eyeState === 'closed' ? 0.8 : 1
+            } : {}}
+            className="relative flex items-center justify-center w-8 h-8 bg-white rounded-full"
+          >
+            <div className={cn(
+              eyeExpression.shape,
+              "transition-all duration-150",
+              "bg-gray-800"
+            )}
+            style={{
+              width: eyeExpression.width,
+              height: eyeExpression.height,
+              transform: eyeExpression.transform
+            }}
+            />
+          </Motion.div>
+        </div>
+        
         {/* Animated mouth */}
-        <div 
+        <Motion.div 
+          animate={mouthOpen ? {
+            scaleY: [1, 1.2, 1],
+            transition: { repeat: Infinity, duration: 0.3 }
+          } : {}}
           className={cn(
             mouthExpression.shape,
             "transition-all duration-100",
-            mood === 'deep' || mood === 'focus' ? "bg-white/90" : "bg-gray-800/90",
-            "mt-8"
+            "bg-gray-800/90",
+            "mt-6"
           )}
           style={{
             width: mouthExpression.width,
@@ -300,7 +376,7 @@ const AssistantAvatar = ({ isSpeaking, mood, status, persona = 'general' }: Assi
       {isSpeaking && (
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-mimi-primary/10 animate-pulse-slow" />
       )}
-    </div>
+    </Motion.div>
   );
 };
 

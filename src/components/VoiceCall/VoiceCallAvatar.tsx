@@ -79,8 +79,25 @@ const VoiceCallAvatar = ({ isSpeaking, mood, persona = 'general' }: VoiceCallAva
     }
   };
 
+  // Get persona display name
+  const getPersonaName = () => {
+    switch(persona) {
+      case 'general': return 'M.I.M.I';
+      case 'medicine': return 'Health AI';
+      case 'architecture': return 'Architect AI';
+      case 'software': return 'Code AI';
+      case 'education': return 'Tutor AI';
+      case 'finance': return 'Finance AI';
+      case 'legal': return 'Legal AI';
+      case 'diet_coach': return 'Nutrition AI';
+      case 'real_estate': return 'Property AI';
+      default: return 'M.I.M.I';
+    }
+  };
+
   return (
-    <div className="relative mb-8">
+    <div className="relative mb-8 flex items-center space-x-4">
+      {/* Main Avatar */}
       <Motion.div
         animate={isSpeaking ? {
           scale: [1, 1.05, 1],
@@ -97,9 +114,28 @@ const VoiceCallAvatar = ({ isSpeaking, mood, persona = 'general' }: VoiceCallAva
         </div>
       </Motion.div>
       
+      {/* Persona Logo Badge */}
+      <Motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+        className={cn(
+          "py-2 px-4 rounded-md shadow-md border",
+          getBorderColor(),
+          getBackgroundColor(),
+          "flex flex-col items-center justify-center"
+        )}
+      >
+        <div className="text-sm font-bold mb-1 text-gray-700">Powered by</div>
+        <div className="text-xl font-bold tracking-wider text-mimi-primary">{getPersonaName()}</div>
+        <div className="text-xs text-gray-500 mt-1">
+          Modular Interactive<br/>Machine Intelligence
+        </div>
+      </Motion.div>
+      
       {/* Speech indicator dots */}
       {isSpeaking && (
-        <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-1">
+        <div className="absolute -bottom-3 left-16 transform -translate-x-1/2 flex space-x-1">
           <Motion.div
             animate={{ 
               y: [0, -10, 0], 
