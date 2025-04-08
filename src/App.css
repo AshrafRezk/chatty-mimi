@@ -79,7 +79,18 @@ html, body {
   animation: fadeIn 0.3s ease-out forwards;
 }
 
-/* Message styling improvements */
+/* Message styling improvements with better contrast */
+.chat-bubble-user {
+  color: white; /* Ensure text is white */
+  background-color: #0052CC; /* Mimi primary blue */
+}
+
+.chat-bubble-assistant {
+  color: #172B4D; /* Dark blue-gray for good contrast */
+  background-color: #F5F5F7; /* Light gray background */
+}
+
+/* Message code styling improvements */
 .chat-bubble-assistant pre,
 .chat-bubble-user pre {
   white-space: pre-wrap;

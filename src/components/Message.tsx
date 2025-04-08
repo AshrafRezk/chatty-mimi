@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Message as MessageType } from "@/types";
 import MessageReferences from "./MessageReferences";
@@ -34,33 +33,26 @@ const Message = ({ message }: MessageProps) => {
   const [copied, setCopied] = useState(false);
   
   useEffect(() => {
-    // Get the base URL from the browser
     setBaseUrl(window.location.origin);
     
-    // Check if the message contains comparison data that could be visualized
     if (message.sender === "assistant") {
       extractChartData(message.text);
     }
   }, [message]);
   
-  // Helper to extract potential chart data from message content
   const extractChartData = (text: string) => {
-    // Check for table patterns (markdown tables or other tabular data)
     const hasTable = /\|\s*[^|]+\s*\|/.test(text) || 
                      /comparison|compare|versus|vs\.?|statistics/i.test(text);
                      
-    // Check if there's a comparison section with numbers
     const comparisonPattern = /([A-Za-z\s]+):\s*(\d+(?:\.\d+)?)/g;
     const matches = [...text.matchAll(comparisonPattern)];
     
     if (matches.length >= 2) {
-      // Extract name-value pairs for charting
       const data: ChartData[] = matches.map(match => ({
         name: match[1].trim(), 
         value: parseFloat(match[2])
       }));
       
-      // Try to extract a title from the context
       const titleMatch = text.match(/(?:comparing|comparison of|between)\s+([^.]+)/i);
       if (titleMatch) {
         setChartTitle(titleMatch[1].trim());
@@ -68,8 +60,6 @@ const Message = ({ message }: MessageProps) => {
       
       setChartData(data);
     } else if (hasTable) {
-      // This is a placeholder for more advanced table parsing logic
-      // For now, we'll just check if there are numeric values that could be charted
       const numericPattern = /\|\s*([^|]+)\s*\|\s*(\d+(?:\.\d+)?)\s*\|/g;
       const tableMatches = [...text.matchAll(numericPattern)];
       
@@ -86,7 +76,6 @@ const Message = ({ message }: MessageProps) => {
     }
   };
   
-  // Helper to handle copying message content with attribution
   const handleCopy = async () => {
     try {
       const attributionText = language === 'ar' 
@@ -111,18 +100,15 @@ const Message = ({ message }: MessageProps) => {
   
   const handleDownload = () => {
     try {
-      // Create a blob with the message content
       const blob = new Blob([message.text], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
       
-      // Create a temporary anchor element to download the file
       const a = document.createElement("a");
       a.href = url;
       a.download = `mimi-response-${new Date().toISOString().slice(0, 10)}.txt`;
       document.body.appendChild(a);
       a.click();
       
-      // Clean up
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
@@ -137,7 +123,6 @@ const Message = ({ message }: MessageProps) => {
     }
   };
   
-  // Function to detect and highlight code blocks
   const renderContent = () => {
     return (
       <ReactMarkdown
@@ -175,12 +160,11 @@ const Message = ({ message }: MessageProps) => {
     );
   };
 
-  // Get bubble styles - simplified without mood-specific styling
   const getBubbleStyle = () => {
     if (message.sender === "user") {
-      return "chat-bubble-user ios-glass shadow-lg";
+      return "chat-bubble-user shadow-md";
     } else {
-      return "chat-bubble-assistant ios-glass shadow-lg";
+      return "chat-bubble-assistant shadow-md";
     }
   };
   
@@ -193,7 +177,6 @@ const Message = ({ message }: MessageProps) => {
       <div className={cn(
         "relative max-w-[85%] md:max-w-[70%] rounded-2xl px-4 py-3",
         getBubbleStyle(),
-        // Added overflow-hidden to prevent content from extending outside
         "overflow-hidden"
       )}>
         {message.imageSrc && (
