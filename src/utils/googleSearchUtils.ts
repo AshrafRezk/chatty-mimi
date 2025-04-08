@@ -1,132 +1,31 @@
+
 import { Reference } from "@/types";
-
-// Default API keys for Google Search
-const DEFAULT_GOOGLE_API_KEY = "AIzaSyAVlJ8upjkeQdnXynHLFtLX8vXM39Q2CRE";
-const DEFAULT_GOOGLE_CSE_ID = "e0f89b879ec0547bf";
-
-// Get API keys from localStorage if available, otherwise use defaults
-const getGoogleApiKey = (): string => {
-  return localStorage.getItem('google_api_key') || DEFAULT_GOOGLE_API_KEY;
-};
-
-const getGoogleCseId = (): string => {
-  return localStorage.getItem('google_cse_id') || DEFAULT_GOOGLE_CSE_ID;
-};
-
-interface GoogleSearchResult {
-  title: string;
-  link: string;
-  snippet: string;
-}
-
-interface GoogleSearchResponse {
-  items?: GoogleSearchResult[];
-  error?: {
-    code: number;
-    message: string;
-  };
-}
+import { performWebSearch } from "./searchUtils";
 
 /**
- * Check if Google Search API is configured
- */
-export const isGoogleSearchConfigured = (): boolean => {
-  const apiKey = getGoogleApiKey();
-  const cseId = getGoogleCseId();
-  return Boolean(apiKey && cseId);
-};
-
-/**
- * Extract URLs from message text and convert them to reference format
- * @param text The message text to extract URLs from
- * @returns Array of reference objects
- */
-export const extractLinksFromMessage = async (text: string): Promise<Reference[]> => {
-  // Match URLs in the text
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const matches = text.match(urlRegex);
-  
-  if (!matches || matches.length === 0) return [];
-  
-  const references: Reference[] = [];
-  
-  // Process each URL
-  for (const url of matches) {
-    try {
-      // Clean the URL (remove trailing punctuation, etc.)
-      let cleanUrl = url;
-      if (cleanUrl.endsWith('.') || cleanUrl.endsWith(',') || 
-          cleanUrl.endsWith(')') || cleanUrl.endsWith(']') || 
-          cleanUrl.endsWith('"') || cleanUrl.endsWith("'")) {
-        cleanUrl = cleanUrl.slice(0, -1);
-      }
-      
-      const urlObj = new URL(cleanUrl);
-      const domain = urlObj.hostname;
-      
-      // Create a more descriptive reference
-      references.push({
-        title: domain.replace(/^www\./, ''), // Remove 'www.' prefix for cleaner display
-        url: cleanUrl,
-        snippet: `Link referenced from ${domain}`
-      });
-      
-      // Attempt to fetch metadata in the background to enhance reference details
-      // This is done asynchronously to not block the UI
-      fetch(`https://api.microlink.io/?url=${encodeURIComponent(cleanUrl)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.data && data.data.title) {
-            // Find and update the reference with metadata
-            const index = references.findIndex(ref => ref.url === cleanUrl);
-            if (index !== -1) {
-              references[index].title = data.data.title;
-              if (data.data.description) {
-                references[index].snippet = data.data.description;
-              }
-            }
-          }
-        })
-        .catch(() => {
-          // If metadata fetch fails, keep the original reference
-          console.log("Failed to fetch metadata for:", cleanUrl);
-        });
-      
-    } catch (error) {
-      console.warn("Error processing URL:", error);
-      // Still add the URL even if we couldn't parse it properly
-      try {
-        references.push({
-          title: new URL(url).hostname,
-          url: url,
-          snippet: "Link referenced in conversation"
-        });
-      } catch (e) {
-        // If URL parsing fails, just skip this one
-      }
-    }
-  }
-  
-  return references;
-};
-
-/**
- * Perform a Google search using the Custom Search JSON API
+ * Performs a Google search using the Google Custom Search API
  * @param query The search query
- * @returns Array of reference objects
+ * @returns Array of references with title, link, and snippet
  */
 export const performGoogleSearch = async (query: string): Promise<Reference[]> => {
   try {
-    const apiKey = getGoogleApiKey();
-    const cseId = getGoogleCseId();
-    
-    if (!apiKey || !cseId) {
-      console.warn("Google Search API not configured");
-      throw new Error("Google Search API not configured");
+    // Validate input
+    if (!query || typeof query !== 'string') {
+      console.error("Invalid query provided to Google search");
+      return [];
     }
     
-    const encodedQuery = encodeURIComponent(query);
-    const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cseId}&q=${encodedQuery}&num=5`;
+    // Get API key and search engine ID from environment variables
+    const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
+    const searchEngineId = import.meta.env.VITE_GOOGLE_SEARCH_ENGINE_ID;
+    
+    if (!apiKey || !searchEngineId) {
+      console.warn("Google API key or Search Engine ID not configured");
+      return [];
+    }
+    
+    // Construct the API URL
+    const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}`;
     
     console.log("Performing Google search for:", query);
     const response = await fetch(url);
@@ -134,101 +33,136 @@ export const performGoogleSearch = async (query: string): Promise<Reference[]> =
     if (!response.ok) {
       const errorData = await response.json();
       console.error("Google Search API error:", errorData);
-      throw new Error(`Google Search API error: ${response.status}`);
+      return [];
     }
     
-    const data: GoogleSearchResponse = await response.json();
+    const data = await response.json();
     
-    if (!data.items || data.items.length === 0) {
+    if (!data.items || !Array.isArray(data.items)) {
       console.log("No search results found");
       return [];
     }
     
-    // Map results to reference format
-    const references: Reference[] = data.items.map(item => ({
-      title: item.title || "Untitled Source",
-      url: item.link || "#",
+    // Map the results to the Reference format
+    const references: Reference[] = data.items.map((item: any) => ({
+      title: item.title || "No title",
+      link: item.link || "",
+      url: item.link || "",
       snippet: item.snippet || "No description available"
     }));
     
+    console.log(`Found ${references.length} Google search results`);
     return references;
   } catch (error) {
-    console.error("Google search error:", error);
+    console.error("Error in Google search:", error);
     return [];
   }
 };
 
 /**
- * Fallback to existing search method if Google search fails or returns no results
+ * Performs a fallback search if the primary search method fails
+ * @param query The search query
+ * @param primarySearchFunction The primary search function to use
+ * @returns Array of references with title, link, and snippet
  */
-export const performFallbackSearch = async (query: string, fallbackSearchFn: (query: string) => Promise<Reference[]>): Promise<Reference[]> => {
+export const performFallbackSearch = async (
+  query: string, 
+  primarySearchFunction: (query: string) => Promise<Reference[]>
+): Promise<Reference[]> => {
   try {
-    // Check if Google Search is configured
-    if (!isGoogleSearchConfigured()) {
-      console.log("Google Search not configured, using fallback search");
-      return await fallbackSearchFn(query);
+    // Try the primary search function first
+    const primaryResults = await primarySearchFunction(query);
+    
+    if (primaryResults && primaryResults.length > 0) {
+      return primaryResults;
     }
     
+    // If no results, fallback to Google search
+    console.log("Primary search returned no results, falling back to Google search");
     const googleResults = await performGoogleSearch(query);
     
-    if (googleResults.length > 0) {
+    if (googleResults && googleResults.length > 0) {
       return googleResults;
     }
     
-    // Fallback to existing search implementation
-    console.log("Google search returned no results, falling back to existing search implementation");
-    return await fallbackSearchFn(query);
+    // If still no results, attempt a more general search
+    if (query.length > 10) {
+      const simplifiedQuery = query
+        .split(' ')
+        .filter(word => word.length > 3)
+        .slice(0, 5)
+        .join(' ');
+      
+      console.log("Attempting simplified search with query:", simplifiedQuery);
+      
+      const fallbackResults = await performGoogleSearch(simplifiedQuery);
+      
+      if (fallbackResults && fallbackResults.length > 0) {
+        return fallbackResults.map(result => ({
+          ...result,
+          // Mark this as a fallback search result
+          title: `[Broader Result] ${result.title}`,
+          link: result.link || result.url,
+        }));
+      }
+    }
+    
+    console.log("All search attempts failed for query:", query);
+    return [];
   } catch (error) {
-    console.error("Google search failed, using fallback:", error);
-    return await fallbackSearchFn(query);
+    console.error("Error in fallback search:", error);
+    return [];
   }
 };
 
 /**
- * Combine manually extracted links with search results
+ * Extracts links from a message and converts them to Reference objects
+ * @param message The message text to extract links from
+ * @returns Promise<Reference[]> Array of extracted reference objects
  */
-export const combineLinksAndSearchResults = (links: Reference[], searchResults: Reference[]): Reference[] => {
-  // Create a map of URLs to prevent duplicates
-  const uniqueReferences = new Map<string, Reference>();
-  
-  // Add links first (they were explicitly mentioned in the message)
-  for (const link of links) {
-    uniqueReferences.set(link.url, link);
-  }
-  
-  // Then add search results if they don't duplicate links
-  for (const result of searchResults) {
-    if (!uniqueReferences.has(result.url)) {
-      uniqueReferences.set(result.url, result);
-    }
-  }
-  
-  // Return as array
-  return Array.from(uniqueReferences.values());
-};
-
-export const formatSearchResults = (result: any): Reference[] => {
-  if (!result || !result.organic) {
+export const extractLinksFromMessage = async (message: string): Promise<Reference[]> => {
+  try {
+    // Regular expression to match URLs in text
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const matches = message.match(urlRegex);
+    
+    if (!matches) return [];
+    
+    const links: Reference[] = matches.map(url => ({
+      title: "Referenced Link",
+      link: url,
+      url: url,
+      snippet: `Link referenced in the response: ${url}`
+    }));
+    
+    return links;
+  } catch (error) {
+    console.error("Error extracting links:", error);
     return [];
   }
-  
-  return result.organic.map((item: any) => {
-    return {
-      title: item.title,
-      link: item.url, // Changed url to link to match the Reference type
-      url: item.url,  // Keep url for backward compatibility
-      snippet: item.snippet
-    };
-  });
 };
 
-export const processGoogleSearchResult = (data: any) => {
-  const references = data.organic.map((item: any) => ({
-    title: item.title,
-    link: item.link || item.url, // Ensure link is set correctly
-    url: item.url, // Keep for backward compatibility
-    snippet: item.snippet,
-  }));
+/**
+ * Combines links from the message with search results, removing duplicates
+ * @param extractedLinks Links extracted from the message
+ * @param searchResults Results from the search function
+ * @returns Reference[] Combined array of unique references
+ */
+export const combineLinksAndSearchResults = (
+  extractedLinks: Reference[],
+  searchResults: Reference[]
+): Reference[] => {
+  // Create a combined array of references
+  const combined = [...extractedLinks, ...searchResults];
   
-  return references;
+  // Filter out duplicates based on URL
+  const uniqueUrls = new Set();
+  const unique = combined.filter(ref => {
+    const url = ref.link || ref.url;
+    if (uniqueUrls.has(url)) return false;
+    uniqueUrls.add(url);
+    return true;
+  });
+  
+  return unique;
 };
