@@ -1,6 +1,3 @@
 
-import * as React from "react"
-import { useToast as useHookToast, toast } from "@/hooks/use-toast"
-
-export const useToast = useHookToast
-export { toast }
+// Re-export the hook from the correct location
+export { useToast, toast } from "@/hooks/use-toast"

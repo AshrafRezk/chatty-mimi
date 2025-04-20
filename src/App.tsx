@@ -15,7 +15,7 @@ import Auth from './pages/Auth';
 import InMemory from './pages/InMemory';
 import Profile from './pages/Profile';
 import { AnimatePresence } from 'framer-motion';
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "sonner";
 
 const FooterWithLocation = () => {
   const location = useLocation();
