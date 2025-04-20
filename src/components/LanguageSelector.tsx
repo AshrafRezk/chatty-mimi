@@ -30,18 +30,13 @@ const LANGUAGES = [
   { code: 'no', label: 'Norsk', group: 'european' },
 ];
 
-// Define LanguageGroup as a regular function component
-const LanguageGroup = ({ 
-  title,
-  languages, 
-  currentLanguage, 
-  onSelectLanguage 
-}: { 
+// Define LanguageGroup as a separate component
+const LanguageGroup: React.FC<{ 
   title: string;
   languages: typeof LANGUAGES;
   currentLanguage: Language; 
   onSelectLanguage: (code: Language) => void;
-}) => {
+}> = ({ title, languages, currentLanguage, onSelectLanguage }) => {
   return (
     <>
       <DropdownMenuLabel>{title}</DropdownMenuLabel>
@@ -62,7 +57,7 @@ const LanguageGroup = ({
 };
 
 // Main LanguageSelector component
-const LanguageSelector = () => {
+const LanguageSelector: React.FC = () => {
   const { state, setLanguage } = useChat();
   const { language } = state;
 
@@ -70,7 +65,7 @@ const LanguageSelector = () => {
     setLanguage(code);
   };
 
-  // Group languages - moved outside of hooks for simplicity
+  // Group languages
   const popularLanguages = LANGUAGES.filter(lang => lang.group === 'popular');
   const europeanLanguages = LANGUAGES.filter(lang => lang.group === 'european');
   const asianLanguages = LANGUAGES.filter(lang => lang.group === 'asian');
