@@ -30,18 +30,23 @@ const LANGUAGES = [
   { code: 'no', label: 'Norsk', group: 'european' },
 ];
 
-// Define LanguageGroup as a regular function component
-const LanguageGroup = ({ 
-  title,
-  languages, 
-  currentLanguage, 
-  onSelectLanguage 
-}: { 
-  title: string;
-  languages: typeof LANGUAGES;
-  currentLanguage: Language; 
-  onSelectLanguage: (code: Language) => void;
-}) => {
+// Function to group languages by category - defined outside components
+const getLanguageGroups = () => {
+  const popular = LANGUAGES.filter(lang => lang.group === 'popular');
+  const european = LANGUAGES.filter(lang => lang.group === 'european');
+  const asian = LANGUAGES.filter(lang => lang.group === 'asian');
+  const other = LANGUAGES.filter(lang => lang.group === 'other');
+  
+  return { popular, european, asian, other };
+};
+
+// Simplify the language group rendering to a plain function
+function renderLanguageGroup(
+  title: string,
+  languages: typeof LANGUAGES,
+  currentLanguage: Language,
+  onSelectLanguage: (code: Language) => void
+) {
   return (
     <>
       <DropdownMenuLabel>{title}</DropdownMenuLabel>
@@ -59,10 +64,10 @@ const LanguageGroup = ({
       ))}
     </>
   );
-};
+}
 
 // Main LanguageSelector component
-const LanguageSelector = () => {
+function LanguageSelector() {
   const { state, setLanguage } = useChat();
   const { language } = state;
 
@@ -70,11 +75,8 @@ const LanguageSelector = () => {
     setLanguage(code);
   };
 
-  // Group languages - moved outside of hooks for simplicity
-  const popularLanguages = LANGUAGES.filter(lang => lang.group === 'popular');
-  const europeanLanguages = LANGUAGES.filter(lang => lang.group === 'european');
-  const asianLanguages = LANGUAGES.filter(lang => lang.group === 'asian');
-  const otherLanguages = LANGUAGES.filter(lang => lang.group === 'other');
+  // Get grouped languages
+  const { popular, european, asian, other } = getLanguageGroups();
 
   // Find current language label
   const currentLanguage = LANGUAGES.find(lang => lang.code === language)?.label || 'English';
@@ -89,44 +91,24 @@ const LanguageSelector = () => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48 bg-popover">
-          <LanguageGroup 
-            title="Select language"
-            languages={popularLanguages} 
-            currentLanguage={language} 
-            onSelectLanguage={handleLanguageChange} 
-          />
+          {renderLanguageGroup("Select language", popular, language, handleLanguageChange)}
           
           <DropdownMenuSeparator />
-          <LanguageGroup 
-            title="European"
-            languages={europeanLanguages} 
-            currentLanguage={language} 
-            onSelectLanguage={handleLanguageChange} 
-          />
+          {renderLanguageGroup("European", european, language, handleLanguageChange)}
           
           <DropdownMenuSeparator />
-          <LanguageGroup 
-            title="Asian"
-            languages={asianLanguages} 
-            currentLanguage={language} 
-            onSelectLanguage={handleLanguageChange} 
-          />
+          {renderLanguageGroup("Asian", asian, language, handleLanguageChange)}
           
-          {otherLanguages.length > 0 && (
+          {other.length > 0 && (
             <>
               <DropdownMenuSeparator />
-              <LanguageGroup 
-                title="Other"
-                languages={otherLanguages} 
-                currentLanguage={language} 
-                onSelectLanguage={handleLanguageChange} 
-              />
+              {renderLanguageGroup("Other", other, language, handleLanguageChange)}
             </>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
   );
-};
+}
 
 export default LanguageSelector;
