@@ -3,7 +3,7 @@ import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { HelmetProvider } from 'react-helmet-async';
 import SEOHead from '@/components/SEOHead';
-import SalesforceConnections from '@/components/SalesforceConnections';
+import SalesforceUserPassAuth from '@/components/SalesforceUserPassAuth';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -20,7 +20,7 @@ const Profile = () => {
       />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold mb-8">Profile Settings</h1>
-        <SalesforceConnections />
+        <SalesforceUserPassAuth />
       </div>
     </HelmetProvider>
   );

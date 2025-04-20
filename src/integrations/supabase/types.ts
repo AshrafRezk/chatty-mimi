@@ -71,6 +71,45 @@ export type Database = {
           },
         ]
       }
+      salesforce_auth: {
+        Row: {
+          created_at: string
+          id: string
+          instance_url: string | null
+          is_sandbox: boolean | null
+          last_used_at: string | null
+          password: string
+          security_token: string
+          session_id: string | null
+          user_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          instance_url?: string | null
+          is_sandbox?: boolean | null
+          last_used_at?: string | null
+          password: string
+          security_token: string
+          session_id?: string | null
+          user_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          instance_url?: string | null
+          is_sandbox?: boolean | null
+          last_used_at?: string | null
+          password?: string
+          security_token?: string
+          session_id?: string | null
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
       salesforce_connections: {
         Row: {
           access_token: string
