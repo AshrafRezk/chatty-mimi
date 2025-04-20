@@ -1,4 +1,3 @@
-
 import { Reference } from "@/types";
 import { performWebSearch } from "./searchUtils";
 
