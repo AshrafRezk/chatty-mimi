@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState, useCallback, memo } from "react";
 import Message from "./Message";
 import ChatInput from "./ChatInput";
@@ -29,7 +30,7 @@ const MemoizedMessage = memo(Message);
 
 const ChatInterface = () => {
   const { state, addMessage, setTyping, clearMessages, setVoiceMode } = useChat();
-  const { messages, language, isTyping, userLocation, aiConfig, isVoiceMode } = state;
+  const { messages, language, isTyping, userLocation, aiConfig, isVoiceMode, currentConversationId } = state;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -39,6 +40,7 @@ const ChatInterface = () => {
   const [processingImage, setProcessingImage] = useState(false);
   const [processingType, setProcessingType] = useState<"extractText" | "analyzeImage" | null>(null);
   const welcomeMessageSentRef = useRef(false);
+  const hasInitializedRef = useRef(false);
   
   const messageSentSound = useRef<HTMLAudioElement | null>(null);
   const messageReceivedSound = useRef<HTMLAudioElement | null>(null);
@@ -117,8 +119,15 @@ const ChatInterface = () => {
   }, [scrollToBottom, messages, isTyping]);
   
   useEffect(() => {
-    if (messages.length === 0 && !welcomeMessageSentRef.current) {
+    // Since we're loading conversations from the backend, we need to avoid showing
+    // the welcome message when there's already messages or a current conversation
+    const shouldShowWelcome = messages.length === 0 && !currentConversationId && !hasInitializedRef.current;
+    
+    if (shouldShowWelcome && !welcomeMessageSentRef.current) {
+      // Mark as initialized to prevent duplicate welcome messages
+      hasInitializedRef.current = true;
       welcomeMessageSentRef.current = true;
+      
       const welcomeMessage = getWelcomeMessage(userLocation, language);
       const personaInfo = getPersonaWelcomeMessage(aiConfig.persona, language);
       
@@ -141,12 +150,18 @@ const ChatInterface = () => {
       
       return () => clearTimeout(typingTimer);
     }
-  }, [messages.length, userLocation, language, addMessage, setTyping, aiConfig.persona, playMessageReceivedSound]);
+    
+    // When a conversation is loaded or changed, mark as initialized
+    if (currentConversationId || messages.length > 0) {
+      hasInitializedRef.current = true;
+    }
+  }, [messages.length, userLocation, language, addMessage, setTyping, aiConfig.persona, playMessageReceivedSound, currentConversationId]);
   
   useEffect(() => {
     return () => {
       if (messages.length === 0) {
         welcomeMessageSentRef.current = false;
+        hasInitializedRef.current = false;
       }
     };
   }, [messages]);
@@ -228,6 +243,7 @@ const ChatInterface = () => {
     
     const userMessageWithPrompt = `${text}\n\n[${languageInfo}]`;
     
+    // Add user message to UI immediately
     addMessage({
       text,
       sender: "user",
@@ -335,7 +351,7 @@ const ChatInterface = () => {
       }
       
       const nutritionData = extractNutritionData(response);
-      const propertyData = extractPropertyData(response);
+      const propertyData = extractPropertyData ? extractPropertyData(response) : undefined;
       
       if (nutritionData) {
         response = response.replace(/\{[\s\S]*"calories"[\s\S]*\}/, '');
@@ -387,6 +403,7 @@ const ChatInterface = () => {
         response = featuresResponse;
       }
       
+      // Add assistant message to UI
       addMessage({
         text: response,
         sender: "assistant",

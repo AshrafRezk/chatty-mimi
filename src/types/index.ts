@@ -1,4 +1,3 @@
-
 // Define available languages
 export type Language = 'en' | 'ar' | 'fr' | 'es' | 'de' | 'it' | 'pt' | 'ru' | 'zh' | 'ja' | 'ko' | 'tr' | 'no';
 
@@ -49,17 +48,18 @@ export interface AIConfig {
 // Interface for chat state
 export interface ChatState {
   messages: Message[];
-  isTyping: boolean;
   language: Language;
-  mood: Mood;
+  mood: string;
+  isTyping: boolean;
   userLocation: UserLocation | null;
-  aiConfig: AIConfig;
-  currentConversationId: string | null;
   isFreeLimit: boolean;
-  isVoiceMode: boolean;
   theme: Theme;
+  aiConfig: AIConfig;
+  isVoiceMode: boolean;
+  currentConversationId: string | null;
   conversationHistory: any[];
   isGuestMode: boolean;
+  isSavingMessage: boolean;
 }
 
 // Interface for references/sources

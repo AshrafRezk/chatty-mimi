@@ -26,6 +26,7 @@ const initialState: ChatState = {
   currentConversationId: null,
   conversationHistory: [],
   isGuestMode: false,
+  isSavingMessage: false,
 };
 
 // Action types
@@ -45,6 +46,7 @@ type ChatAction =
   | { type: 'SET_CONVERSATION_HISTORY'; payload: any[] }
   | { type: 'LOAD_CONVERSATION'; payload: { messages: Message[], conversationId: string } }
   | { type: 'SET_GUEST_MODE'; payload: boolean }
+  | { type: 'SET_SAVING_MESSAGE'; payload: boolean }
   | { type: 'CLEAR_MESSAGES' };
 
 // Reducer
@@ -62,7 +64,10 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
         language: action.payload,
       };
     case 'SET_MOOD':
-      return state;
+      return {
+        ...state,
+        mood: action.payload,
+      };
     case 'SET_TYPING':
       return {
         ...state,
@@ -133,6 +138,11 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
       return {
         ...state,
         isGuestMode: action.payload,
+      };
+    case 'SET_SAVING_MESSAGE':
+      return {
+        ...state,
+        isSavingMessage: action.payload,
       };
     case 'CLEAR_MESSAGES':
       return {
@@ -388,6 +398,9 @@ export const ChatProvider: React.FC<{children: React.ReactNode}> = ({ children }
     // If user is logged in, save to database
     if (user) {
       try {
+        // Set saving state to true
+        dispatch({ type: 'SET_SAVING_MESSAGE', payload: true });
+        
         // If no conversation exists, create one
         if (!conversationId) {
           const newConvId = await createNewConversation();
@@ -436,6 +449,10 @@ export const ChatProvider: React.FC<{children: React.ReactNode}> = ({ children }
           .eq('id', conversationId);
       } catch (error) {
         console.error('Error saving message:', error);
+        toast.error('Failed to save message, but it\'s still visible in the chat');
+      } finally {
+        // Set saving state to false when done
+        dispatch({ type: 'SET_SAVING_MESSAGE', payload: false });
       }
     }
 
