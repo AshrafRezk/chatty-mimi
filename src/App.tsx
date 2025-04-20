@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ChatProvider } from './context/ChatContext';
 import { AuthProvider } from './context/AuthContext';
@@ -16,13 +15,11 @@ import InMemory from './pages/InMemory';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from "@/components/ui/toaster";
 
-// Separate component for footer to use useLocation hook
 const FooterWithLocation = () => {
   const location = useLocation();
   return location.pathname !== '/chat' ? <Footer /> : null;
 };
 
-// Wrapper component for routes with AnimatePresence
 const AnimatedRoutes = () => {
   const location = useLocation();
   
@@ -35,6 +32,7 @@ const AnimatedRoutes = () => {
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/in-memory" element={<InMemory />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AnimatePresence>
