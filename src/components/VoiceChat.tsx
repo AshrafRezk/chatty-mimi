@@ -14,6 +14,7 @@ import { RecognizedTrack, recognizeMusic, prepareAudioForRecognition } from '@/u
 import { playNotificationSound } from '@/utils/audioUtils';
 import VoiceCallAvatar from './VoiceCall/VoiceCallAvatar';
 import TranscriptDisplay from './VoiceCall/TranscriptDisplay';
+import { Mood } from '@/types';
 
 interface VoiceChatProps {
   onSendMessage: (text: string) => void;
@@ -445,7 +446,7 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
             <CallTimer 
               status={callStatus} 
               language={language} 
-              mood={mood} 
+              mood={mood as Mood} 
             />
             
             <Button 
@@ -462,7 +463,7 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
         <div className="p-6 flex flex-col items-center">
           <VoiceCallAvatar 
             isSpeaking={isSpeaking} 
-            mood={mood}
+            mood={mood as Mood}
             persona={aiConfig.persona}
           />
           
@@ -490,7 +491,7 @@ const VoiceChat = ({ onSendMessage, onClose }: VoiceChatProps) => {
             isListening={isListening}
             isMusicMode={isMusicMode}
             transcript={currentTranscript}
-            mood={mood}
+            mood={mood as Mood}
             language={language}
             isProcessing={isProcessingMessage}
           />
