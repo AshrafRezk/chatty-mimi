@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ChatProvider } from './context/ChatContext';
 import { AuthProvider } from './context/AuthContext';
@@ -12,6 +13,7 @@ import NotFound from './pages/NotFound';
 import Index from './pages/Index';
 import Auth from './pages/Auth';
 import InMemory from './pages/InMemory';
+import Profile from './pages/Profile';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from "@/components/ui/toaster";
 
