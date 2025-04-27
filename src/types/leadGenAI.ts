@@ -71,14 +71,15 @@ export interface LeadSearchHistoryItem {
   provider_services?: string;
   target_client?: string;
   target_client_website?: string;
-  contacts?: LeadStakeholder[];
+  // These fields come from the view and might be JSON strings or parsed objects
+  contacts?: LeadStakeholder[] | string;
   intent?: {
     activity_summary: string;
     urgency_score: number;
-  };
+  } | string;
   sales_plan?: {
     cold_call_script: string;
     email_sequence: string;
     marketing_tips: string;
-  };
+  } | string;
 }
