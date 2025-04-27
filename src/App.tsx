@@ -14,12 +14,13 @@ import Index from './pages/Index';
 import Auth from './pages/Auth';
 import InMemory from './pages/InMemory';
 import Profile from './pages/Profile';
+import LeadGenAI from './pages/LeadGenAI'; // Import the new page
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from "sonner";
 
 const FooterWithLocation = () => {
   const location = useLocation();
-  return location.pathname !== '/chat' ? <Footer /> : null;
+  return location.pathname !== '/chat' && location.pathname !== '/leadgenai' ? <Footer /> : null;
 };
 
 const AnimatedRoutes = () => {
@@ -35,6 +36,7 @@ const AnimatedRoutes = () => {
           <Route path="/auth" element={<Auth />} />
           <Route path="/in-memory" element={<InMemory />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/leadgenai" element={<LeadGenAI />} /> {/* Add new route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AnimatePresence>
