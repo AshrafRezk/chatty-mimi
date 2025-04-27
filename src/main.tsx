@@ -44,8 +44,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Ensure React 18 works consistently - removed StrictMode to prevent double rendering
-// which can cause issues with some component libraries like Radix UI
+// Ensure React 18 works consistently
 const container = document.getElementById('root');
 if (!container) {
   throw new Error('Failed to find the root element');
@@ -53,4 +52,8 @@ if (!container) {
 
 // Create a root using the React 18 createRoot API
 const root = createRoot(container);
-root.render(<App />);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
