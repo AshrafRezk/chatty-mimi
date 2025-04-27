@@ -1,3 +1,3 @@
 
-// Re-export the hook from the correct location
-export { useToast, toast } from "@/hooks/use-toast"
+// Re-export from the hooks directory
+export { useToast, toast } from "@/hooks/use-toast";

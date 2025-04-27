@@ -53,7 +53,7 @@ const App: React.FC = () => {
           <AuthProvider>
             <ChatProvider>
               <AnimatedRoutes />
-              <Toaster />
+              <Toaster position="top-right" richColors />
             </ChatProvider>
           </AuthProvider>
         </Router>

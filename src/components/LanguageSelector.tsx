@@ -30,7 +30,7 @@ const LANGUAGES = [
   { code: 'no', label: 'Norsk', group: 'european' },
 ];
 
-// Function to group languages by category - defined outside components
+// Get grouped languages
 const getLanguageGroups = () => {
   const popular = LANGUAGES.filter(lang => lang.group === 'popular');
   const european = LANGUAGES.filter(lang => lang.group === 'european');
@@ -40,34 +40,7 @@ const getLanguageGroups = () => {
   return { popular, european, asian, other };
 };
 
-// Simplify the language group rendering to a plain function
-function renderLanguageGroup(
-  title: string,
-  languages: typeof LANGUAGES,
-  currentLanguage: Language,
-  onSelectLanguage: (code: Language) => void
-) {
-  return (
-    <>
-      <DropdownMenuLabel>{title}</DropdownMenuLabel>
-      {languages.map(lang => (
-        <DropdownMenuItem 
-          key={lang.code}
-          className={currentLanguage === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
-          onClick={() => onSelectLanguage(lang.code as Language)}
-        >
-          {lang.label}
-          {currentLanguage === lang.code && (
-            <Check className="ml-auto h-4 w-4" />
-          )}
-        </DropdownMenuItem>
-      ))}
-    </>
-  );
-}
-
-// Main LanguageSelector component
-function LanguageSelector() {
+const LanguageSelector: React.FC = () => {
   const { state, setLanguage } = useChat();
   const { language } = state;
 
@@ -91,24 +64,72 @@ function LanguageSelector() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48 bg-popover">
-          {renderLanguageGroup("Select language", popular, language, handleLanguageChange)}
+          <DropdownMenuLabel>Select language</DropdownMenuLabel>
+          {popular.map(lang => (
+            <DropdownMenuItem 
+              key={lang.code}
+              className={language === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
+              onClick={() => handleLanguageChange(lang.code as Language)}
+            >
+              {lang.label}
+              {language === lang.code && (
+                <Check className="ml-auto h-4 w-4" />
+              )}
+            </DropdownMenuItem>
+          ))}
           
           <DropdownMenuSeparator />
-          {renderLanguageGroup("European", european, language, handleLanguageChange)}
+          <DropdownMenuLabel>European</DropdownMenuLabel>
+          {european.map(lang => (
+            <DropdownMenuItem 
+              key={lang.code}
+              className={language === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
+              onClick={() => handleLanguageChange(lang.code as Language)}
+            >
+              {lang.label}
+              {language === lang.code && (
+                <Check className="ml-auto h-4 w-4" />
+              )}
+            </DropdownMenuItem>
+          ))}
           
           <DropdownMenuSeparator />
-          {renderLanguageGroup("Asian", asian, language, handleLanguageChange)}
+          <DropdownMenuLabel>Asian</DropdownMenuLabel>
+          {asian.map(lang => (
+            <DropdownMenuItem 
+              key={lang.code}
+              className={language === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
+              onClick={() => handleLanguageChange(lang.code as Language)}
+            >
+              {lang.label}
+              {language === lang.code && (
+                <Check className="ml-auto h-4 w-4" />
+              )}
+            </DropdownMenuItem>
+          ))}
           
           {other.length > 0 && (
             <>
               <DropdownMenuSeparator />
-              {renderLanguageGroup("Other", other, language, handleLanguageChange)}
+              <DropdownMenuLabel>Other</DropdownMenuLabel>
+              {other.map(lang => (
+                <DropdownMenuItem 
+                  key={lang.code}
+                  className={language === lang.code ? "bg-mimi-soft dark:bg-mimi-dark/40" : ""}
+                  onClick={() => handleLanguageChange(lang.code as Language)}
+                >
+                  {lang.label}
+                  {language === lang.code && (
+                    <Check className="ml-auto h-4 w-4" />
+                  )}
+                </DropdownMenuItem>
+              ))}
             </>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
   );
-}
+};
 
 export default LanguageSelector;
