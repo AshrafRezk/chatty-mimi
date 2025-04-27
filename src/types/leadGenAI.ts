@@ -40,4 +40,21 @@ export interface LeadRequest {
   stakeholders?: LeadStakeholder[];
   intents?: LeadIntent;
   salesPlan?: LeadSalesPlan;
+  scoutingMode?: boolean;
+  industry?: string;
+}
+
+// Types for scout mode
+export interface ScoutedCompany {
+  name: string;
+  website: string;
+  description: string;
+  matchScore: number; // 1-10
+  contacts: LeadStakeholder[];
+}
+
+export interface ScoutingResult {
+  companies: ScoutedCompany[];
+  searchQuery: string;
+  timestamp: string;
 }

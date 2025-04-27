@@ -1,4 +1,5 @@
-import { CompanySearchResult } from "@/types/leadGenAI";
+
+import { CompanySearchResult, LeadStakeholder, ScoutedCompany } from '@/types/leadGenAI';
 import { performWebSearch } from "./searchUtils";
 
 // SerpAPI key for fallback
@@ -46,6 +47,161 @@ export const searchCompanies = async (query: string): Promise<CompanySearchResul
 };
 
 /**
+ * Scout for potential leads based on provider company and services
+ * @param providerCompany Your company name
+ * @param providerServices Your services
+ * @param targetIndustry Target industry to scout
+ * @returns Promise<ScoutedCompany[]> Array of potential leads
+ */
+export const scoutForLeads = async (
+  providerCompany: string,
+  providerServices: string,
+  targetIndustry: string
+): Promise<ScoutedCompany[]> => {
+  try {
+    // Create search queries to find potential leads
+    const queries = [
+      `${targetIndustry} companies looking for "${providerServices}"`,
+      `${targetIndustry} companies hiring for roles related to "${providerServices}"`,
+      `${targetIndustry} companies "actively seeking" "${providerServices}" vendors`,
+      `${targetIndustry} startups that need "${providerServices}"`
+    ];
+    
+    const allResults: any[] = [];
+    const uniqueCompanies = new Map();
+    
+    // Search for potential leads using each query
+    for (const query of queries) {
+      const results = await performWebSearch(query);
+      allResults.push(...results);
+      
+      // Process results to extract company names
+      for (const result of results) {
+        // Extract company name from title or URL
+        let companyName = extractCompanyNameFromResult(result);
+        if (!companyName || companyName.length < 3) continue;
+        
+        // Skip if we already have this company
+        if (uniqueCompanies.has(companyName.toLowerCase())) continue;
+        
+        // Get company website from search result
+        let website = result.url || "";
+        try {
+          const url = new URL(website);
+          website = url.hostname;
+        } catch (e) {
+          continue; // Skip invalid URLs
+        }
+        
+        // Calculate match score based on keyword relevance
+        const matchScore = calculateMatchScore(result, providerServices);
+        
+        // Skip low-relevance results
+        if (matchScore < 4) continue;
+        
+        uniqueCompanies.set(companyName.toLowerCase(), {
+          name: companyName,
+          website,
+          description: result.snippet || "",
+          matchScore,
+          contacts: [] // Will be populated later
+        });
+      }
+    }
+    
+    // Convert map to array
+    const companies: ScoutedCompany[] = Array.from(uniqueCompanies.values());
+    
+    // Get top 5 companies with highest match scores
+    const topCompanies = companies
+      .sort((a, b) => b.matchScore - a.matchScore)
+      .slice(0, 5);
+    
+    // Fetch contacts for each top company
+    for (const company of topCompanies) {
+      const contacts = await scrapeStakeholders(company.name, company.website);
+      company.contacts = contacts;
+    }
+    
+    return topCompanies;
+  } catch (error) {
+    console.error("Error scouting for leads:", error);
+    return [];
+  }
+};
+
+/**
+ * Extract company name from search result
+ */
+const extractCompanyNameFromResult = (result: any): string => {
+  let name = "";
+  
+  if (result.title) {
+    // Try to extract company name from title
+    // Split by common separators
+    const parts = result.title.split(/\s*[\|\-]\s*/);
+    name = parts[0].trim();
+  }
+  
+  if (!name && result.url) {
+    try {
+      // Try to extract from URL domain
+      const url = new URL(result.url);
+      // Get domain without TLD
+      name = url.hostname.split('.')[0];
+      // Convert to title case
+      name = name.charAt(0).toUpperCase() + name.slice(1);
+    } catch (e) {
+      // Invalid URL, ignore
+    }
+  }
+  
+  return name;
+};
+
+/**
+ * Calculate match score based on keywords in search result
+ */
+const calculateMatchScore = (result: any, services: string): number => {
+  let score = 5; // Base score
+  
+  const keywords = [
+    "looking for", "hiring", "seeking", "need", "requires",
+    "request for proposal", "RFP", "vendor", "provider"
+  ];
+  
+  // Also add service keywords
+  const serviceKeywords = services
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(word => word.length > 3);
+  
+  // Check snippet and title for keywords
+  const text = `${result.title || ""} ${result.snippet || ""}`.toLowerCase();
+  
+  // Check for service keywords
+  serviceKeywords.forEach(keyword => {
+    if (text.includes(keyword)) {
+      score += 0.5;
+    }
+  });
+  
+  // Check for intent keywords
+  keywords.forEach(keyword => {
+    if (text.includes(keyword)) {
+      score += 1;
+    }
+  });
+  
+  // Recency bonus
+  if (text.includes("recent") || text.includes("2023") || text.includes("2024")) {
+    score += 1;
+  }
+  
+  return Math.min(10, Math.round(score));
+};
+
+/**
  * Scrape stakeholders from a company using Google Search
  * @param companyName Target company name
  * @param companyWebsite Target company website
@@ -54,7 +210,7 @@ export const searchCompanies = async (query: string): Promise<CompanySearchResul
 export const scrapeStakeholders = async (
   companyName: string,
   companyWebsite: string
-): Promise<any[]> => {
+): Promise<LeadStakeholder[]> => {
   try {
     // Search for leadership team
     const queries = [
@@ -87,8 +243,8 @@ export const scrapeStakeholders = async (
 /**
  * Extract people information from search results
  */
-const extractPeopleFromSearchResults = (searchResults: any[], companyName: string): any[] => {
-  const people: any[] = [];
+const extractPeopleFromSearchResults = (searchResults: any[], companyName: string): LeadStakeholder[] => {
+  const people: LeadStakeholder[] = [];
   const seenNames = new Set();
   
   for (const result of searchResults) {
