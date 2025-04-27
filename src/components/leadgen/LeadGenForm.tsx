@@ -16,6 +16,7 @@ interface LeadGenFormProps {
 }
 
 const INDUSTRIES = [
+  "Any",
   "Technology",
   "Healthcare",
   "Finance",
@@ -64,7 +65,7 @@ const LeadGenForm: React.FC<LeadGenFormProps> = ({ onSubmit, isProcessing }) => 
       targetClient: scoutingMode ? '' : targetClient,
       targetClientWebsite: scoutingMode ? '' : targetClientWebsite,
       scoutingMode,
-      industry: scoutingMode ? industry : undefined
+      industry: scoutingMode && industry !== 'Any' ? industry : undefined
     };
     
     try {

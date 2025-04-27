@@ -28,7 +28,6 @@ const CompanySearchInput: React.FC<CompanySearchInputProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const debouncedSearchTerm = useDebounce(value, 500);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const handleSearch = async () => {
@@ -40,28 +39,15 @@ const CompanySearchInput: React.FC<CompanySearchInputProps> = ({
 
       setIsSearching(true);
       
-      // Set a timeout to cancel the search if it takes too long
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-      
-      searchTimeoutRef.current = setTimeout(() => {
-        setIsSearching(false);
-        console.log('Search timed out');
-      }, 5000);
-
       try {
         const results = await searchCompanies(debouncedSearchTerm);
         setSearchResults(results);
         setIsDropdownOpen(results.length > 0);
       } catch (error) {
         console.error('Error searching companies:', error);
+        setSearchResults([]);
       } finally {
         setIsSearching(false);
-        if (searchTimeoutRef.current) {
-          clearTimeout(searchTimeoutRef.current);
-          searchTimeoutRef.current = null;
-        }
       }
     };
 
@@ -81,6 +67,13 @@ const CompanySearchInput: React.FC<CompanySearchInputProps> = ({
     };
   }, []);
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(e.target.value);
+    if (e.target.value.length >= 3) {
+      setIsDropdownOpen(true);
+    }
+  };
+
   const handleCompanyClick = (company: CompanySearchResult) => {
     onCompanySelect(company);
     setIsDropdownOpen(false);
@@ -95,11 +88,11 @@ const CompanySearchInput: React.FC<CompanySearchInputProps> = ({
         <Input
           id={label.replace(/\s+/g, '-').toLowerCase()}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={handleInputChange}
           placeholder={placeholder}
           className={`pr-8 ${className}`}
           autoComplete="off"
-          onClick={() => {
+          onFocus={() => {
             if (searchResults.length > 0) {
               setIsDropdownOpen(true);
             }
