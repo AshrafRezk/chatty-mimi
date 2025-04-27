@@ -132,18 +132,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithSSO = async (provider: Provider) => {
     try {
       setLoading(true);
+      // Use current window origin to construct the redirect URL
+      const redirectUrl = `${window.location.origin}/auth`;
+      console.log(`OAuth redirect URL: ${redirectUrl}`);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth`
+          redirectTo: redirectUrl
         }
       });
       
       if (error) {
         toast.error(error.message);
+        console.error('OAuth error:', error);
       }
     } catch (error: any) {
       toast.error(error.message);
+      console.error('Unexpected OAuth error:', error);
     } finally {
       setLoading(false);
     }
