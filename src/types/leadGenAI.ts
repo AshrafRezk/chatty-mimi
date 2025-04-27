@@ -1,3 +1,4 @@
+
 export interface CompanySearchResult {
   name: string;
   website: string;
@@ -58,7 +59,8 @@ export interface ScoutingResult {
   timestamp: string;
 }
 
-export interface LeadSearchHistory {
+// Search history types
+export interface LeadSearchHistoryItem {
   id?: string;
   lead_request_id?: string;
   search_query: string;

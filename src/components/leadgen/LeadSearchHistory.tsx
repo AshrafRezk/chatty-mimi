@@ -19,11 +19,11 @@ import {
 } from '@/components/ui/table';
 import { useChat } from '@/context/ChatContext';
 import { useAuth } from '@/context/AuthContext';
-import { LeadSearchHistory } from '@/types/leadGenAI';
+import { LeadSearchHistoryItem } from '@/types/leadGenAI';
 import { Clock } from 'lucide-react';
 
-const LeadSearchHistory: React.FC = () => {
-  const [searchHistory, setSearchHistory] = useState<LeadSearchHistory[]>([]);
+const LeadSearchHistoryDialog: React.FC = () => {
+  const [searchHistory, setSearchHistory] = useState<LeadSearchHistoryItem[]>([]);
   const { user } = useAuth();
   const { addMessage } = useChat();
 
@@ -31,23 +31,28 @@ const LeadSearchHistory: React.FC = () => {
     const fetchSearchHistory = async () => {
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from('lead_search_history_details')
-        .select('*')
-        .order('searched_at', { ascending: false });
+      try {
+        // Use any() to bypass TypeScript checks for custom views
+        const { data, error } = await supabase
+          .from('lead_search_history_details')
+          .select('*')
+          .order('searched_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching search history:', error);
-        return;
+        if (error) {
+          console.error('Error fetching search history:', error);
+          return;
+        }
+
+        setSearchHistory(data as LeadSearchHistoryItem[] || []);
+      } catch (err) {
+        console.error('Error in search history fetch:', err);
       }
-
-      setSearchHistory(data || []);
     };
 
     fetchSearchHistory();
   }, [user]);
 
-  const handleContinueInChat = (history: LeadSearchHistory) => {
+  const handleContinueInChat = (history: LeadSearchHistoryItem) => {
     const chatMessage = `I want to discuss a lead from my search history:
 
 Company: ${history.provider_company}
@@ -120,4 +125,4 @@ Can you help me strategize my approach?`;
   );
 };
 
-export default LeadSearchHistory;
+export default LeadSearchHistoryDialog;

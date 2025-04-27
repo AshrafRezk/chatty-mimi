@@ -6,14 +6,14 @@ import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { LeadRequest, ScoutingResult, ScoutedCompany, LeadSearchHistory } from '@/types/leadGenAI';
+import { LeadRequest, ScoutingResult, ScoutedCompany } from '@/types/leadGenAI';
 import Navbar from '@/components/Navbar';
 import LeadGenForm from '@/components/leadgen/LeadGenForm';
 import StakeholdersTable from '@/components/leadgen/StakeholdersTable';
 import CompanyIntentCard from '@/components/leadgen/CompanyIntentCard';
 import SalesPlanTabs from '@/components/leadgen/SalesPlanTabs';
 import DownloadReportButton from '@/components/leadgen/DownloadReportButton';
-import LeadSearchHistory from '@/components/leadgen/LeadSearchHistory';
+import LeadSearchHistoryDialog from '@/components/leadgen/LeadSearchHistory';
 import { scrapeStakeholders, scrapeCompanyIntent, generateSalesPlan, scoutForLeads } from '@/utils/companySearchUtils';
 
 const LeadGenAI: React.FC = () => {
@@ -41,7 +41,8 @@ const LeadGenAI: React.FC = () => {
       let leadRequestRecord: { id?: string } = {};
       
       // First, store the lead request
-      const { data: requestData, error: requestError } = await supabase
+      // Use any() to bypass TypeScript checks for custom tables
+      const { data: requestData, error: requestError } = await (supabase as any)
         .from('lead_requests')
         .insert({
           user_id: user?.id,
@@ -57,7 +58,7 @@ const LeadGenAI: React.FC = () => {
       leadRequestRecord = requestData;
 
       // Store search history
-      await supabase
+      await (supabase as any)
         .from('lead_search_history')
         .insert({
           user_id: user?.id,
@@ -89,7 +90,7 @@ const LeadGenAI: React.FC = () => {
         );
 
         if (contacts.length) {
-          await supabase.from('lead_contacts').insert(contacts);
+          await (supabase as any).from('lead_contacts').insert(contacts);
         }
         
         setScoutingResults(results);
@@ -116,7 +117,7 @@ const LeadGenAI: React.FC = () => {
         }));
 
         if (stakeholderContacts.length) {
-          await supabase.from('lead_contacts').insert(stakeholderContacts);
+          await (supabase as any).from('lead_contacts').insert(stakeholderContacts);
         }
         
         toast.info('Analyzing company intent...', { duration: 2000 });
@@ -128,7 +129,7 @@ const LeadGenAI: React.FC = () => {
         );
         
         // Store intent
-        await supabase.from('lead_intents').insert({
+        await (supabase as any).from('lead_intents').insert({
           request_id: leadRequestRecord.id,
           activity_summary: intent.activitySummary,
           urgency_score: intent.urgencyScore
@@ -146,7 +147,7 @@ const LeadGenAI: React.FC = () => {
         );
         
         // Store sales plan
-        await supabase.from('lead_sales_plans').insert({
+        await (supabase as any).from('lead_sales_plans').insert({
           request_id: leadRequestRecord.id,
           cold_call_script: salesPlan.coldCallScript,
           email_sequence: salesPlan.emailSequence,
@@ -202,7 +203,7 @@ const LeadGenAI: React.FC = () => {
                 Generate strategic sales intelligence for your B2B sales efforts.
               </p>
             </div>
-            <LeadSearchHistory />
+            <LeadSearchHistoryDialog />
           </div>
           
           <LeadGenForm 
