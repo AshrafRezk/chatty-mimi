@@ -1,4 +1,3 @@
-
 export interface CompanySearchResult {
   name: string;
   website: string;
@@ -57,4 +56,27 @@ export interface ScoutingResult {
   companies: ScoutedCompany[];
   searchQuery: string;
   timestamp: string;
+}
+
+export interface LeadSearchHistory {
+  id?: string;
+  lead_request_id?: string;
+  search_query: string;
+  search_type: 'direct' | 'scouting';
+  search_params: Record<string, any>;
+  searched_at?: string;
+  provider_company?: string;
+  provider_services?: string;
+  target_client?: string;
+  target_client_website?: string;
+  contacts?: LeadStakeholder[];
+  intent?: {
+    activity_summary: string;
+    urgency_score: number;
+  };
+  sales_plan?: {
+    cold_call_script: string;
+    email_sequence: string;
+    marketing_tips: string;
+  };
 }

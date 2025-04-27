@@ -5,13 +5,15 @@ import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { LeadRequest, ScoutingResult, ScoutedCompany } from '@/types/leadGenAI';
+import { supabase } from '@/integrations/supabase/client';
+import { LeadRequest, ScoutingResult, ScoutedCompany, LeadSearchHistory } from '@/types/leadGenAI';
 import Navbar from '@/components/Navbar';
 import LeadGenForm from '@/components/leadgen/LeadGenForm';
 import StakeholdersTable from '@/components/leadgen/StakeholdersTable';
 import CompanyIntentCard from '@/components/leadgen/CompanyIntentCard';
 import SalesPlanTabs from '@/components/leadgen/SalesPlanTabs';
 import DownloadReportButton from '@/components/leadgen/DownloadReportButton';
+import LeadSearchHistory from '@/components/leadgen/LeadSearchHistory';
 import { scrapeStakeholders, scrapeCompanyIntent, generateSalesPlan, scoutForLeads } from '@/utils/companySearchUtils';
 
 const LeadGenAI: React.FC = () => {
@@ -36,6 +38,35 @@ const LeadGenAI: React.FC = () => {
     setScoutingResults(null);
     
     try {
+      let leadRequestRecord: { id?: string } = {};
+      
+      // First, store the lead request
+      const { data: requestData, error: requestError } = await supabase
+        .from('lead_requests')
+        .insert({
+          user_id: user?.id,
+          provider_company: leadRequest.providerCompany,
+          provider_services: leadRequest.providerServices,
+          target_client: leadRequest.targetClient || '',
+          target_client_website: leadRequest.targetClientWebsite || '',
+        })
+        .select()
+        .single();
+
+      if (requestError) throw requestError;
+      leadRequestRecord = requestData;
+
+      // Store search history
+      await supabase
+        .from('lead_search_history')
+        .insert({
+          user_id: user?.id,
+          lead_request_id: leadRequestRecord.id,
+          search_query: leadRequest.targetClient || 'Lead Scouting',
+          search_type: leadRequest.scoutingMode ? 'scouting' : 'direct',
+          search_params: JSON.stringify(leadRequest)
+        });
+
       if (leadRequest.scoutingMode) {
         // Handle scouting mode
         toast.info('Scouting for potential leads...', { duration: 2000 });
@@ -46,18 +77,27 @@ const LeadGenAI: React.FC = () => {
           leadRequest.industry || 'technology'
         );
         
+        // Store scouted companies
+        const contacts = results.flatMap(company => 
+          company.contacts.map(contact => ({
+            request_id: leadRequestRecord.id,
+            name: contact.name,
+            title: contact.title,
+            linkedin_url: contact.linkedinUrl,
+            email: contact.email
+          }))
+        );
+
+        if (contacts.length) {
+          await supabase.from('lead_contacts').insert(contacts);
+        }
+        
         setScoutingResults(results);
         setShowResults(true);
         toast.success('Lead scouting complete!');
         
       } else {
         // Handle regular mode (single company)
-        // Store the base request data in memory
-        const requestData: LeadRequest = {
-          ...leadRequest,
-          userId: user?.id,
-        };
-        
         toast.info('Gathering stakeholder information...', { duration: 2000 });
         
         // 2. Scrape stakeholders
@@ -66,6 +106,19 @@ const LeadGenAI: React.FC = () => {
           leadRequest.targetClientWebsite
         );
         
+        // Store stakeholders
+        const stakeholderContacts = stakeholders.map(contact => ({
+          request_id: leadRequestRecord.id,
+          name: contact.name,
+          title: contact.title,
+          linkedin_url: contact.linkedinUrl,
+          email: contact.email
+        }));
+
+        if (stakeholderContacts.length) {
+          await supabase.from('lead_contacts').insert(stakeholderContacts);
+        }
+        
         toast.info('Analyzing company intent...', { duration: 2000 });
         
         // 3. Scrape company intent
@@ -73,6 +126,13 @@ const LeadGenAI: React.FC = () => {
           leadRequest.targetClient, 
           leadRequest.targetClientWebsite
         );
+        
+        // Store intent
+        await supabase.from('lead_intents').insert({
+          request_id: leadRequestRecord.id,
+          activity_summary: intent.activitySummary,
+          urgency_score: intent.urgencyScore
+        });
         
         toast.info('Generating sales plan...', { duration: 2000 });
         
@@ -85,9 +145,18 @@ const LeadGenAI: React.FC = () => {
           intent
         );
         
+        // Store sales plan
+        await supabase.from('lead_sales_plans').insert({
+          request_id: leadRequestRecord.id,
+          cold_call_script: salesPlan.coldCallScript,
+          email_sequence: salesPlan.emailSequence,
+          marketing_tips: salesPlan.marketingTips
+        });
+        
         // 5. Combine all data and set state
         const completeLeadData: LeadRequest = {
-          ...requestData,
+          ...leadRequest,
+          id: leadRequestRecord.id,
           stakeholders,
           intents: intent,
           salesPlan
@@ -126,10 +195,15 @@ const LeadGenAI: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-3xl font-bold mb-2">LeadGenAI</h1>
-          <p className="text-muted-foreground mb-8">
-            Generate strategic sales intelligence for your B2B sales efforts.
-          </p>
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">LeadGenAI</h1>
+              <p className="text-muted-foreground">
+                Generate strategic sales intelligence for your B2B sales efforts.
+              </p>
+            </div>
+            <LeadSearchHistory />
+          </div>
           
           <LeadGenForm 
             onSubmit={handleSubmit} 
