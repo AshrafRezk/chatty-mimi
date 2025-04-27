@@ -1,5 +1,4 @@
 
-// This file uses the sonner package for toasts, not radix-ui
 import { toast as sonnerToast } from "sonner";
 
 type ToastProps = {
@@ -31,7 +30,5 @@ export function useToast() {
   };
 }
 
-export const toast = (props: ToastProps) => {
-  const { toast: showToast } = useToast();
-  return showToast(props);
-};
+// Simplified toast function for direct use
+export const toast = sonnerToast;
