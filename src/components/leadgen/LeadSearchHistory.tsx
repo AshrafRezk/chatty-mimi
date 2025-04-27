@@ -32,8 +32,8 @@ const LeadSearchHistoryDialog: React.FC = () => {
       if (!user) return;
 
       try {
-        // Use any() to bypass TypeScript checks for custom views
-        const { data, error } = await supabase
+        // Cast the response type to our custom view type
+        const { data, error } = await (supabase as any)
           .from('lead_search_history_details')
           .select('*')
           .order('searched_at', { ascending: false });
@@ -43,7 +43,8 @@ const LeadSearchHistoryDialog: React.FC = () => {
           return;
         }
 
-        setSearchHistory(data as LeadSearchHistoryItem[] || []);
+        // Cast the data to our expected type
+        setSearchHistory(data as LeadSearchHistoryItem[]);
       } catch (err) {
         console.error('Error in search history fetch:', err);
       }
@@ -59,15 +60,15 @@ Company: ${history.provider_company}
 Services: ${history.provider_services}
 Target Client: ${history.target_client}
 
-Contacts: ${history.contacts?.map(c => `${c.name} (${c.title})`).join(', ')}
+${history.contacts ? `Contacts: ${JSON.parse(history.contacts as string)?.map((c: any) => `${c.name} (${c.title})`).join(', ')}` : ''}
 
-Intent: ${history.intent?.activity_summary}
-Urgency Score: ${history.intent?.urgency_score}/10
+${history.intent ? `Intent: ${JSON.parse(history.intent as string)?.activity_summary}
+Urgency Score: ${JSON.parse(history.intent as string)?.urgency_score}/10` : ''}
 
-Sales Plan Strategy:
-Cold Call Script: ${history.sales_plan?.cold_call_script}
-Email Sequence: ${history.sales_plan?.email_sequence}
-Marketing Tips: ${history.sales_plan?.marketing_tips}
+${history.sales_plan ? `Sales Plan Strategy:
+Cold Call Script: ${JSON.parse(history.sales_plan as string)?.cold_call_script}
+Email Sequence: ${JSON.parse(history.sales_plan as string)?.email_sequence}
+Marketing Tips: ${JSON.parse(history.sales_plan as string)?.marketing_tips}` : ''}
 
 Can you help me strategize my approach?`;
 
@@ -100,7 +101,7 @@ Can you help me strategize my approach?`;
           </TableHeader>
           <TableBody>
             {searchHistory.map((history) => (
-              <TableRow key={history.id}>
+              <TableRow key={history.history_id}>
                 <TableCell>
                   {new Date(history.searched_at || '').toLocaleDateString()}
                 </TableCell>

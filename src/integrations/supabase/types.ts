@@ -33,6 +33,179 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_contacts: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          linkedin_url: string
+          name: string
+          request_id: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          linkedin_url: string
+          name: string
+          request_id?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          linkedin_url?: string
+          name?: string
+          request_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_contacts_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "lead_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_intents: {
+        Row: {
+          activity_summary: string
+          created_at: string | null
+          id: string
+          request_id: string | null
+          urgency_score: number
+        }
+        Insert: {
+          activity_summary: string
+          created_at?: string | null
+          id?: string
+          request_id?: string | null
+          urgency_score: number
+        }
+        Update: {
+          activity_summary?: string
+          created_at?: string | null
+          id?: string
+          request_id?: string | null
+          urgency_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_intents_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "lead_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_requests: {
+        Row: {
+          created_at: string | null
+          id: string
+          provider_company: string
+          provider_services: string
+          target_client: string
+          target_client_website: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          provider_company: string
+          provider_services: string
+          target_client: string
+          target_client_website: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          provider_company?: string
+          provider_services?: string
+          target_client?: string
+          target_client_website?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      lead_sales_plans: {
+        Row: {
+          cold_call_script: string
+          created_at: string | null
+          email_sequence: string
+          id: string
+          marketing_tips: string
+          request_id: string | null
+        }
+        Insert: {
+          cold_call_script: string
+          created_at?: string | null
+          email_sequence: string
+          id?: string
+          marketing_tips: string
+          request_id?: string | null
+        }
+        Update: {
+          cold_call_script?: string
+          created_at?: string | null
+          email_sequence?: string
+          id?: string
+          marketing_tips?: string
+          request_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_sales_plans_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "lead_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_search_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          lead_request_id: string | null
+          search_params: Json
+          search_query: string
+          search_type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lead_request_id?: string | null
+          search_params: Json
+          search_query: string
+          search_type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lead_request_id?: string | null
+          search_params?: Json
+          search_query?: string
+          search_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_search_history_lead_request_id_fkey"
+            columns: ["lead_request_id"]
+            isOneToOne: false
+            referencedRelation: "lead_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           conversation_id: string
@@ -193,7 +366,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      lead_search_history_details: {
+        Row: {
+          contacts: Json | null
+          history_id: string | null
+          intent: Json | null
+          lead_request_id: string | null
+          provider_company: string | null
+          provider_services: string | null
+          sales_plan: Json | null
+          search_params: Json | null
+          search_query: string | null
+          search_type: string | null
+          searched_at: string | null
+          target_client: string | null
+          target_client_website: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_search_history_lead_request_id_fkey"
+            columns: ["lead_request_id"]
+            isOneToOne: false
+            referencedRelation: "lead_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
