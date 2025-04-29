@@ -30,5 +30,5 @@ export function useToast() {
   };
 }
 
-// Simplified toast function for direct use
+// Export sonnerToast directly for simpler usage
 export const toast = sonnerToast;
