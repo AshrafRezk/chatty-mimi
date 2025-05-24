@@ -38,6 +38,16 @@ const Index: React.FC = () => {
           </div>
           
           <Features />
+
+          {/* Memorial section near footer */}
+          <div className="mt-16 mb-8 text-center">
+            <Link 
+              to="/in-memory" 
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              In Memory of Michael Elia
+            </Link>
+          </div>
         </motion.div>
       </div>
     </>
