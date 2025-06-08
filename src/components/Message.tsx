@@ -9,7 +9,7 @@ import InteractiveChart, { ChartData } from "./InteractiveChart";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
-import { Copy, Check, Download } from "lucide-react";
+import { Copy, Check, Download, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -31,12 +31,17 @@ const Message = ({ message }: MessageProps) => {
   const [chartData, setChartData] = useState<ChartData[] | null>(null);
   const [chartTitle, setChartTitle] = useState<string | undefined>(undefined);
   const [copied, setCopied] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [tldrSummary, setTldrSummary] = useState<string>("");
+  const [fullResponse, setFullResponse] = useState<string>("");
+  const [showReadMore, setShowReadMore] = useState(false);
   
   useEffect(() => {
     setBaseUrl(window.location.origin);
     
     if (message.sender === "assistant") {
       extractChartData(message.text);
+      extractSummaryAndContent(message.text);
     }
   }, [message]);
   
@@ -74,6 +79,34 @@ const Message = ({ message }: MessageProps) => {
     } else {
       setChartData(null);
     }
+  };
+
+  const extractSummaryAndContent = (text: string) => {
+    // Check if the response is long enough to warrant summarization
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    
+    if (sentences.length <= 2 || text.length < 200) {
+      // Short response, no need for summarization
+      setTldrSummary("");
+      setFullResponse(text);
+      setShowReadMore(false);
+      return;
+    }
+
+    // Generate a simple TL;DR by taking the first sentence or two
+    let summary = sentences[0].trim();
+    if (summary.length < 50 && sentences[1]) {
+      summary += ". " + sentences[1].trim();
+    }
+    
+    // Ensure summary ends with proper punctuation
+    if (!summary.match(/[.!?]$/)) {
+      summary += ".";
+    }
+
+    setTldrSummary(summary);
+    setFullResponse(text);
+    setShowReadMore(true);
   };
   
   const handleCopy = async () => {
@@ -124,6 +157,8 @@ const Message = ({ message }: MessageProps) => {
   };
   
   const renderContent = () => {
+    const contentToRender = showReadMore && !isExpanded ? tldrSummary : fullResponse;
+    
     return (
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
@@ -155,7 +190,7 @@ const Message = ({ message }: MessageProps) => {
           },
         }}
       >
-        {message.text}
+        {contentToRender}
       </ReactMarkdown>
     );
   };
@@ -191,7 +226,38 @@ const Message = ({ message }: MessageProps) => {
         )}
         
         <div className="relative pb-6">
+          {/* TL;DR Badge for summarized responses */}
+          {showReadMore && !isExpanded && tldrSummary && (
+            <div className="flex items-center gap-2 mb-2">
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-mimi-primary/10 text-mimi-primary">
+                💡 {language === 'ar' ? 'باختصار' : 'TL;DR'}
+              </span>
+            </div>
+          )}
+          
           {renderContent()}
+          
+          {/* Read More/Less Button */}
+          {showReadMore && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-3 h-8 px-3 text-sm font-medium text-mimi-primary hover:bg-mimi-primary/10 transition-colors"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              {isExpanded ? (
+                <>
+                  <ChevronUp className="w-4 h-4 mr-1" />
+                  {language === 'ar' ? 'اقرأ أقل' : 'Read Less'}
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4 mr-1" />
+                  {language === 'ar' ? 'اقرأ المزيد' : 'Read More'}
+                </>
+              )}
+            </Button>
+          )}
           
           {message.sender === "assistant" && (
             <div className="absolute bottom-0 right-0 flex space-x-1">
@@ -217,6 +283,9 @@ const Message = ({ message }: MessageProps) => {
             </div>
           )}
         </div>
+        
+        
+        
         
         {message.sender === "assistant" && message.references && message.references.length > 0 && (
           <div className="mt-2">
